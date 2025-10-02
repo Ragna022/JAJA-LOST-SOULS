@@ -49,7 +49,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private void OnSceneChange(UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
     {
-        if (newScene.buildIndex == WorldSaveGameManager.Instance.GetWorldSceneIndex())
+        if (newScene.buildIndex == WorldSaveGameManager.instance.GetWorldSceneIndex())
         {
             instance.enabled = true;
         }
