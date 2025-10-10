@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: afd9545e0317bb94db76b28dc329d9b7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 272215
+  packageName: Stylized Lost Cave
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/LostCave/HDRP/Art/Animations/Camera8.controller
+  uploadId: 691744

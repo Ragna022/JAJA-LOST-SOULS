@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 22bb7d6ae44eb4a4899a4df623faea89
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 272215
+  packageName: Stylized Lost Cave
+  packageVersion: 1.0
+  assetPath: Assets/LeartesStudios/LostCave/HDRP/Scene/L_LostCave_Settings.lighting
+  uploadId: 691744
