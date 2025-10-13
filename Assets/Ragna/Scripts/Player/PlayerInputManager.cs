@@ -27,6 +27,10 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] bool jumpInput = false;
     [SerializeField] bool RB_Input = false;
 
+    [Header("TRIGGER INPUTS")]
+    [SerializeField] bool RT_Input = false;
+    [SerializeField] bool Hold_RT_Input = false;
+
     private void Awake()
     {
         if (instance == null)
@@ -87,6 +91,11 @@ public class PlayerInputManager : MonoBehaviour
             playerControls.PlayerActions.Jump.performed += i => jumpInput = true;
             playerControls.PlayerActions.RB.performed += i => RB_Input = true;
 
+            // TRIGGERS
+            playerControls.PlayerActions.RT.performed += i => RT_Input = true;
+            playerControls.PlayerActions.HoldRT.performed += i => Hold_RT_Input = true;
+            playerControls.PlayerActions.HoldRT.canceled += i => Hold_RT_Input = false;
+
             // HOLDING THE SPRINT SETS THE BOOL TO TRUE
             playerControls.PlayerActions.Sprint.performed += i => sprintInput = true;
             // PRESSING THE INPUT SETS THE BOOL TO FALSE
@@ -127,6 +136,8 @@ public class PlayerInputManager : MonoBehaviour
         HandleSpringInput();
         HandleJumpInput();
         HandleRBInput();
+        HandleRTInput();
+        HandleChargeRTInput();
     }
 
     // MOVEMENT
@@ -204,9 +215,9 @@ public class PlayerInputManager : MonoBehaviour
     {
         if (RB_Input)
         {
-            
+
             RB_Input = false;
-            
+
             // TODO: IF WE HAVE A UI WINDOW OPEN, RETURN AND DO NOTHING
 
             player.playerNetworkManager.SetCharacterActionHand(true);
@@ -214,6 +225,35 @@ public class PlayerInputManager : MonoBehaviour
             // TODO: IF WE ARE TWO HANDING THE WEAPON, USE THE TWO HANDED ACTION
 
             player.playerCombatManager.PerformingWeaponBasedAction(player.playerInventoryManager.currentRightHandWeapon.oh_RB_Actions, player.playerInventoryManager.currentRightHandWeapon);
+        }
+    }
+
+    private void HandleRTInput()
+    {
+        if (RT_Input)
+        {
+
+            RT_Input = false;
+
+            // TODO: IF WE HAVE A UI WINDOW OPEN, RETURN AND DO NOTHING
+
+            player.playerNetworkManager.SetCharacterActionHand(true);
+
+            // TODO: IF WE ARE TWO HANDING THE WEAPON, USE THE TWO HANDED ACTION
+
+            player.playerCombatManager.PerformingWeaponBasedAction(player.playerInventoryManager.currentRightHandWeapon.oh_RT_Actions, player.playerInventoryManager.currentRightHandWeapon);
+        }
+    }
+    
+    private void HandleChargeRTInput()
+    {
+        // WE ONLY WANT TO CHECK FOR A CHARGE IF WE ARE IN AN ACTION THAT REQUIRES IT(attacking)
+        if(player.isPerformingAction)
+        {
+            if(player.playerNetworkManager.isUsingRightHand.Value)
+            {
+                player.playerNetworkManager.isChargingAttack.Value = Hold_RT_Input;
+            }
         }
     }
 }

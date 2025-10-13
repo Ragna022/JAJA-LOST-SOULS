@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 7ed3ca2a721728a41b40410825737c75
+timeCreated: 1505921772
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 100795
+  packageName: Simple Sprite Trails
+  packageVersion: 1.0
+  assetPath: Assets/SimpleSpriteTrails/Scripts/MeleeWeaponTrail.cs
+  uploadId: 205503

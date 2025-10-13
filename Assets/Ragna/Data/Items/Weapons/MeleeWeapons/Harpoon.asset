@@ -21,11 +21,14 @@ MonoBehaviour:
   dexREQ: 10
   intREQ: 0
   faithREQ: 0
-  physicalDamage: 25
+  physicalDamage: 50
   magicDamage: 0
   fireDamage: 0
   holyDamage: 0
   lightningDamage: 0
   poiseDamage: 15
+  lightAttcakModifier: 1.1
   baseStaminaCost: 10
+  lightAttackStaminaCostMultiplier: 0.9
   oh_RB_Actions: {fileID: 11400000, guid: b1f082e9db7b0fc4d8e6154c15b69e21, type: 2}
+  oh_RT_Actions: {fileID: 11400000, guid: 8ea34347f92edeb4894c3be32ccf3341, type: 2}

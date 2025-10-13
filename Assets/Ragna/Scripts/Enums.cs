@@ -25,3 +25,12 @@ public enum WeaponModelSlot
     RightHand,
     LeftHand
 }
+
+// THIS IS USED TO CALCULATE DAMAGE BASED ON ATTACK TYPE
+public enum AttackType
+{
+    LightAttack01,
+    HeavyAttack01,
+    ChargedAttack01,
+    ChargedAttack02,
+}

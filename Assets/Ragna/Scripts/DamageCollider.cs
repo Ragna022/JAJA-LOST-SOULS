@@ -20,11 +20,13 @@ public class DamageCollider : MonoBehaviour
     [Header("Characters Damaged")]
     protected List<CharacterManager> charactersDamaged = new List<CharacterManager>();
 
-    // Add a reference to the character who owns this collider
-    public CharacterManager characterOwner; 
+    protected virtual void Awake()
+    {
+        
+    }
 
 
-    private void OnTriggerEnter(Collider other)
+    protected virtual void OnTriggerEnter(Collider other)
     {
         CharacterManager damageTarget = other.GetComponentInParent<CharacterManager>();
 
@@ -47,10 +49,10 @@ public class DamageCollider : MonoBehaviour
         // WE DON'T WANT TO DAMAGE THE SAME TARGET MORE THAN ONCE IN A SINGLE ACTION
         // SO WE ADD THEM TO A LIST THAT CHECKS BEFORE APPLYING DAMAGE
 
-        /*if (charactersDamaged.Contains(damageTarget))
+        if (charactersDamaged.Contains(damageTarget)) // HERE, JUST INCASE THE OPEN AND CLOSE COLLIDER DOES NOT WORK 
             return;
 
-        charactersDamaged.Add(damageTarget);*/
+        charactersDamaged.Add(damageTarget);
 
         TakeDamageEffect damageEffect = Instantiate(WorldCharacterEffectsManager.instance.takeDamageEffect);
         damageEffect.physicalDamage = physicalDamage;

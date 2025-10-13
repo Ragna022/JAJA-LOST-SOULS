@@ -14,19 +14,21 @@ public class CharacterManager : NetworkBehaviour
     [HideInInspector] public CharacterNetworkManager characterNetworkManager;
     [HideInInspector] public CharacterEffectsManager characterEffectsManager;
     [HideInInspector] public CharacterAnimatorManager characterAnimatorManager;
+    [HideInInspector] public CharacterCombatManager characterCombatManager;
+    [HideInInspector] public CharacterSoundFXManager characterSoundFXManager;
 
     [Header("Flags")]
     public bool isPerformingAction = false;
-    //public bool isJumping = false;
     public bool isGrounded = false;
     public bool applyRootMotion = false;
     public bool canRotate = true;
     public bool canMove = true;
 
     [Header("Equipment")]
-    public DamageCollider damageCollider; // NEW: Add a reference for your weapon's collider
+    public DamageCollider damageCollider;
 
-    
+    // Track if death animation has been played
+    private bool deathAnimationPlayed = false;
 
     protected virtual void Awake()
     {
@@ -38,6 +40,8 @@ public class CharacterManager : NetworkBehaviour
         characterNetworkManager = GetComponent<CharacterNetworkManager>();
         characterEffectsManager = GetComponent<CharacterEffectsManager>();
         characterAnimatorManager = GetComponent<CharacterAnimatorManager>();
+        characterCombatManager = GetComponent<CharacterCombatManager>();
+        characterSoundFXManager = GetComponent<CharacterSoundFXManager>();
     }
 
     protected virtual void Start()
@@ -65,6 +69,13 @@ public class CharacterManager : NetworkBehaviour
                 (transform.rotation,
                 characterNetworkManager.networkRotation.Value,
                 characterNetworkManager.networkRotationSmoothTime);
+
+            // CRITICAL FIX: Check isDead status every frame for non-owners
+            if (isDead.Value && !deathAnimationPlayed)
+            {
+                Debug.Log($"[CharacterManager] Update detected isDead=true without callback! Playing death animation for {gameObject.name}");
+                PlayDeathAnimation();
+            }
         }
     }
 
@@ -73,34 +84,95 @@ public class CharacterManager : NetworkBehaviour
 
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        Debug.Log($"[CharacterManager] OnNetworkSpawn - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, NetworkObjectId: {NetworkObjectId}, isDead: {isDead.Value}");
+
+        // Subscribe to isDead changes for sync
+        isDead.OnValueChanged += OnIsDeadChanged;
+        
+        Debug.Log($"[CharacterManager] Subscribed to isDead.OnValueChanged for {gameObject.name}");
+        
+        // If the character is already dead when we spawn (late join scenario), play the death animation
+        if (isDead.Value && !deathAnimationPlayed)
+        {
+            Debug.Log($"[CharacterManager] Character spawned already dead, playing death animation immediately");
+            PlayDeathAnimation();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        Debug.Log($"[CharacterManager] OnNetworkDespawn - Unsubscribing for {gameObject.name}");
+        
+        // Unsubscribe to avoid leaks
+        isDead.OnValueChanged -= OnIsDeadChanged;
+    }
+
+    // Callback to play death animation on ALL clients when isDead syncs
+    private void OnIsDeadChanged(bool oldValue, bool newValue)
+    {
+        Debug.Log($"[CharacterManager] OnIsDeadChanged TRIGGERED - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId}, OldValue: {oldValue}, NewValue: {newValue}");
+        
+        if (newValue && !deathAnimationPlayed)
+        {
+            Debug.Log($"[CharacterManager] isDead changed to TRUE! Playing death animation for {gameObject.name}");
+            PlayDeathAnimation();
+        }
+    }
+
+    private void PlayDeathAnimation()
+    {
+        if (deathAnimationPlayed)
+        {
+            Debug.Log($"[CharacterManager] Death animation already played for {gameObject.name}, skipping");
+            return;
+        }
+
+        deathAnimationPlayed = true;
+        Debug.Log($"[CharacterManager] PlayDeathAnimation called for {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+        Debug.Log($"[CharacterManager] Animator enabled: {animator.enabled}, GameObject active: {gameObject.activeInHierarchy}");
+        Debug.Log($"[CharacterManager] isPerformingAction: {isPerformingAction}, applyRootMotion: {applyRootMotion}");
+        
+        // Play death animation locally on this instance
+        characterNetworkManager.PerformActionAnimationFromServer("Death", true);
+    }
+
     public virtual IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
     {
+        Debug.Log($"[CharacterManager] ProcessDeathEvent STARTED - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId}");
+        
         if (IsOwner)
         {
+            Debug.Log($"[CharacterManager] Setting health to 0 and isDead to true for {gameObject.name}");
+            
             characterNetworkManager.currentHealth.Value = 0;
             isDead.Value = true;
 
-            // RESET ANY FLAGS HERE THAT NEED TO BE RESET
-            // NOTHING YET
-            // IF WE ARE NOT GROUNDED, PLAY AN ARIERL DEATH ANIMATION
-
-            if (!manuallySelectDeathAnimation)
-            {
-                characterAnimatorManager.PlayTargetActionAnimation("Death", true);
-            }
+            Debug.Log($"[CharacterManager] isDead.Value set to: {isDead.Value}");
+        }
+        else
+        {
+            Debug.Log($"[CharacterManager] ProcessDeathEvent called on non-owner, waiting for network sync");
         }
 
-        // PLAY SOME DEATH SFX
+        // PLAY SOME DEATH SFX (add here if needed)
 
         yield return new WaitForSeconds(5);
 
+        Debug.Log($"[CharacterManager] ProcessDeathEvent completed 5 second wait for {gameObject.name}");
+        
         // AWARD PLAYERS WITH RUNES
         // DISABLE CHARACTER
     }
 
     public virtual void ReviveCharacter()
     {
-
+        deathAnimationPlayed = false; // Reset flag on revive
     }
 
     protected virtual void IgnoreMyColliders()
@@ -127,4 +199,5 @@ public class CharacterManager : NetworkBehaviour
             }
         }
     }
+    
 }

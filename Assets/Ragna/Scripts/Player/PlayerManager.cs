@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using Unity.Netcode;
 
 public class PlayerManager : CharacterManager
 {
@@ -12,7 +13,6 @@ public class PlayerManager : CharacterManager
     [HideInInspector] public PlayerInventoryManager playerInventoryManager;
     [HideInInspector] public PlayerEquipmentManager playerEquipmentManager;
     [HideInInspector] public PlayerCombatManager playerCombatManager;
-
 
     private const int DefaultVitality = 15;
     private const int DefaultEndurance = 10;
@@ -53,16 +53,20 @@ public class PlayerManager : CharacterManager
         base.LateUpdate();
 
         PlayerCamera.instance.HandleAllCameraActions();
-
-
     }
 
     public override void OnNetworkSpawn()
     {
-        base.OnNetworkSpawn();
+        Debug.Log($"[PlayerManager] OnNetworkSpawn START - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+
+        base.OnNetworkSpawn();  // Calls base, which handles isDead subscription
+
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
 
         if (IsOwner)
         {
+            Debug.Log($"[PlayerManager] Setting up owner-specific subscriptions");
+
             PlayerCamera.instance.player = this;
             PlayerInputManager.instance.player = this;
             WorldSaveGameManager.instance.player = this;
@@ -74,42 +78,108 @@ public class PlayerManager : CharacterManager
             playerNetworkManager.currentStamina.OnValueChanged += PlayerUIManager.instance.playerUIHudManager.SetNewStaminaValue;
             playerNetworkManager.currentStamina.OnValueChanged += playerStatsManager.ResetStaminaRegenTimer;
 
-            // NEW: Use load for all owners (host/clients), falling back to defaults if save invalid
+            // FLAGS 
+            playerNetworkManager.isChargingAttack.OnValueChanged += playerNetworkManager.OnIsChargingAttackChanged;
+
             LoadGameDataFromCurrentCharacterData(ref WorldSaveGameManager.instance.currentCharacterData);
 
-            // Manual trigger for max setters (in case no change)
             playerNetworkManager.SetNewMaxHealthValue(0, playerNetworkManager.vitality.Value);
             playerNetworkManager.SetNewMaxStaminaValue(0, playerNetworkManager.endurance.Value);
 
-            // Force UI updates
             PlayerUIManager.instance.playerUIHudManager.SetNewHealthValue(0, playerNetworkManager.currentHealth.Value);
             PlayerUIManager.instance.playerUIHudManager.SetNewStaminaValue(0f, playerNetworkManager.currentStamina.Value);
             PlayerUIManager.instance.playerUIHudManager.RefreshHUD();
         }
 
-        playerNetworkManager.currentHealth.OnValueChanged += playerNetworkManager.CheckHp;
+        // NOTE: We removed the duplicate subscription here since it's now in CharacterNetworkManager
+        // playerNetworkManager.currentHealth.OnValueChanged += playerNetworkManager.CheckHp;
 
-        // EQUIPMENT
         playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
 
-        // REMOVED: Client-only load check—now handled uniformly above
+        Debug.Log($"[PlayerManager] OnNetworkSpawn COMPLETE");
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
+
+        if (IsOwner)
+        {
+
+            playerNetworkManager.vitality.OnValueChanged -= playerNetworkManager.SetNewMaxHealthValue;
+            playerNetworkManager.endurance.OnValueChanged -= playerNetworkManager.SetNewMaxStaminaValue;
+
+            playerNetworkManager.currentHealth.OnValueChanged -= PlayerUIManager.instance.playerUIHudManager.SetNewHealthValue;
+            playerNetworkManager.currentStamina.OnValueChanged -= PlayerUIManager.instance.playerUIHudManager.SetNewStaminaValue;
+            playerNetworkManager.currentStamina.OnValueChanged -= playerStatsManager.ResetStaminaRegenTimer;
+
+            // FLAGS 
+            playerNetworkManager.isChargingAttack.OnValueChanged -= playerNetworkManager.OnIsChargingAttackChanged;
+
+            playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
+
+        }
+    }
+
+    private void OnClientConnectedCallback(ulong clientID)
+    {
+        WorldGameSessionManager.instance.AddPlayerToActivePlayerList(this);
+
+        if(!IsServer && IsOwner)
+        {
+            foreach(var player in WorldGameSessionManager.instance.players)
+            {
+                if(player != this)
+                {
+                    player.LoadOtherPlayerCharacterWhenJoiningServer();
+                }
+            }
+        }
     }
 
     public override IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
     {
+        Debug.Log($"[PlayerManager] ProcessDeathEvent STARTED - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+        
         if (IsOwner)
         {
+            Debug.Log($"[PlayerManager] Owner processing death - showing UI popup");
+            
             PlayerUIManager.instance.playerUIPopUpManager.SendYouDiedPopUp();
+
+            characterNetworkManager.currentHealth.Value = 0;
+            isDead.Value = true;
+            
+            Debug.Log($"[PlayerManager] Set currentHealth to 0 and isDead to true");
+
+            // RESET ANY FLAGS HERE THAT NEED TO BE RESET
+            // NOTHING YET
+
+            // IF WE ARE NOT GROUNDED, PLAY AN AERIAL DEATH ANIMATION (update in OnIsDeadChanged if needed)
+        }
+        else
+        {
+            Debug.Log($"[PlayerManager] Non-owner in ProcessDeathEvent, waiting for sync");
         }
 
-        // CHECK FOR ALL PLAYERS THAT ARE ALIVE, IF 0 RESPAWN CHARACTERS
+        // PLAY SOME DEATH SFX
 
-        return base.ProcessDeathEvent(manuallySelectDeathAnimation);
+        yield return new WaitForSeconds(5);
+
+        Debug.Log($"[PlayerManager] ProcessDeathEvent finished 5 second wait");
+        
+        // AWARD PLAYERS WITH RUNES
+        // DISABLE CHARACTER
     }
 
     public override void ReviveCharacter()
     {
         base.ReviveCharacter();
+        
+        Debug.Log($"[PlayerManager] ReviveCharacter called - IsOwner: {IsOwner}");
+        
         if (IsOwner)
         {
             playerNetworkManager.currentHealth.Value = playerNetworkManager.maxHealth.Value;
@@ -119,6 +189,11 @@ public class PlayerManager : CharacterManager
 
             // PLAY REBIRTH EFFECTS
             playerAnimatorManager.PlayTargetActionAnimation("Empty", false);
+
+            // Reset isDead for revive (syncs to all)
+            isDead.Value = false;
+            
+            Debug.Log($"[PlayerManager] Character revived - isDead set to false");
         }
     }
 
@@ -138,26 +213,21 @@ public class PlayerManager : CharacterManager
 
     public void LoadGameDataFromCurrentCharacterData(ref CharacterSaveData currentCharacterData)
     {
-        // Load position and name as before
         playerNetworkManager.characterName.Value = currentCharacterData.characterName;
         Vector3 myPosition = new Vector3(currentCharacterData.xPosition, currentCharacterData.yPosition, currentCharacterData.zPosition);
         transform.position = myPosition;
 
-        // NEW: Use save if valid, else defaults (prevents zeroed clients)
         int vitalityToSet = currentCharacterData.vitality > 0 ? currentCharacterData.vitality : DefaultVitality;
         int enduranceToSet = currentCharacterData.endurance > 0 ? currentCharacterData.endurance : DefaultEndurance;
         playerNetworkManager.vitality.Value = vitalityToSet;
         playerNetworkManager.endurance.Value = enduranceToSet;
 
-        // Calculate max (will use defaults if applied)
         playerNetworkManager.maxHealth.Value = playerStatsManager.CalculateHealthBasedOnVitalityLevel(playerNetworkManager.vitality.Value);
         playerNetworkManager.maxStamina.Value = playerStatsManager.CalculateStaminaBasedOnEnduranceLevel(playerNetworkManager.endurance.Value);
 
-        // Update UI max
         PlayerUIManager.instance.playerUIHudManager.SetMaxHealthValue(playerNetworkManager.maxHealth.Value);
         PlayerUIManager.instance.playerUIHudManager.SetMaxStaminaValue(playerNetworkManager.maxStamina.Value);
 
-        // Compute and set currents (clamp to max, default to max if invalid)
         int healthToSet = Mathf.Clamp(currentCharacterData.currentHealth, 0, playerNetworkManager.maxHealth.Value);
         if (healthToSet <= 0) healthToSet = playerNetworkManager.maxHealth.Value;
         playerNetworkManager.currentHealth.Value = healthToSet;
@@ -166,10 +236,16 @@ public class PlayerManager : CharacterManager
         if (staminaToSet <= 0f) staminaToSet = playerNetworkManager.maxStamina.Value;
         playerNetworkManager.currentStamina.Value = staminaToSet;
 
-        // Force UI current updates and refresh
         PlayerUIManager.instance.playerUIHudManager.SetNewHealthValue(0, playerNetworkManager.currentHealth.Value);
         PlayerUIManager.instance.playerUIHudManager.SetNewStaminaValue(0f, playerNetworkManager.currentStamina.Value);
         PlayerUIManager.instance.playerUIHudManager.RefreshHUD();
+    }
+
+    public void LoadOtherPlayerCharacterWhenJoiningServer()
+    {
+        // SYNC WEAPONS
+        //playerNetworkManager.OncurrentRightHandWeaponIDChange(0, playerNetworkManager.currentRightHandWeaponID.Value);
+        //playerNetworkManager.OncurrentLeftHandWeaponIDChange(0, playerNetworkManager.currentLeftHandWeaponID.Value);
     }
 
     private void DebugMenu()

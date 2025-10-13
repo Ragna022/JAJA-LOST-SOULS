@@ -1,4 +1,3 @@
-using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +6,12 @@ public class CharacterAnimatorManager : MonoBehaviour
     CharacterManager character;
     int vertical;
     int horizontal;
+
+    [Header("Damage Animations")]
+    public string hit_Forward = "hit_front";
+    public string hit_Backwards = "hit_back";
+    public string hit_Left = "hit_left";
+    public string hit_Right = "hit_right";
 
     protected virtual void Awake()
     {
@@ -42,6 +47,8 @@ public class CharacterAnimatorManager : MonoBehaviour
         bool canRotate = false,
         bool canMove = false)
     {
+        Debug.Log($"PlayTargetActionAnimation called for '{targetAnimation}' on IsOwner={character.IsOwner}, LocalClientId={NetworkManager.Singleton.LocalClientId}");
+
         character.applyRootMotion = applyRootMotion;
         character.animator.CrossFade(targetAnimation, 0.2f);
         // CAN BE USED TO STOP CHARACTER FROM ATTEMPTING NEW ACTIONS
@@ -56,7 +63,7 @@ public class CharacterAnimatorManager : MonoBehaviour
         character.characterNetworkManager.NotifyTheServerOfActionAnimationServerRpc(NetworkManager.Singleton.LocalClientId, targetAnimation, applyRootMotion);
     }
 
-    public virtual void PlayTargetAttackActionAnimation(
+    public virtual void PlayTargetAttackActionAnimation(AttackType attackType,
         string targetAnimation,
         bool isPerformingAction,
         bool applyRootMotion = true,
@@ -68,6 +75,7 @@ public class CharacterAnimatorManager : MonoBehaviour
         // UPDATE ANIMATION SET TO CURRENT WEAPONS ANIMATIONS
         // DECIDE IF OUR ATTACK CAN BE PARRIED
         // TELL THE NETWORK OUR "ISATTACKING" FLAG IS ACTIVE (FOR COUNTER DAMAGE ETC)
+        character.characterCombatManager.currentAttackType = attackType;
         character.applyRootMotion = applyRootMotion;
         character.animator.CrossFade(targetAnimation, 0.2f);
         character.isPerformingAction = isPerformingAction;
