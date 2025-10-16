@@ -53,6 +53,12 @@ public class PlayerNetworkManager : CharacterNetworkManager
         WeaponItem newWeapon = Instantiate(WorldItemDatabase.Instance.GetWeaponByID(newID));
         player.playerCombatManager.currentWeaponBeingUsed = newWeapon;
         //player.playerEquipmentManager.LoadWeaponOnBothHands();
+
+        if (player.IsOwner)
+            return;
+
+        if (player.playerCombatManager.currentWeaponBeingUsed != null)
+            player.playerAnimatorManager.UpdateAnimatorController(player.playerCombatManager.currentWeaponBeingUsed.weaponAnimator);
     }
 
     // ITEMS ACTIONS

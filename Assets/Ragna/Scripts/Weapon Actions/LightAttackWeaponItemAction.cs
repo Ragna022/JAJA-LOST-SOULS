@@ -46,17 +46,17 @@ public class LightAttackWeaponItemAction : WeaponItemAction
             // PERFORM AN ATTACK BASED ON THE PREVIOUS ATTACK WE JUST PLAYED
             if (playerPerformingAction.characterCombatManager.lastAttackAnimationPerformed == light_Attack_01)
             {
-                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(AttackType.LightAttack02, light_Attack_02, true);
+                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction, AttackType.LightAttack02, light_Attack_02, true);
             }
             else
             {
-                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(AttackType.LightAttack01, light_Attack_01, true);
+                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction,AttackType.LightAttack01, light_Attack_01, true);
             }
         }
         // OTHERWISE, JUST PERFORM A REGULAR ATTACK
         else
         {
-            playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(AttackType.LightAttack01, light_Attack_01, true);
+            playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction, AttackType.LightAttack01, light_Attack_01, true);
         }
     }
 }

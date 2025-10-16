@@ -61,6 +61,8 @@ public class PlayerEquipmentManager : CharacterEquipmentManager
             rightWeaponManager = rightHandWeaponModel.GetComponent<WeaponManager>();
             rightWeaponManager.SetWeaponDamage(player, player.playerInventoryManager.currentRightHandWeapon);
             // ASSIGN WEAPONS DAMAGE, TO IT'S COLLIDER
+
+            player.playerAnimatorManager.UpdateAnimatorController(player.playerInventoryManager.currentRightHandWeapon.weaponAnimator);
         }
     }
 
