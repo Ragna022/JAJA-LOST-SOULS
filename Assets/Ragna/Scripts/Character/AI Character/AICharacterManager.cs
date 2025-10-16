@@ -5,12 +5,12 @@ public class AICharacterManager : CharacterManager
     [Header("CUrrent States")]
     [SerializeField] AIState currentState;
 
-    protected override void FixedUpdate()
+    /*protected override void FixedUpdate()
     {
         base.FixedUpdate();
 
         ProcessStateMachine();
-    }
+    }*/
 
     private void ProcessStateMachine()
     {

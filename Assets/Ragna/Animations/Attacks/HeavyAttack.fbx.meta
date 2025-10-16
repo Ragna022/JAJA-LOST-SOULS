@@ -69,14 +69,14 @@ ModelImporter:
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.5218936
+      - time: 0.39860594
         functionName: CloseDamageCollider
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.56316787
+      - time: 0.44198895
         functionName: EnableCanDoCombo
         data: 
         objectReferenceParameter: {instanceID: 0}

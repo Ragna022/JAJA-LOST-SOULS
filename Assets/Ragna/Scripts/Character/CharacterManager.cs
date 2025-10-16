@@ -79,11 +79,6 @@ public class CharacterManager : NetworkBehaviour
         }
     }
 
-    protected virtual void FixedUpdate()
-    {
-        
-    }
-
     protected virtual void LateUpdate()
     {
 
@@ -131,46 +126,19 @@ public class CharacterManager : NetworkBehaviour
     }
 
     private void PlayDeathAnimation()
+{
+    if (deathAnimationPlayed)
     {
-        if (deathAnimationPlayed)
-        {
-            Debug.Log($"[CharacterManager] Death animation already played for {gameObject.name}, skipping");
-            return;
-        }
-
-        deathAnimationPlayed = true;
-        Debug.Log($"[CharacterManager] PlayDeathAnimation called for {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
-        Debug.Log($"[CharacterManager] Animator enabled: {animator.enabled}, GameObject active: {gameObject.activeInHierarchy}");
-        Debug.Log($"[CharacterManager] isPerformingAction: {isPerformingAction}, applyRootMotion: {applyRootMotion}");
-        
-        // Play death animation locally on this instance
-        // The method on CharacterNetworkManager is not public; use reflection to invoke it safely.
-        try
-        {
-            var managerType = characterNetworkManager.GetType();
-
-            // Prefer public method if it exists
-            var method = managerType.GetMethod("PerformActionAnimationFromServer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            if (method == null)
-            {
-                // Fallback to non-public method
-                method = managerType.GetMethod("PerformActionAnimationFromServer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            }
-
-            if (method != null)
-            {
-                method.Invoke(characterNetworkManager, new object[] { "Death", true });
-            }
-            else
-            {
-                Debug.LogWarning($"[CharacterManager] Could not find method PerformActionAnimationFromServer on {managerType.FullName}");
-            }
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[CharacterManager] Error invoking PerformActionAnimationFromServer: {ex}");
-        }
+        Debug.Log($"[CharacterManager] Death animation already played for {gameObject.name}, skipping");
+        return;
     }
+
+    deathAnimationPlayed = true;
+    Debug.Log($"[CharacterManager] PlayDeathAnimation called for {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+    
+    // SIMPLE: Just play the death animation
+    characterNetworkManager.PerformActionAnimationFromServer("Death", true);
+}
 
     public virtual IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
     {
@@ -230,5 +198,4 @@ public class CharacterManager : NetworkBehaviour
         }
     }
     
-
 }

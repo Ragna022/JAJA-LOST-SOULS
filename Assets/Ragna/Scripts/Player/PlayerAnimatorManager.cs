@@ -20,7 +20,8 @@ public class PlayerAnimatorManager : CharacterAnimatorManager
         }
     }
 
-    //ANIMATION EVENT CALLS
+    // ANIMATION EVENT CALLS
+
     public override void EnableCanDoCombo()
     {
         if (player.playerNetworkManager.isUsingRightHand.Value)
@@ -29,13 +30,12 @@ public class PlayerAnimatorManager : CharacterAnimatorManager
         }
         else
         {
-            // ENABLE OFF HAND COMBO
+
         }
     }
     
-    public  override void DisableCanDoCombo()
+    public override void DisableCanDoCombo()
     {
         player.playerCombatManager.canComboWithMainHandWeapon = false;
-        //player.playerCombatManager.canComboOffHandWeapon = false;
     }
 }

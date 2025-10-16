@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 4a31b546034230d4dac84f51dee0bc74
+guid: 942c664cdf31b084bb22422401f6b721
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -55,28 +55,28 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.1938289
+      - time: 0.19684337
         functionName: OpenDamageCollider
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.22608696
+      - time: 0.2614817
         functionName: DrainStaminaBasedOnAttack
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.57769066
+      - time: 0.58481824
         functionName: CloseDamageCollider
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.6189649
+      - time: 0.62983423
         functionName: EnableCanDoCombo
         data: 
         objectReferenceParameter: {instanceID: 0}
