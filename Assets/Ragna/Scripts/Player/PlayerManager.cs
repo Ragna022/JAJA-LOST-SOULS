@@ -6,6 +6,8 @@ public class PlayerManager : CharacterManager
 {
     [Header("Debug Menu")]
     [SerializeField] bool respawnCharacter = false;
+    [SerializeField] bool SwitchRightWeapon = false;
+
     [HideInInspector] public PlayerAnimatorManager playerAnimatorManager;
     [HideInInspector] public PlayerLocomotionManager playerLocomotionManager;
     [HideInInspector] public PlayerNetworkManager playerNetworkManager;
@@ -94,7 +96,10 @@ public class PlayerManager : CharacterManager
         // NOTE: We removed the duplicate subscription here since it's now in CharacterNetworkManager
         // playerNetworkManager.currentHealth.OnValueChanged += playerNetworkManager.CheckHp;
 
-        playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
+        //playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
+        playerNetworkManager.currentRightHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentRightHandWeaponIDChange;
+        playerNetworkManager.currentLeftHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentLeftHandWeaponIDChange;
+
 
         Debug.Log($"[PlayerManager] OnNetworkSpawn COMPLETE");
     }
@@ -254,6 +259,12 @@ public class PlayerManager : CharacterManager
         {
             respawnCharacter = false;
             ReviveCharacter();
+        }
+
+        if(SwitchRightWeapon)
+        {
+            SwitchRightWeapon = false;
+            playerEquipmentManager.SwitchRightWeapon();
         }
     }
 }

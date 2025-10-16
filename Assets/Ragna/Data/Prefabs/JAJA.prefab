@@ -621,6 +621,7 @@ MonoBehaviour:
   canMove: 1
   damageCollider: {fileID: 0}
   respawnCharacter: 0
+  SwitchRightWeapon: 0
   playerAnimatorManager: {fileID: 0}
   playerLocomotionManager: {fileID: 0}
   playerNetworkManager: {fileID: 0}
@@ -674,6 +675,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  animator: {fileID: 0}
+  defaultController: {fileID: 0}
+  actionOverrideController: {fileID: 0}
   networkPosition:
     m_InternalValue: {x: 0, y: 0, z: 0}
   networkRotation:
@@ -774,6 +778,10 @@ MonoBehaviour:
         byte0059: 0
         byte0060: 0
         byte0061: 0
+  currentRightHandWeaponID:
+    m_InternalValue: 0
+  currentLeftHandWeaponID:
+    m_InternalValue: 0
   currentWeaponBeingUsed:
     m_InternalValue: 0
   isUsingRightHand:
@@ -964,7 +972,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfdba3d8e794d5a49a8c933d9ea5c831, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentRightHandWeapon: {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
+  currentRightHandWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   currentLeftHandWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   weaponsInRightHandSlots:
   - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
