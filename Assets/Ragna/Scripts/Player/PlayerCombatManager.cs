@@ -7,6 +7,10 @@ public class PlayerCombatManager : CharacterCombatManager
 
     public WeaponItem currentWeaponBeingUsed;
 
+    [Header("Flags")]
+    public bool canComboWithMainHandWeapon = false;
+    //public bool canComboWithOffHandWeapon = false;
+
     protected override void Awake()
     {
         base.Awake();
@@ -25,7 +29,7 @@ public class PlayerCombatManager : CharacterCombatManager
             player.playerNetworkManager.NotifyTheServerOfWeaponActionServerRpc(NetworkManager.Singleton.LocalClientId, weaponAction.actionID, weaponPerformingAction.itemID);
         }
     }
-    
+
     public virtual void DrainStaminaBasedOnAttack()
     {
         if (!player.IsOwner)

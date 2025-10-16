@@ -79,6 +79,11 @@ public class CharacterManager : NetworkBehaviour
         }
     }
 
+    protected virtual void FixedUpdate()
+    {
+        
+    }
+
     protected virtual void LateUpdate()
     {
 
@@ -139,7 +144,32 @@ public class CharacterManager : NetworkBehaviour
         Debug.Log($"[CharacterManager] isPerformingAction: {isPerformingAction}, applyRootMotion: {applyRootMotion}");
         
         // Play death animation locally on this instance
-        characterNetworkManager.PerformActionAnimationFromServer("Death", true);
+        // The method on CharacterNetworkManager is not public; use reflection to invoke it safely.
+        try
+        {
+            var managerType = characterNetworkManager.GetType();
+
+            // Prefer public method if it exists
+            var method = managerType.GetMethod("PerformActionAnimationFromServer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            if (method == null)
+            {
+                // Fallback to non-public method
+                method = managerType.GetMethod("PerformActionAnimationFromServer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            }
+
+            if (method != null)
+            {
+                method.Invoke(characterNetworkManager, new object[] { "Death", true });
+            }
+            else
+            {
+                Debug.LogWarning($"[CharacterManager] Could not find method PerformActionAnimationFromServer on {managerType.FullName}");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[CharacterManager] Error invoking PerformActionAnimationFromServer: {ex}");
+        }
     }
 
     public virtual IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
@@ -200,4 +230,5 @@ public class CharacterManager : NetworkBehaviour
         }
     }
     
+
 }

@@ -6,6 +6,7 @@ public class PlayerManager : CharacterManager
 {
     [Header("Debug Menu")]
     [SerializeField] bool respawnCharacter = false;
+    [SerializeField] bool SwitchRightWeapon = false;
     [HideInInspector] public PlayerAnimatorManager playerAnimatorManager;
     [HideInInspector] public PlayerLocomotionManager playerLocomotionManager;
     [HideInInspector] public PlayerNetworkManager playerNetworkManager;
@@ -79,7 +80,7 @@ public class PlayerManager : CharacterManager
             playerNetworkManager.currentStamina.OnValueChanged += playerStatsManager.ResetStaminaRegenTimer;
 
             // FLAGS 
-            playerNetworkManager.isChargingAttack.OnValueChanged += playerNetworkManager.OnIsChargingAttackChanged;
+            //playerNetworkManager.isChargingAttack.OnValueChanged += playerNetworkManager.OnIsChargingAttackChanged;
 
             LoadGameDataFromCurrentCharacterData(ref WorldSaveGameManager.instance.currentCharacterData);
 
@@ -94,9 +95,15 @@ public class PlayerManager : CharacterManager
         // NOTE: We removed the duplicate subscription here since it's now in CharacterNetworkManager
         // playerNetworkManager.currentHealth.OnValueChanged += playerNetworkManager.CheckHp;
 
+        //playerNetworkManager.isChargingAttack.OnValueChanged += playerNetworkManager.OnIsChargingAttackChanged;
+
         playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
 
         Debug.Log($"[PlayerManager] OnNetworkSpawn COMPLETE");
+
+        // EQUIPMENT
+        playerNetworkManager.currentRightHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentRightHandWeaponIDChange;
+        playerNetworkManager.currentLeftHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentLeftHandWeaponIDChange;
     }
 
     public override void OnNetworkDespawn()
@@ -116,7 +123,7 @@ public class PlayerManager : CharacterManager
             playerNetworkManager.currentStamina.OnValueChanged -= playerStatsManager.ResetStaminaRegenTimer;
 
             // FLAGS 
-            playerNetworkManager.isChargingAttack.OnValueChanged -= playerNetworkManager.OnIsChargingAttackChanged;
+            //playerNetworkManager.isChargingAttack.OnValueChanged -= playerNetworkManager.OnIsChargingAttackChanged;
 
             playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
 
@@ -214,7 +221,16 @@ public class PlayerManager : CharacterManager
     public void LoadGameDataFromCurrentCharacterData(ref CharacterSaveData currentCharacterData)
     {
         playerNetworkManager.characterName.Value = currentCharacterData.characterName;
-        Vector3 myPosition = new Vector3(currentCharacterData.xPosition, currentCharacterData.yPosition, currentCharacterData.zPosition);
+
+        // A small offset to spawn the player just above the ground
+        float verticalOffset = 0.5f; 
+    
+        // Set the position slightly higher than the saved location
+        Vector3 myPosition = new Vector3(
+            currentCharacterData.xPosition, 
+            currentCharacterData.yPosition + verticalOffset, // Add the offset here
+            currentCharacterData.zPosition
+        );
         transform.position = myPosition;
 
         int vitalityToSet = currentCharacterData.vitality > 0 ? currentCharacterData.vitality : DefaultVitality;
@@ -244,8 +260,8 @@ public class PlayerManager : CharacterManager
     public void LoadOtherPlayerCharacterWhenJoiningServer()
     {
         // SYNC WEAPONS
-        //playerNetworkManager.OncurrentRightHandWeaponIDChange(0, playerNetworkManager.currentRightHandWeaponID.Value);
-        //playerNetworkManager.OncurrentLeftHandWeaponIDChange(0, playerNetworkManager.currentLeftHandWeaponID.Value);
+        playerNetworkManager.OnCurrentRightHandWeaponIDChange(0, playerNetworkManager.currentRightHandWeaponID.Value);
+        playerNetworkManager.OnCurrentLeftHandWeaponIDChange(0, playerNetworkManager.currentLeftHandWeaponID.Value);
     }
 
     private void DebugMenu()
@@ -254,6 +270,12 @@ public class PlayerManager : CharacterManager
         {
             respawnCharacter = false;
             ReviveCharacter();
+        }
+
+        if(SwitchRightWeapon)
+        {
+            SwitchRightWeapon = false;
+            playerEquipmentManager.SwitchRightWeapon();
         }
     }
 }

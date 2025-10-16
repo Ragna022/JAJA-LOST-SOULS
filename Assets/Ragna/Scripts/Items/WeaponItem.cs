@@ -3,6 +3,8 @@ using UnityEngine;
 public class WeaponItem : Item
 {
     // ANIMATOR CONTROLLER OVERRIDE (change attack animations based on weapon you are currently using)
+    [Header("Animations")]
+    public AnimatorOverrideController weaponAnimator;
 
     [Header("Weapon Model")]
     public GameObject weaponModel;
@@ -29,9 +31,12 @@ public class WeaponItem : Item
     // WEAPON MODIFIERS
     // LIGHT ATTACK MODIFIERS
     [Header("Attack Modifiers")]
-    public float light_Attack_Modifier = 1.1f;
+    public float light_Attack_Modifier = 1f;
+    public float light_Attack_Combo_Modifier = 1.5f;
     public float heavy_Attack_Modifier = 1.4f;
+    public float heavy_Attack_Combo_Modifier = 1.7f;
     public float charged_Attack_Modifier = 2f;
+    public float charged_Attack_Combo_Modifier = 2.4f;
     // HEAVY ATTACK MODIFIERS
     // CRITICAL ATTACK MODIFIERS
 

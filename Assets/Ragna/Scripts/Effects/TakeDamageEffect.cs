@@ -107,51 +107,50 @@ public class TakeDamageEffect : InstantCharacterEffects
     }
     
     private void PlayDirectionalBasedDamageAnimation(CharacterManager character)
-{
-    if (!character.IsOwner)
-        return;
+    {
+        // REMOVED: if (!character.IsOwner) return;  // Allow all clients to play the animation locally
         
-    // CRITICAL FIX: Don't play hit animation if this damage will kill the character
-    int healthAfterDamage = character.characterNetworkManager.currentHealth.Value - finalDamageDealt;
-    if (healthAfterDamage <= 0)
-    {
-        Debug.Log($"[TakeDamageEffect] Fatal damage detected, skipping hit animation for death sequence");
-        return; // Skip hit animation, let death animation play directly
+        // TO: CALCULATE IF POISE IS BROKEN
+        poiseIsBroken = true;
+        if (angleHitFrom >= 145 && angleHitFrom <= 180)
+        {
+            // PLAY FRONT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Forward;
+        }
+        else if (angleHitFrom <= -145 && angleHitFrom >= -180)
+        {
+            // PLAY FRONT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Forward;
+        }
+        else if (angleHitFrom >= -45 && angleHitFrom <= 45)
+        {
+            // PLAY BACK ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Backwards;
+        }
+        else if (angleHitFrom >= -144 && angleHitFrom <= -45)
+        {
+            // PLAY LEFT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Left;
+        }
+        else if (angleHitFrom >= 45 && angleHitFrom <= 144)
+        {
+            // PLAY RIGHT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Right;
+        }
+        
+        // IF POISE IS BROKEN, PLAY A STAGGERING DAMAGE ANIMATION
+        if(poiseIsBroken)
+        {
+            if (character.IsOwner)
+            {
+                // If owner, use PlayTargetActionAnimation to play local and sync via RPC
+                character.characterAnimatorManager.PlayTargetActionAnimation(damageAnimation, true);
+            }
+            else
+            {
+                // For non-owners, play locally without RPC (since owner already sent)
+                character.animator.CrossFade(damageAnimation, 0.2f);
+            }
+        }
     }
-    
-    // TO: CALCULATE IF POISE IS BROKEN
-    poiseIsBroken = true;
-    
-    if (angleHitFrom >= 145 && angleHitFrom <= 180)
-    {
-        // PLAY FRONT ANIMATION
-        damageAnimation = character.characterAnimatorManager.hit_Forward;
-    }
-    else if (angleHitFrom <= -145 && angleHitFrom >= -180)
-    {
-        // PLAY FRONT ANIMATION
-        damageAnimation = character.characterAnimatorManager.hit_Forward;
-    }
-    else if (angleHitFrom >= -45 && angleHitFrom <= 45)
-    {
-        // PLAY BACK ANIMATION
-        damageAnimation = character.characterAnimatorManager.hit_Backwards;
-    }
-    else if (angleHitFrom >= -144 && angleHitFrom <= -45)
-    {
-        // PLAY LEFT ANIMATION
-        damageAnimation = character.characterAnimatorManager.hit_Left;
-    }
-    else if (angleHitFrom >= 45 && angleHitFrom <= 144)
-    {
-        // PLAY RIGHT ANIMATION
-        damageAnimation = character.characterAnimatorManager.hit_Right;
-    }
-    
-    // IF POISE IS BROKEN, PLAY A STAGGERING DAMAGE ANIMATION
-    if(poiseIsBroken)
-    {
-        character.characterAnimatorManager.PlayTargetActionAnimation(damageAnimation, true);
-    }
-}
 }

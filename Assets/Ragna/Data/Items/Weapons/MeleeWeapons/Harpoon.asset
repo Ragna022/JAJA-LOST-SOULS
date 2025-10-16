@@ -15,7 +15,8 @@ MonoBehaviour:
   itemName: Harpoon
   itemIcon: {fileID: 21300000, guid: 9ee36341c1a9d204fa3fa64fc252651a, type: 3}
   itemDescription: Harpoon - Jaja's Weapon
-  itemID: 0
+  itemID: 1
+  weaponAnimator: {fileID: 22100000, guid: 82fc4166ac4f02748ab517165d993dbb, type: 2}
   weaponModel: {fileID: 8494758387132349917, guid: b44505a658013e2478cba028fb2de8e1, type: 3}
   strengthREQ: 10
   dexREQ: 10
@@ -27,8 +28,13 @@ MonoBehaviour:
   holyDamage: 0
   lightningDamage: 0
   poiseDamage: 15
-  lightAttcakModifier: 1.1
-  baseStaminaCost: 10
-  lightAttackStaminaCostMultiplier: 0.9
+  light_Attack_Modifier: 1
+  light_Attack_Combo_Modifier: 1.5
+  heavy_Attack_Modifier: 1.4
+  heavy_Attack_Combo_Modifier: 1.7
+  charged_Attack_Modifier: 2
+  charged_Attack_Combo_Modifier: 2.4
+  baseStaminaCost: 2
+  lightAttackStaminaCostMultiplier: 0.4
   oh_RB_Actions: {fileID: 11400000, guid: b1f082e9db7b0fc4d8e6154c15b69e21, type: 2}
   oh_RT_Actions: {fileID: 11400000, guid: 8ea34347f92edeb4894c3be32ccf3341, type: 2}

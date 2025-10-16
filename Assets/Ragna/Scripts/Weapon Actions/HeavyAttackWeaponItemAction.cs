@@ -4,6 +4,8 @@ using UnityEngine;
 public class HeavyAttackWeaponItemAction : WeaponItemAction
 {
     [SerializeField] string heavy_Attack_01 = "HeavyAttack";
+    [SerializeField] string heavy_Attack_02 = "HeavyComboAttack";
+
 
     public override void AttemptToPerformAction(PlayerManager playerPerformingAction, WeaponItem weaponPerformingAction)
     {
@@ -36,13 +38,26 @@ public class HeavyAttackWeaponItemAction : WeaponItemAction
 
     private void PerformHeavyAttack(PlayerManager playerPerformingAction, WeaponItem weaponPerformingAction)
     {
-        if (playerPerformingAction.playerNetworkManager.isUsingRightHand.Value)
+        // IF WE ARE ATTACKING CURRENTLY, AND WE CAN COMBO, PERFORM THE COMBO ATTACK
+        if (playerPerformingAction.playerCombatManager.canComboWithMainHandWeapon && playerPerformingAction.isPerformingAction)
         {
-            playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(AttackType.HeavyAttack01, heavy_Attack_01, true);
+            playerPerformingAction.playerCombatManager.canComboWithMainHandWeapon = false;
+
+            // PERFORM AN ATTCAK BASED ON THE PREVIOUS ATTACK WE JUST PLAYED
+            if (playerPerformingAction.characterCombatManager.lastAttackAnimationPerformed == heavy_Attack_01)
+            {
+                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction, AttackType.HeavyAttack02, heavy_Attack_02, true);
+            }
+            else
+            {
+                playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction, AttackType.HeavyAttack01, heavy_Attack_01, true);
+            }
         }
-        if (playerPerformingAction.playerNetworkManager.isUsingLeftHand.Value)
+        // OTHERWISE, IF WE ARE NOT ALREADY ATTACKING, JUST PERFORM A REGULAR ATTACK
+        else if (!playerPerformingAction.isPerformingAction)
         {
-            //playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(light_Attack_01, true);
+            playerPerformingAction.playerAnimatorManager.PlayTargetAttackActionAnimation(weaponPerformingAction, AttackType.HeavyAttack01, heavy_Attack_01, true);
         }
+        
     }
 }
