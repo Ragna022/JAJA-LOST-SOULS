@@ -429,9 +429,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5381944382838098503, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
       insertIndex: -1
       addedObject: {fileID: -58928885629290940}
-    - targetCorrespondingSourceObject: {fileID: 5381944382838098503, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: -7124835535696815580}
     - targetCorrespondingSourceObject: {fileID: 9000967900628704789, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6915681106732567156}
@@ -1034,18 +1031,6 @@ MonoBehaviour:
   currentAttackType: 0
   currentWeaponBeingUsed: {fileID: 0}
   canComboWithMainHandWeapon: 0
---- !u!114 &-7124835535696815580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 558649551312652575}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f91fea599a1ab84392c126d8f193d91, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &849678091291849737 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5096544879642982225, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
