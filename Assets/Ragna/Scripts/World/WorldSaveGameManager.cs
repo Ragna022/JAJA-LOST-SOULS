@@ -71,6 +71,84 @@ public class WorldSaveGameManager : MonoBehaviour
         }
     }
 
+    public bool HasFreeCharacterSlots()
+    {
+        saveFileDataWriter = new SaveFileDataWriter();
+        saveFileDataWriter.saveDataDirectoryPath = Application.persistentDataPath;
+        // CHECK TO SEE IF WE CAN CREATE A NEW SAVE FILE (CHECK FOR OTHER EXISTING FILES FIRST)
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_01);
+        
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_02);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_03);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_04);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_05);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_06);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_07);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_08);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_09);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        saveFileDataWriter.saveFileName = DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot.CharacterSlot_10);
+
+        if (!saveFileDataWriter.CheckToSeeIfFileExist())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public string DecideCharacterNameBasedOnCharactersSlotBeingUsed(CharacterSlot characterSlot)
     {
         string fileName = "";

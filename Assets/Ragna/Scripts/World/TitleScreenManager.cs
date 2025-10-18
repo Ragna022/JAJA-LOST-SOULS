@@ -1,28 +1,47 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 
 public class TitleScreenManager : MonoBehaviour
 {
     public static TitleScreenManager Instance;
+    public static GameObject selectedPlayerPrefab;
 
-    [Header("Menus")]
+    // MAIN MENU
+    [Header("Main Menu Menus")]
     [SerializeField] GameObject titleScreenMenu;
     [SerializeField] GameObject titleScreenLoadMenu;
+    [SerializeField] GameObject titleScreenCharacterCreationMenu;
 
-    [Header("Buttons")]
+    [Header("Main Menu Buttons")]
     [SerializeField] Button loadMenuReturnButton;
     [SerializeField] Button mainMenuReturnButton;
     [SerializeField] Button mainMenuNewGameButton;
     [SerializeField] Button deleteCharacterPopUpConfirmButton;
 
-    [Header("Pop Ups")]
+    [Header("Main Menu Pop Ups")]
     [SerializeField] GameObject noCharacterSlotsPopUp;
     [SerializeField] Button noCharacterSlotsOkayButton;
     [SerializeField] GameObject deleteCharacterSlotPopUp;
 
+    // CHARACTER CREATION MENU
+    [Header("Character Creation Main Panel Buttons")]
+    [SerializeField] Button characterNameButton;
+    [SerializeField] Button characterClassButton;
+    [SerializeField] Button startGameButton;
+
+    [Header("Character Creation Class Panel Buttons")]
+    [SerializeField] Button[] characterClassButtons;
+
+    [Header("Character Creation Secondary Panel Menus")]
+    [SerializeField] GameObject characterClassMenu;
+
     [Header("Character Slots")]
     public CharacterSlot currentSelectedSlot = CharacterSlot.NO_SLOT;
+
+    [Header("Classes")]
+    public CharacterClass[] startingClasses;
 
 
 
@@ -45,6 +64,18 @@ public class TitleScreenManager : MonoBehaviour
         Debug.Log("Starting network as host...");
 
         NetworkManager.Singleton.StartHost();
+    }
+
+    public void AttemptToCreateNewCharacter()
+    {
+        if (WorldSaveGameManager.instance.HasFreeCharacterSlots())
+        {
+            OpenCharacterCreationMenu();
+        }
+        else
+        {
+            DisplayNoFreeCharacterSlotsPopUp();
+        }
     }
 
     public void StartNewGame()
@@ -80,6 +111,46 @@ public class TitleScreenManager : MonoBehaviour
 
         //FIND THE FIRST LOAD SLOT AND AUTO SELECT IT
 
+    }
+
+    public void OpenCharacterCreationMenu()
+    {
+        titleScreenCharacterCreationMenu.SetActive(true);
+    }
+
+    public void CloseCharacterCreationMenu()
+    {
+        titleScreenCharacterCreationMenu.SetActive(false);
+    }
+
+    public void OpenChooseCharacterClassSubMenu()
+    {
+        ToogleCharacterCreationScreenMainMenuButtons(false);
+
+        characterClassMenu.SetActive(true);
+
+        if(characterClassButtons.Length > 0)
+        {
+            characterClassButtons[0].Select();
+            characterClassButtons[0].OnSelect(null);
+        }
+    }
+
+    public void CloseChooseCharacterClassSubMenu()
+    {
+        ToogleCharacterCreationScreenMainMenuButtons(true);
+
+        characterClassMenu.SetActive(false);
+
+        characterClassButton.Select();
+        characterClassButton.OnSelect(null);
+    }
+    
+    private void ToogleCharacterCreationScreenMainMenuButtons(bool status)
+    {
+        characterNameButton.enabled = status;
+        characterClassButton.enabled = status;
+        startGameButton.enabled = status;
     }
 
     public void DisplayNoFreeCharacterSlotsPopUp()
@@ -132,6 +203,51 @@ public class TitleScreenManager : MonoBehaviour
     {
         deleteCharacterSlotPopUp.SetActive(false);
         loadMenuReturnButton.Select();
+    }
+
+    // CHARACTER CLASS
+    public void SelectClass(int classID)
+    {
+        PlayerManager player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerManager>();
+
+        if (startingClasses.Length <= 0)
+            return;
+
+        startingClasses[classID].SetClass(player);
+        CloseChooseCharacterClassSubMenu();
+    }
+
+    public void PreviewClass(int classID)
+    {
+        PlayerManager previewPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerManager>();
+
+    if (startingClasses.Length <= 0)
+        return;
+    }
+
+    public void SetCharacterClass(PlayerManager player, int vitality, int endurance, int strength, int dexterity, int intelligence,
+        WeaponItem[] mainHandWeapons, WeaponItem[] offHandWeapons)
+    {
+        // SET STATS
+        player.playerNetworkManager.vitality.Value = vitality;
+        player.playerNetworkManager.endurance.Value = endurance;
+        //player.playerNetworkManager.mind.Value = mind;
+        player.playerNetworkManager.dexterity.Value = dexterity;
+        player.playerNetworkManager.intelligence.Value = intelligence;
+
+
+        // SET WEAPONS
+        player.playerInventoryManager.weaponsInRightHandSlots[0] = Instantiate(mainHandWeapons[0]);
+        player.playerInventoryManager.weaponsInRightHandSlots[1] = Instantiate(mainHandWeapons[1]);
+        player.playerInventoryManager.weaponsInRightHandSlots[2] = Instantiate(mainHandWeapons[2]);
+        player.playerInventoryManager.currentRightHandWeapon = player.playerInventoryManager.weaponsInRightHandSlots[0];
+        player.playerNetworkManager.currentRightHandWeaponID.Value = player.playerInventoryManager.weaponsInRightHandSlots[0].itemID;
+
+        player.playerInventoryManager.weaponsInLeftHandSlots[0] = Instantiate(offHandWeapons[0]);
+        player.playerInventoryManager.weaponsInLeftHandSlots[1] = Instantiate(offHandWeapons[1]);
+        player.playerInventoryManager.weaponsInLeftHandSlots[2] = Instantiate(offHandWeapons[2]);
+        player.playerInventoryManager.currentLeftHandWeapon = player.playerInventoryManager.weaponsInLeftHandSlots[0];
+        player.playerNetworkManager.currentLeftHandWeaponID.Value = player.playerInventoryManager.weaponsInLeftHandSlots[0].itemID;
     }
 
 }
