@@ -374,6 +374,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1986654623826989742}
   - component: {fileID: 3782232907882584371}
+  - component: {fileID: 6086933259921944344}
+  - component: {fileID: 1014920735836527146}
   m_Layer: 7
   m_Name: hand_r
   m_TagString: Untagged
@@ -424,6 +426,34 @@ CapsuleCollider:
   m_Height: 0.3
   m_Direction: 0
   m_Center: {x: 0.1, y: 0, z: 0}
+--- !u!114 &6086933259921944344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643051445262205062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94bcc663f53ffde4984f4112d27ab978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponSlot: 0
+  currentWeaponModel: {fileID: 0}
+--- !u!114 &1014920735836527146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643051445262205062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94bcc663f53ffde4984f4112d27ab978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponSlot: 1
+  currentWeaponModel: {fileID: 0}
 --- !u!1 &1707134981135766984
 GameObject:
   m_ObjectHideFlags: 0
@@ -1026,12 +1056,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfdba3d8e794d5a49a8c933d9ea5c831, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentRightHandWeapon: {fileID: 0}
-  currentLeftHandWeapon: {fileID: 0}
+  currentRightHandWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
+  currentLeftHandWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   weaponsInRightHandSlots:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
+  - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
+  - {fileID: 11400000, guid: 1a4c4a92796a62e45830e89ff52d0960, type: 2}
   rightHandWeaponIndex: 0
   weaponsInLeftHandSlots:
   - {fileID: 0}

@@ -8,4 +8,16 @@ AnimatorOverrideController:
   m_PrefabAsset: {fileID: 0}
   m_Name: Axe
   m_Controller: {fileID: 9100000, guid: 0f4998d2b14343c4e9ba2e2f046ca88d, type: 2}
-  m_Clips: []
+  m_Clips:
+  - m_OriginalClip: {fileID: 3618418563803250505, guid: 1ab9ed77a56750a40afe0cb04ef51fe2, type: 3}
+    m_OverrideClip: {fileID: -203655887218126122, guid: 0be5c96b4c000da41b590479dc95261b, type: 3}
+  - m_OriginalClip: {fileID: -3557598459210001959, guid: 942c664cdf31b084bb22422401f6b721, type: 3}
+    m_OverrideClip: {fileID: -203655887218126122, guid: 8cb5d9a15d37c54479924e58886b551e, type: 3}
+  - m_OriginalClip: {fileID: -3644312441060961049, guid: 2cdfb84a2111b4d4abe62b92d9f7393e, type: 3}
+    m_OverrideClip: {fileID: -203655887218126122, guid: a2d4c71254792614ea716702efbf6642, type: 3}
+  - m_OriginalClip: {fileID: 5848264558272783907, guid: 87d4838dbc2c37f4c95feab5428ccd11, type: 3}
+    m_OverrideClip: {fileID: -203655887218126122, guid: e7bd7d5ca2958564bb1a0073ba6f81ff, type: 3}
+  - m_OriginalClip: {fileID: 2144818588510171651, guid: c1cfaad6b03cce84babdcac8523ea492, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: d25c3fecc52ec574ca713adaab9efb6c, type: 3}
+  - m_OriginalClip: {fileID: -5252816984213320552, guid: 0df8a646f0f7c414394c49219a1ab803, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 4d9f5edffb07c9b40a051c8ef9db9a00, type: 3}

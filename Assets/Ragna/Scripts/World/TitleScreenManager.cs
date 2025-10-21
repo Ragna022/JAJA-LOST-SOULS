@@ -1,5 +1,8 @@
+using System.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
 
@@ -8,9 +11,9 @@ public class TitleScreenManager : MonoBehaviour
     public static TitleScreenManager Instance;
     public static GameObject selectedPlayerPrefab;
 
-    // ADDED: Character Prefab Selection
+    // CHARACTER PREFAB SELECTION
     [Header("Character Prefabs")]
-    [SerializeField] GameObject[] availableCharacterPrefabs;
+    public GameObject[] availableCharacterPrefabs;
     [SerializeField] int defaultCharacterIndex = 0;
 
     // MAIN MENU
@@ -18,17 +21,17 @@ public class TitleScreenManager : MonoBehaviour
     [SerializeField] GameObject titleScreenMenu;
     [SerializeField] GameObject titleScreenLoadMenu;
     [SerializeField] GameObject titleScreenCharacterCreationMenu;
-    [SerializeField] GameObject titleScreenCharacterSelectionMenu; // ADDED
+    [SerializeField] GameObject titleScreenCharacterSelectionMenu;
 
     [Header("Main Menu Buttons")]
     [SerializeField] Button loadMenuReturnButton;
     [SerializeField] Button mainMenuReturnButton;
     [SerializeField] Button mainMenuNewGameButton;
     [SerializeField] Button deleteCharacterPopUpConfirmButton;
-    [SerializeField] Button characterSelectionReturnButton; // ADDED
+    [SerializeField] Button characterSelectionReturnButton;
 
     [Header("Character Selection Buttons")]
-    [SerializeField] Button[] characterSelectionButtons; // ADDED
+    [SerializeField] Button[] characterSelectionButtons;
 
     [Header("Main Menu Pop Ups")]
     [SerializeField] GameObject noCharacterSlotsPopUp;
@@ -53,7 +56,7 @@ public class TitleScreenManager : MonoBehaviour
     [Header("Classes")]
     public CharacterClass[] startingClasses;
 
-    // ADDED: Character Preview
+    // CHARACTER PREVIEW
     [Header("Character Preview")]
     [SerializeField] Transform characterPreviewSpawnPoint;
     private GameObject currentPreviewCharacter;
@@ -77,22 +80,67 @@ public class TitleScreenManager : MonoBehaviour
 
     private void Start()
     {
-        // Initialize with default character preview
+        // Try to load previously selected character
+        LoadSelectedCharacterFromPrefs();
+        
+        // Initialize with character preview
         if (availableCharacterPrefabs.Length > 0 && characterPreviewSpawnPoint != null)
         {
             CreateCharacterPreview(defaultCharacterIndex);
         }
     }
 
-    public void StartNetworkAsHost()
+    // LOAD SELECTED CHARACTER FROM PLAYERPREFS
+    private void LoadSelectedCharacterFromPrefs()
     {
-        // Code to start the network as host
-        Debug.Log("Starting network as host...");
-
-        NetworkManager.Singleton.StartHost();
+        string savedCharacterName = PlayerPrefs.GetString("SelectedCharacter", "");
+        if (!string.IsNullOrEmpty(savedCharacterName))
+        {
+            foreach (var prefab in availableCharacterPrefabs)
+            {
+                if (prefab.name == savedCharacterName)
+                {
+                    selectedPlayerPrefab = prefab;
+                    Debug.Log($"Loaded selected character from prefs: {savedCharacterName}");
+                    break;
+                }
+            }
+        }
     }
 
-    // MODIFIED: Now opens character selection instead of direct character creation
+    // SAVE SELECTED CHARACTER TO PLAYERPREFS
+    private void SaveSelectedCharacterToPrefs()
+    {
+        if (selectedPlayerPrefab != null)
+        {
+            PlayerPrefs.SetString("SelectedCharacter", selectedPlayerPrefab.name);
+            PlayerPrefs.Save();
+            Debug.Log($"Saved selected character to prefs: {selectedPlayerPrefab.name}");
+        }
+    }
+
+    // PREPARE FOR NEW GAME (CLOSE MENUS, SAVE SELECTION)
+    public void PrepareForNewGame()
+    {
+        // Close all UI menus before starting
+        titleScreenMenu.SetActive(false);
+        titleScreenCharacterCreationMenu.SetActive(false);
+        titleScreenCharacterSelectionMenu.SetActive(false);
+        
+        Debug.Log("Preparing for new game...");
+        
+        // Make sure we have a character selected and save it
+        if (selectedPlayerPrefab == null && availableCharacterPrefabs.Length > 0)
+        {
+            selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
+        }
+        
+        // Save the selection
+        SaveSelectedCharacterToPrefs();
+        
+        Debug.Log($"Selected character saved: {selectedPlayerPrefab.name}");
+    }
+
     public void AttemptToCreateNewCharacter()
     {
         if (WorldSaveGameManager.instance.HasFreeCharacterSlots())
@@ -105,6 +153,7 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
+    // START NEW GAME
     public void StartNewGame()
     {
         // Make sure we have a character selected
@@ -113,6 +162,13 @@ public class TitleScreenManager : MonoBehaviour
             selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
         }
         
+        // Save the selection
+        SaveSelectedCharacterToPrefs();
+        
+        // Prepare for new game (close menus, etc.)
+        PrepareForNewGame();
+        
+        // This will now load the scene and THEN start the host
         WorldSaveGameManager.instance.AttempToCreateNewGame();
     }
 
@@ -128,7 +184,6 @@ public class TitleScreenManager : MonoBehaviour
         loadMenuReturnButton.Select();
 
         //FIND THE FIRST LOAD SLOT AND AUTO SELECT IT
-
     }
 
     public void CloseLoadGameMenu()
@@ -143,10 +198,9 @@ public class TitleScreenManager : MonoBehaviour
         mainMenuReturnButton.Select();
 
         //FIND THE FIRST LOAD SLOT AND AUTO SELECT IT
-
     }
 
-    // ADDED: Character Selection Methods
+    // CHARACTER SELECTION METHODS
     public void OpenCharacterSelectionMenu()
     {
         // CLOSE MAIN MENU
@@ -182,7 +236,7 @@ public class TitleScreenManager : MonoBehaviour
         mainMenuNewGameButton.OnSelect(null);
     }
 
-    // ADDED: Select Character Prefab
+    // SELECT CHARACTER PREFAB
     public void SelectCharacterPrefab(int characterIndex)
     {
         if (characterIndex >= 0 && characterIndex < availableCharacterPrefabs.Length)
@@ -202,7 +256,7 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
-    // ADDED: Create Character Preview
+    // CREATE CHARACTER PREVIEW
     private void CreateCharacterPreview(int characterIndex)
     {
         // Remove current preview
@@ -227,70 +281,71 @@ public class TitleScreenManager : MonoBehaviour
         Debug.Log($"Created preview for character: {availableCharacterPrefabs[characterIndex].name}");
     }
 
-    // ADDED: Setup preview character (disable gameplay components)
-    // ADDED: Setup preview character (disable gameplay components)
-private void SetupPreviewCharacter(GameObject previewCharacter)
-{
-    // Disable NetworkObject if present
-    NetworkObject networkObject = previewCharacter.GetComponent<NetworkObject>();
-    if (networkObject != null)
+    // SETUP PREVIEW CHARACTER (DISABLE GAMEPLAY COMPONENTS)
+    private void SetupPreviewCharacter(GameObject previewCharacter)
     {
-        networkObject.enabled = false;
+        // Disable NetworkObject if present
+        NetworkObject networkObject = previewCharacter.GetComponent<NetworkObject>();
+        if (networkObject != null)
+        {
+            networkObject.enabled = false;
+        }
+
+        // Disable PlayerManager if present
+        PlayerManager playerManager = previewCharacter.GetComponent<PlayerManager>();
+        if (playerManager != null)
+        {
+            playerManager.enabled = false;
+        }
+
+        // Disable CharacterController if present
+        CharacterController characterController = previewCharacter.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        // Disable CharacterLocomotionManager if present
+        CharacterLocomotionManager locomotionManager = previewCharacter.GetComponent<CharacterLocomotionManager>();
+        if (locomotionManager != null)
+        {
+            locomotionManager.enabled = false;
+        }
+
+        // Disable PlayerLocomotionManager if present
+        PlayerLocomotionManager playerLocomotion = previewCharacter.GetComponent<PlayerLocomotionManager>();
+        if (playerLocomotion != null)
+        {
+            playerLocomotion.enabled = false;
+        }
+
+        // Disable any Rigidbody if present
+        Rigidbody rb = previewCharacter.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.detectCollisions = false;
+        }
+
+        // Disable all colliders to prevent physics interactions
+        Collider[] colliders = previewCharacter.GetComponentsInChildren<Collider>();
+        foreach (Collider collider in colliders)
+        {
+            collider.enabled = false;
+        }
+
+        // Add rotation script for nice visual effect
+        //PreviewCharacterRotator rotator = previewCharacter.AddComponent<PreviewCharacterRotator>();
+        //rotator.rotationSpeed = 15f;
     }
 
-    // Disable PlayerManager if present
-    PlayerManager playerManager = previewCharacter.GetComponent<PlayerManager>();
-    if (playerManager != null)
-    {
-        playerManager.enabled = false;
-    }
-
-    // Disable CharacterController if present
-    CharacterController characterController = previewCharacter.GetComponent<CharacterController>();
-    if (characterController != null)
-    {
-        characterController.enabled = false;
-    }
-
-    // Disable CharacterLocomotionManager if present
-    CharacterLocomotionManager locomotionManager = previewCharacter.GetComponent<CharacterLocomotionManager>();
-    if (locomotionManager != null)
-    {
-        locomotionManager.enabled = false;
-    }
-
-    // Disable PlayerLocomotionManager if present
-    PlayerLocomotionManager playerLocomotion = previewCharacter.GetComponent<PlayerLocomotionManager>();
-    if (playerLocomotion != null)
-    {
-        playerLocomotion.enabled = false;
-    }
-
-    // Disable any Rigidbody if present
-    Rigidbody rb = previewCharacter.GetComponent<Rigidbody>();
-    if (rb != null)
-    {
-        rb.isKinematic = true;
-        rb.detectCollisions = false;
-    }
-
-    // Disable all colliders to prevent physics interactions
-    Collider[] colliders = previewCharacter.GetComponentsInChildren<Collider>();
-    foreach (Collider collider in colliders)
-    {
-        collider.enabled = false;
-    }
-
-    // Add rotation script for nice visual effect
-    PreviewCharacterRotator rotator = previewCharacter.AddComponent<PreviewCharacterRotator>();
-    rotator.rotationSpeed = 15f;
-}
-
-    // ADDED: Confirm character selection and proceed to character creation
+    // CONFIRM CHARACTER SELECTION AND PROCEED TO CHARACTER CREATION
     public void ConfirmCharacterSelection()
     {
         if (selectedPlayerPrefab != null)
         {
+            // Save the selection
+            SaveSelectedCharacterToPrefs();
             OpenCharacterCreationMenu();
         }
         else
@@ -300,12 +355,12 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
             if (availableCharacterPrefabs.Length > 0)
             {
                 selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
+                SaveSelectedCharacterToPrefs();
                 OpenCharacterCreationMenu();
             }
         }
     }
 
-    // YOUR EXISTING METHODS - UNCHANGED
     public void OpenCharacterCreationMenu()
     {
         titleScreenCharacterCreationMenu.SetActive(true);
@@ -362,7 +417,6 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
     {
         noCharacterSlotsPopUp.SetActive(false);
         mainMenuNewGameButton.Select();
-
     }
 
     // CHARACTER SLOTS
@@ -395,7 +449,6 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
         titleScreenLoadMenu.SetActive(false);
         titleScreenLoadMenu.SetActive(true);
         loadMenuReturnButton.Select();
-        
     }
 
     public void CloseDeleteCharacterPopUp()
@@ -407,16 +460,21 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
     // CHARACTER CLASS
     public void SelectClass(int classID)
     {
-        PlayerManager player = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerManager>();
-
-        if (startingClasses.Length <= 0)
-            return;
-
-        startingClasses[classID].SetClass(player);
+        // This would be called when you actually start the game with a class
+        // For now, we'll handle class selection differently
+        Debug.Log($"Class selected: {classID}");
+        
+        // If we have a player in the scene, apply the class
+        PlayerManager player = FindObjectOfType<PlayerManager>();
+        if (player != null && startingClasses.Length > classID)
+        {
+            startingClasses[classID].SetClass(player);
+        }
+        
         CloseChooseCharacterClassSubMenu();
     }
 
-    // MODIFIED: PreviewClass to preview character selection
+    // PREVIEWCLASS TO PREVIEW CHARACTER SELECTION
     public void PreviewClass(int characterIndex)
     {
         // Use this method to preview character when hovering/selecting buttons
@@ -435,10 +493,8 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
         // SET STATS
         player.playerNetworkManager.vitality.Value = vitality;
         player.playerNetworkManager.endurance.Value = endurance;
-        //player.playerNetworkManager.mind.Value = mind;
         player.playerNetworkManager.dexterity.Value = dexterity;
         player.playerNetworkManager.intelligence.Value = intelligence;
-
 
         // SET WEAPONS
         player.playerInventoryManager.weaponsInRightHandSlots[0] = Instantiate(mainHandWeapons[0]);
@@ -454,7 +510,7 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
         player.playerNetworkManager.currentLeftHandWeaponID.Value = player.playerInventoryManager.weaponsInLeftHandSlots[0].itemID;
     }
 
-    // ADDED: Clean up when destroyed
+    // CLEAN UP WHEN DESTROYED
     private void OnDestroy()
     {
         if (currentPreviewCharacter != null)
@@ -462,15 +518,111 @@ private void SetupPreviewCharacter(GameObject previewCharacter)
             Destroy(currentPreviewCharacter);
         }
     }
+
+    // LOBBY NETWORK METHODS
+   // Add these methods to your existing TitleScreenManager class:
+
+public void HostGame()
+{
+    PrepareForNewGame();
+    
+    Debug.Log("Starting host and loading lobby scene...");
+    
+    // Start the host FIRST, then load the scene
+    StartCoroutine(StartHostThenLoadLobby());
 }
 
-// ADDED: Helper class for rotating preview characters
-public class PreviewCharacterRotator : MonoBehaviour
+private System.Collections.IEnumerator StartHostThenLoadLobby()
 {
-    public float rotationSpeed = 15f;
-    
-    private void Update()
+    // Make sure NetworkManager exists
+    if (NetworkManager.Singleton == null)
     {
-        transform.Rotate(0, rotationSpeed * Time.deltaTime, 0);
+        Debug.LogError("NetworkManager not found!");
+        yield break;
     }
+    
+    // Start host FIRST
+    if (!NetworkManager.Singleton.IsListening)
+    {
+        Debug.Log("🚀 Starting NetworkManager as host...");
+        bool success = NetworkManager.Singleton.StartHost();
+        
+        if (success)
+        {
+            Debug.Log("✅ Host started successfully!");
+            
+            // Wait for network to initialize
+            yield return new WaitForSeconds(1f);
+            
+            // NOW load the lobby scene
+            Debug.Log("📥 Loading lobby scene...");
+            SceneManager.LoadScene("LobbyScene");
+        }
+        else
+        {
+            Debug.LogError("❌ Failed to start host!");
+        }
+    }
+    else
+    {
+        Debug.Log("NetworkManager is already listening, loading lobby scene...");
+        SceneManager.LoadScene("LobbyScene");
+    }
+}
+
+public void JoinGame(string ipAddress = "127.0.0.1")
+{
+    PrepareForNewGame();
+    
+    Debug.Log("Joining game and loading lobby scene...");
+    
+    // Start the client FIRST, then load the scene
+    StartCoroutine(StartClientThenLoadLobby(ipAddress));
+}
+
+private System.Collections.IEnumerator StartClientThenLoadLobby(string ipAddress)
+{
+    // Make sure NetworkManager exists
+    if (NetworkManager.Singleton == null)
+    {
+        Debug.LogError("NetworkManager not found!");
+        yield break;
+    }
+
+    // Set connection data
+    var transport = NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
+    if (transport != null)
+    {
+        transport.SetConnectionData(ipAddress, 7777);
+        Debug.Log($"🔗 Set connection data: {ipAddress}:7777");
+    }
+
+    // Start client FIRST
+    if (!NetworkManager.Singleton.IsListening)
+    {
+        Debug.Log("🚀 Starting NetworkManager as client...");
+        bool success = NetworkManager.Singleton.StartClient();
+        
+        if (success)
+        {
+            Debug.Log("✅ Client started successfully!");
+            
+            // Wait for network to initialize
+            yield return new WaitForSeconds(1f);
+            
+            // NOW load the lobby scene
+            Debug.Log("📥 Loading lobby scene...");
+            SceneManager.LoadScene("LobbyScene");
+        }
+        else
+        {
+            Debug.LogError("❌ Failed to start client!");
+        }
+    }
+    else
+    {
+        Debug.Log("NetworkManager is already listening, loading lobby scene...");
+        SceneManager.LoadScene("LobbyScene");
+    }
+}
 }

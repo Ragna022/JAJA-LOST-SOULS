@@ -1,5 +1,12 @@
 fileFormatVersion: 2
 guid: b473e4cf427610d43a6dfbee919c7dde
+AssetOrigin:
+  serializedVersion: 1
+  productId: 240125
+  packageName: BoStaff AnimSet for Unity
+  packageVersion: 1.01
+  assetPath: Assets/BoStaff_AnimSet_forUnity/Animations/Humanoid/Inplace/move_N_run_front_inplace.fbx
+  uploadId: 710392
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -16,8 +23,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -696,8 +701,7 @@ ModelImporter:
     - name: index_03_r
       parentName: index_02_r
       position: {x: -0.03358673, y: 0.00000015258789, z: 0.0000000047683715}
-      rotation: {x: 0.0000000018588862, y: -0.0000000011701453, z: -0.0032202848,
-        w: 0.9999948}
+      rotation: {x: 0.0000000018588862, y: -0.0000000011701453, z: -0.0032202848, w: 0.9999948}
       scale: {x: 1, y: 1.0000002, z: 1.0000001}
     - name: middle_01_r
       parentName: hand_r
@@ -861,8 +865,7 @@ ModelImporter:
     hasTranslationDoF: 1
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 7910d01f605b19a47be0dd4c5a08fdfc,
-    type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 7910d01f605b19a47be0dd4c5a08fdfc, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
@@ -874,10 +877,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 240125
-  packageName: BoStaff AnimSet for Unity
-  packageVersion: 1.01
-  assetPath: Assets/BoStaff_AnimSet_forUnity/Animations/Humanoid/Inplace/move_N_run_front_inplace.fbx
-  uploadId: 710392

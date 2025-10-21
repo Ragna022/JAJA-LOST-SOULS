@@ -31,6 +31,9 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] bool RT_Input = false;
     [SerializeField] bool Hold_RT_Input = false;
 
+    // ADDED: Track if we're ready to process input
+    private bool isReady = false;
+
     private void Awake()
     {
         if (instance == null)
@@ -41,16 +44,12 @@ public class PlayerInputManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
     }
 
     private void Start()
     {
-
         DontDestroyOnLoad(gameObject);
-
         SceneManager.activeSceneChanged += OnSceneChange;
-
         instance.enabled = false;
 
         if (playerControls != null)
@@ -64,15 +63,25 @@ public class PlayerInputManager : MonoBehaviour
         if (newScene.buildIndex == WorldSaveGameManager.instance.GetWorldSceneIndex())
         {
             instance.enabled = true;
-
+            
+            // ADDED: Reset ready state and wait for player to be assigned
+            isReady = false;
+            
             if (playerControls != null)
             {
                 playerControls.Enable();
+            }
+            
+            // ADDED: Try to find player if not already assigned
+            if (player == null)
+            {
+                FindPlayerInScene();
             }
         }
         else
         {
             instance.enabled = false;
+            isReady = false; // ADDED: Reset ready state
 
             if (playerControls != null)
             {
@@ -80,6 +89,37 @@ public class PlayerInputManager : MonoBehaviour
             }
         }
     }
+
+    // ADDED: Method to find player in scene
+    private void FindPlayerInScene()
+    {
+        PlayerManager[] players = FindObjectsOfType<PlayerManager>();
+        foreach (PlayerManager foundPlayer in players)
+        {
+            if (foundPlayer.IsOwner)
+            {
+                player = foundPlayer;
+                isReady = true;
+                Debug.Log($"PlayerInputManager: Found player {player.gameObject.name}");
+                break;
+            }
+        }
+        
+        if (player == null)
+        {
+            Debug.LogWarning("PlayerInputManager: No player found in scene, will retry");
+            // We'll keep trying in Update until we find a player
+        }
+    }
+
+    // ADDED: Method to set player reference (can be called from PlayerManager)
+    public void SetPlayer(PlayerManager newPlayer)
+    {
+        player = newPlayer;
+        isReady = true;
+        Debug.Log($"PlayerInputManager: Player set to {player.gameObject.name}");
+    }
+
     private void OnEnable()
     {
         if (playerControls == null)
@@ -125,11 +165,22 @@ public class PlayerInputManager : MonoBehaviour
 
     private void Update()
     {
+        // ADDED: Keep trying to find player if not ready
+        if (!isReady && player == null)
+        {
+            FindPlayerInScene();
+            return; // Don't process input until we have a player
+        }
+        
         HandleAllInput();
     }
 
     private void HandleAllInput()
     {
+        // ADDED: Safety check
+        if (!isReady || player == null)
+            return;
+
         HandlePlayerMovementInput();
         HandleCameraMovementInput();
         HandleDodgeInput();
@@ -158,9 +209,7 @@ public class PlayerInputManager : MonoBehaviour
             moveAmount = 1;
         }
 
-        if (player == null)
-            return;
-
+        // REMOVED: Redundant null check since we check in HandleAllInput
 
         player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
     }
@@ -215,7 +264,6 @@ public class PlayerInputManager : MonoBehaviour
     {
         if (RB_Input)
         {
-
             RB_Input = false;
 
             // TODO: IF WE HAVE A UI WINDOW OPEN, RETURN AND DO NOTHING
@@ -232,7 +280,6 @@ public class PlayerInputManager : MonoBehaviour
     {
         if (RT_Input)
         {
-
             RT_Input = false;
 
             // TODO: IF WE HAVE A UI WINDOW OPEN, RETURN AND DO NOTHING

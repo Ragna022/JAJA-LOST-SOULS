@@ -44,17 +44,16 @@ public class CharacterSelectionButton : MonoBehaviour, ISelectHandler, IPointerE
             selectionHighlight.SetActive(true);
         }
 
-        // You could add sound feedback here
         Debug.Log($"Selected character: {characterName} (Index: {characterIndex})");
     }
 
-    // ADDED: Preview when hovering with mouse
+    // PREVIEW WHEN HOVERING WITH MOUSE
     public void OnPointerEnter(PointerEventData eventData)
     {
         TitleScreenManager.Instance.PreviewClass(characterIndex);
     }
 
-    // ADDED: Preview when selecting with keyboard/gamepad
+    // PREVIEW WHEN SELECTING WITH KEYBOARD/GAMEPAD
     public void OnSelect(BaseEventData eventData)
     {
         TitleScreenManager.Instance.PreviewClass(characterIndex);

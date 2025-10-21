@@ -16,6 +16,7 @@ public class CharacterManager : NetworkBehaviour
     [HideInInspector] public CharacterAnimatorManager characterAnimatorManager;
     [HideInInspector] public CharacterCombatManager characterCombatManager;
     [HideInInspector] public CharacterSoundFXManager characterSoundFXManager;
+    [HideInInspector] public CharacterUIManager characterUIManager;
 
     [Header("Flags")]
     public bool isPerformingAction = false;
@@ -42,6 +43,7 @@ public class CharacterManager : NetworkBehaviour
         characterAnimatorManager = GetComponent<CharacterAnimatorManager>();
         characterCombatManager = GetComponent<CharacterCombatManager>();
         characterSoundFXManager = GetComponent<CharacterSoundFXManager>();
+        characterUIManager = GetComponent<CharacterUIManager>();
     }
 
     protected virtual void Start()
@@ -82,6 +84,18 @@ public class CharacterManager : NetworkBehaviour
     protected virtual void LateUpdate()
     {
 
+    }
+
+    protected virtual void OnEnable()
+    {
+        /*if(characterUIManager.hasFloatingHPBar)
+            characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;*/
+    }
+    
+    protected virtual void OnDisable()
+    {
+        /*if(characterUIManager.hasFloatingHPBar)
+            characterNetworkManager.currentHealth.OnValueChanged -= characterUIManager.OnHPChanged;*/
     }
 
     public override void OnNetworkSpawn()

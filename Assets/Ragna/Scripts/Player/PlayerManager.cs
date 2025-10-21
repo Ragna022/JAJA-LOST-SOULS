@@ -57,6 +57,20 @@ public class PlayerManager : CharacterManager
         PlayerCamera.instance.HandleAllCameraActions();
     }
 
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+
+        
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
+        
+    }
+
     public override void OnNetworkSpawn()
     {
         Debug.Log($"[PlayerManager] OnNetworkSpawn START - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
@@ -71,7 +85,24 @@ public class PlayerManager : CharacterManager
 
             PlayerCamera.instance.player = this;
             PlayerInputManager.instance.player = this;
-            WorldSaveGameManager.instance.player = this;
+
+            PlayerInputManager.instance.SetPlayer(this);
+
+            // FIXED: Use FindObjectOfType instead of direct reference
+            WorldSaveGameManager saveManager = FindObjectOfType<WorldSaveGameManager>();
+            if (saveManager != null)
+            {
+                // Set this player as the current player in WorldSaveGameManager
+                // You might want to add a SetPlayer method to WorldSaveGameManager
+                Debug.Log($"[PlayerManager] Found WorldSaveGameManager, loading game data");
+
+                // Load game data for this player
+                LoadGameDataFromCurrentCharacterData(ref saveManager.currentCharacterData);
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerManager] WorldSaveGameManager not found in scene");
+            }
 
             playerNetworkManager.vitality.OnValueChanged += playerNetworkManager.SetNewMaxHealthValue;
             playerNetworkManager.endurance.OnValueChanged += playerNetworkManager.SetNewMaxStaminaValue;
@@ -83,8 +114,6 @@ public class PlayerManager : CharacterManager
             // FLAGS 
             playerNetworkManager.isChargingAttack.OnValueChanged += playerNetworkManager.OnIsChargingAttackChanged;
 
-            LoadGameDataFromCurrentCharacterData(ref WorldSaveGameManager.instance.currentCharacterData);
-
             playerNetworkManager.SetNewMaxHealthValue(0, playerNetworkManager.vitality.Value);
             playerNetworkManager.SetNewMaxStaminaValue(0, playerNetworkManager.endurance.Value);
 
@@ -92,6 +121,9 @@ public class PlayerManager : CharacterManager
             PlayerUIManager.instance.playerUIHudManager.SetNewStaminaValue(0f, playerNetworkManager.currentStamina.Value);
             PlayerUIManager.instance.playerUIHudManager.RefreshHUD();
         }
+        
+        if(!IsOwner)
+            characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;
 
         // NOTE: We removed the duplicate subscription here since it's now in CharacterNetworkManager
         // playerNetworkManager.currentHealth.OnValueChanged += playerNetworkManager.CheckHp;
@@ -100,19 +132,18 @@ public class PlayerManager : CharacterManager
         playerNetworkManager.currentRightHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentRightHandWeaponIDChange;
         playerNetworkManager.currentLeftHandWeaponID.OnValueChanged += playerNetworkManager.OnCurrentLeftHandWeaponIDChange;
 
-
         Debug.Log($"[PlayerManager] OnNetworkSpawn COMPLETE");
     }
 
     public override void OnNetworkDespawn()
     {
+        
         base.OnNetworkDespawn();
 
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
 
         if (IsOwner)
         {
-
             playerNetworkManager.vitality.OnValueChanged -= playerNetworkManager.SetNewMaxHealthValue;
             playerNetworkManager.endurance.OnValueChanged -= playerNetworkManager.SetNewMaxStaminaValue;
 
@@ -124,8 +155,10 @@ public class PlayerManager : CharacterManager
             playerNetworkManager.isChargingAttack.OnValueChanged -= playerNetworkManager.OnIsChargingAttackChanged;
 
             playerNetworkManager.currentWeaponBeingUsed.OnValueChanged += playerNetworkManager.OnCurrentWeaponBeingUsedIDChange;
-
         }
+
+        if(!IsOwner)
+            characterNetworkManager.currentHealth.OnValueChanged -= characterUIManager.OnHPChanged;
     }
 
     private void OnClientConnectedCallback(ulong clientID)
