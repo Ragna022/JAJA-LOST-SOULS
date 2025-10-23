@@ -26,6 +26,9 @@ public class LobbyManager : NetworkBehaviour
     private NetworkList<LobbyPlayerData> lobbyPlayers;
     private Dictionary<ulong, GameObject> playerSlots = new Dictionary<ulong, GameObject>();
     private bool isReady = false;
+
+    // This list will hold the player data *during* the scene transition
+    private List<LobbyPlayerData> persistentLobbyData; // <-- NEW
     
     private void Awake()
     {
@@ -353,6 +356,19 @@ public class LobbyManager : NetworkBehaviour
         if (!IsServer) return;
         
         Debug.Log("🎯 SERVER: Starting game!");
+
+        // --- START OF FIX ---
+        // 1. Create the persistent list
+        persistentLobbyData = new List<LobbyPlayerData>(); // <-- NEW
+
+        // 2. Copy the data from the NetworkList to the normal List
+        foreach (var player in lobbyPlayers) // <-- NEW
+        {
+            persistentLobbyData.Add(player); // <-- NEW
+        }
+        
+        Debug.Log($"📝 Copied {persistentLobbyData.Count} players to persistent list."); // <-- NEW
+        // --- END OF FIX ---
         
         // Hide lobby UI
         HideLobbyUIClientRpc();
@@ -388,9 +404,10 @@ public class LobbyManager : NetworkBehaviour
     
     private void SpawnAllPlayers()
     {
-        Debug.Log($"🎮 SERVER: Spawning {lobbyPlayers.Count} players...");
+        // Use the persistent list, as lobbyPlayers has been disposed
+        Debug.Log($"🎮 SERVER: Spawning {persistentLobbyData.Count} players..."); // <-- MODIFIED
         
-        foreach (var playerData in lobbyPlayers)
+        foreach (var playerData in persistentLobbyData) // <-- MODIFIED
         {
             SpawnPlayerForClient(playerData.clientId);
         }
@@ -425,9 +442,11 @@ public class LobbyManager : NetworkBehaviour
     private Vector3 CalculateSpawnPosition(ulong clientId)
     {
         int playerIndex = 0;
-        for (int i = 0; i < lobbyPlayers.Count; i++)
+        
+        // Use the persistent list here as well
+        for (int i = 0; i < persistentLobbyData.Count; i++) // <-- MODIFIED
         {
-            if (lobbyPlayers[i].clientId == clientId)
+            if (persistentLobbyData[i].clientId == clientId) // <-- MODIFIED
             {
                 playerIndex = i;
                 break;
