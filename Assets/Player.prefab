@@ -94,10 +94,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerNameText: {fileID: 2261219085809918890}
-  readyStatusImage: {fileID: 2354687955088485775}
-  statusText: {fileID: 4529327389589076378}
+  readyStatusText: {fileID: 4529327389589076378}
+  backgroundImage: {fileID: 987474817035974738}
+  hostIndicator: {fileID: 2794699350761707017}
   readyColor: {r: 0, g: 1, b: 0, a: 1}
   notReadyColor: {r: 1, g: 0, b: 0, a: 1}
+  hostColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &2615486381801447411
 GameObject:
   m_ObjectHideFlags: 0

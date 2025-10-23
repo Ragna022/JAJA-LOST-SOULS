@@ -32,11 +32,11 @@ public class LobbyManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
         
         lobbyPlayers = new NetworkList<LobbyPlayerData>();
@@ -45,28 +45,33 @@ public class LobbyManager : NetworkBehaviour
     private void Start()
     {
         Debug.Log("🔄 LobbyManager Start() called");
+        ValidateUIPrefabs();
+    }
+    
+    private void ValidateUIPrefabs()
+    {
+        Debug.Log("🔍 Validating UI prefabs...");
         
-        NetworkObject netObj = GetComponent<NetworkObject>();
-        if (netObj == null)
+        if (playerSlotPrefab != null)
         {
-            Debug.LogError("❌ LobbyManager is missing NetworkObject component!");
-        }
-        else
-        {
-            Debug.Log("✅ LobbyManager has NetworkObject component");
-            
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !netObj.IsSpawned)
+            NetworkObject netObj = playerSlotPrefab.GetComponent<NetworkObject>();
+            if (netObj != null)
             {
-                Debug.Log("🔄 Manually spawning LobbyManager on network...");
-                netObj.Spawn();
+                Debug.LogError($"❌ playerSlotPrefab '{playerSlotPrefab.name}' has NetworkObject component!");
+                Debug.LogError("   UI elements should NOT have NetworkObject components!");
+            }
+            else
+            {
+                Debug.Log("✅ playerSlotPrefab is properly configured (no NetworkObject)");
             }
         }
     }
     
     public override void OnNetworkSpawn()
     {
-        Debug.Log($"🎯 LobbyManager spawned on network - IsServer: {IsServer}, IsClient: {IsClient}, NetworkObjectId: {NetworkObjectId}");
+        Debug.Log($"🎯 LobbyManager.OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}, NetworkObjectId: {NetworkObjectId}");
         
+        // Server-only setup
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
@@ -74,22 +79,28 @@ public class LobbyManager : NetworkBehaviour
             
             // Add host to lobby
             AddPlayerToLobby(NetworkManager.Singleton.LocalClientId, "Host", false);
+            Debug.Log("✅ SERVER: Added host to lobby");
         }
         
+        // Everyone subscribes to list changes
         lobbyPlayers.OnListChanged += OnLobbyPlayersChanged;
         
+        // Setup UI for everyone
         SetupUI();
         UpdatePlayerListUI();
         
+        // Clients request their data be added after a short delay
         if (!IsServer)
         {
             StartCoroutine(DelayedSubmitData());
         }
+        
+        Debug.Log("✅ LobbyManager.OnNetworkSpawn complete");
     }
     
     private System.Collections.IEnumerator DelayedSubmitData()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
         SubmitPlayerData();
     }
     
@@ -102,32 +113,29 @@ public class LobbyManager : NetworkBehaviour
             startGameButton.gameObject.SetActive(IsServer);
             startGameButton.onClick.AddListener(StartGame);
             startGameButton.interactable = false;
-            Debug.Log($"🎮 Start Game Button - Active: {startGameButton.gameObject.activeSelf}, Interactable: {startGameButton.interactable}");
         }
         
         if (readyButton != null)
         {
             readyButton.onClick.AddListener(ToggleReadyStatus);
-            Debug.Log("✅ Ready button listener added");
         }
         
         if (leaveButton != null)
         {
             leaveButton.onClick.AddListener(LeaveLobby);
-            Debug.Log("✅ Leave button listener added");
         }
         
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(true);
-            Debug.Log("✅ Lobby panel activated");
         }
 
-        // Set initial button text
         if (readyButtonText != null)
         {
             readyButtonText.text = isReady ? "UNREADY" : "READY";
         }
+        
+        Debug.Log("✅ Lobby UI setup complete");
     }
     
     public void ToggleReadyStatus()
@@ -135,15 +143,12 @@ public class LobbyManager : NetworkBehaviour
         isReady = !isReady;
         ToggleReadyStatusServerRpc(NetworkManager.Singleton.LocalClientId, isReady);
         
-        // Update button text
         if (readyButtonText != null)
         {
             readyButtonText.text = isReady ? "UNREADY" : "READY";
         }
 
         Debug.Log($"🔄 Ready status toggled to: {isReady}");
-        
-        UpdatePlayerListUI();
     }
     
     private void SubmitPlayerData()
@@ -155,47 +160,33 @@ public class LobbyManager : NetworkBehaviour
         }
         
         SubmitPlayerDataServerRpc(NetworkManager.Singleton.LocalClientId, playerName, false);
-        Debug.Log($"📤 Submitting player data: {playerName}");
+        Debug.Log($"📤 CLIENT: Submitting player data: {playerName}");
     }
     
     private void OnClientConnected(ulong clientId)
     {
-        Debug.Log($"🎯 Client {clientId} connected to lobby");
-        
-        if (IsServer)
-        {
-            RequestPlayerDataClientRpc(clientId);
-        }
+        Debug.Log($"🎯 SERVER: Client {clientId} connected to lobby");
     }
     
     private void OnClientDisconnected(ulong clientId)
     {
-        Debug.Log($"🎯 Client {clientId} disconnected from lobby");
+        Debug.Log($"🎯 SERVER: Client {clientId} disconnected from lobby");
         if (IsServer)
         {
             RemovePlayerFromLobby(clientId);
         }
     }
     
-    [ClientRpc]
-    private void RequestPlayerDataClientRpc(ulong clientId)
-    {
-        if (NetworkManager.Singleton.LocalClientId == clientId)
-        {
-            Debug.Log($"📥 Server requested our player data");
-            SubmitPlayerData();
-        }
-    }
-    
     [ServerRpc(RequireOwnership = false)]
-    private void SubmitPlayerDataServerRpc(ulong clientId, FixedString64Bytes playerName, bool isReady)
+    private void SubmitPlayerDataServerRpc(ulong clientId, FixedString64Bytes playerName, bool isReady, ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"📥 Received player data from {clientId}: {playerName}, Ready: {isReady}");
+        Debug.Log($"📥 SERVER: Received player data from {clientId}: {playerName}, Ready: {isReady}");
         AddPlayerToLobby(clientId, playerName.ToString(), isReady);
     }
     
     private void AddPlayerToLobby(ulong clientId, string playerName, bool isReady)
     {
+        // Update existing player
         for (int i = 0; i < lobbyPlayers.Count; i++)
         {
             if (lobbyPlayers[i].clientId == clientId)
@@ -207,11 +198,12 @@ public class LobbyManager : NetworkBehaviour
                     isReady = isReady
                 };
                 lobbyPlayers[i] = updatedPlayer;
-                Debug.Log($"🔄 Updated player in lobby: {playerName} (Ready: {isReady})");
+                Debug.Log($"🔄 SERVER: Updated player: {playerName} (Ready: {isReady})");
                 return;
             }
         }
         
+        // Add new player
         lobbyPlayers.Add(new LobbyPlayerData
         {
             clientId = clientId,
@@ -219,7 +211,7 @@ public class LobbyManager : NetworkBehaviour
             isReady = isReady
         });
         
-        Debug.Log($"✅ Added player to lobby: {playerName} (Ready: {isReady}) - Total players: {lobbyPlayers.Count}");
+        Debug.Log($"✅ SERVER: Added player: {playerName} (Ready: {isReady}) - Total: {lobbyPlayers.Count}");
     }
     
     private void RemovePlayerFromLobby(ulong clientId)
@@ -230,7 +222,7 @@ public class LobbyManager : NetworkBehaviour
             {
                 string playerName = lobbyPlayers[i].playerName.ToString();
                 lobbyPlayers.RemoveAt(i);
-                Debug.Log($"🗑️ Removed player from lobby: {playerName}");
+                Debug.Log($"🗑️ SERVER: Removed player: {playerName}");
                 break;
             }
         }
@@ -242,49 +234,43 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
-    //
-    // --- START OF DEBUG-LOG-HEAVY METHODS ---
-    //
-
     private void OnLobbyPlayersChanged(NetworkListEvent<LobbyPlayerData> changeEvent)
     {
-        // This is the most important log. We need to see if this fires.
-        Debug.Log($"====== 1. ON LOBBY PLAYERS CHANGED (Event: {changeEvent.Type}) ======");
+        Debug.Log($"📋 Lobby players changed (Event: {changeEvent.Type}) - Total: {lobbyPlayers.Count}");
         UpdatePlayerListUI();
         
         if (IsServer)
         {
-            Debug.Log("...is Server, calling CheckAllPlayersReady()");
             CheckAllPlayersReady();
         }
     }
     
     private void UpdatePlayerListUI()
     {
-        Debug.Log("====== 2. UPDATING PLAYER LIST UI ======");
-        Debug.Log($"... clearing {playerSlots.Count} old UI slots.");
+        // Clear existing slots
         foreach (var slot in playerSlots.Values)
         {
-            if (slot != null) Destroy(slot);
+            if (slot != null) 
+            {
+                Destroy(slot);
+            }
         }
         playerSlots.Clear();
         
-        Debug.Log($"... creating {lobbyPlayers.Count} new UI slots.");
+        // Create new slots
         foreach (var player in lobbyPlayers)
         {
             if (playerListContainer != null && playerSlotPrefab != null)
             {
                 GameObject playerSlot = Instantiate(playerSlotPrefab, playerListContainer);
+                playerSlot.name = $"PlayerSlot_{player.clientId}";
                 
-                // New log to see what data is being used
-                Debug.Log($"... setting up UI for Player: {player.playerName}, Ready: {player.isReady}");
                 SetupPlayerSlotUI(playerSlot, player);
                 playerSlots[player.clientId] = playerSlot;
             }
         }
         
-        UpdateStatusText(); // This updates the summary text
-        Debug.Log("====== 3. FINISHED UPDATING PLAYER LIST UI ======");
+        UpdateStatusText();
     }
     
     private void SetupPlayerSlotUI(GameObject playerSlot, LobbyPlayerData playerData)
@@ -294,13 +280,11 @@ public class LobbyManager : NetworkBehaviour
         if (playerUI != null)
         {
             bool isHost = playerData.clientId == NetworkManager.ServerClientId;
-            // New log to confirm SetPlayerData is called
-            Debug.Log($"... calling playerUI.SetPlayerData('{playerData.playerName}', {playerData.isReady}, {isHost})");
             playerUI.SetPlayerData(playerData.playerName.ToString(), playerData.isReady, isHost);
         }
         else
         {
-            Debug.LogError($"❌ Prefab 'playerSlotPrefab' is missing the LobbyPlayerUI component!");
+            Debug.LogError($"❌ PlayerSlot prefab missing LobbyPlayerUI component!");
         }
     }
     
@@ -308,8 +292,7 @@ public class LobbyManager : NetworkBehaviour
     {
         if (statusText != null)
         {
-            Debug.Log("... updating main LobbyStatus text.");
-            string status = $"🎮 MULTIPLAYER LOBBY\n"; // Using emojis might still cause '□' errors if font is not updated
+            string status = $"🎮 MULTIPLAYER LOBBY\n";
             status += $"Players: {lobbyPlayers.Count}/4\n\n";
             
             foreach (var player in lobbyPlayers)
@@ -325,12 +308,10 @@ public class LobbyManager : NetworkBehaviour
     
     private void CheckAllPlayersReady()
     {
-        Debug.Log($"====== 4. CHECK ALL PLAYERS READY (IsServer: {IsServer}) ======");
         if (lobbyPlayers.Count < 1) 
         {
             if (startGameButton != null)
                 startGameButton.interactable = false;
-            Debug.Log("... no players in lobby. Start button disabled.");
             return;
         }
         
@@ -344,20 +325,15 @@ public class LobbyManager : NetworkBehaviour
             }
         }
         
-        Debug.Log($"... All players ready? {allReady}");
         if (startGameButton != null)
         {
             startGameButton.interactable = allReady;
-            Debug.Log($"... Start Game Button interactable set to: {allReady}");
+            Debug.Log($"🎮 SERVER: Start button {(allReady ? "ENABLED" : "DISABLED")}");
         }
     }
-
-    //
-    // --- END OF DEBUG-LOG-HEAVY METHODS ---
-    //
     
     [ServerRpc(RequireOwnership = false)]
-    private void ToggleReadyStatusServerRpc(ulong clientId, bool readyStatus)
+    private void ToggleReadyStatusServerRpc(ulong clientId, bool readyStatus, ServerRpcParams rpcParams = default)
     {
         for (int i = 0; i < lobbyPlayers.Count; i++)
         {
@@ -366,7 +342,7 @@ public class LobbyManager : NetworkBehaviour
                 var updatedPlayer = lobbyPlayers[i];
                 updatedPlayer.isReady = readyStatus;
                 lobbyPlayers[i] = updatedPlayer;
-                Debug.Log($"🔄 Player {lobbyPlayers[i].playerName} ready status: {readyStatus}");
+                Debug.Log($"🔄 SERVER: Player {lobbyPlayers[i].playerName} ready: {readyStatus}");
                 break;
             }
         }
@@ -376,17 +352,16 @@ public class LobbyManager : NetworkBehaviour
     {
         if (!IsServer) return;
         
-        Debug.Log("🎯 Starting game from lobby!");
+        Debug.Log("🎯 SERVER: Starting game!");
         
-        // Hide lobby UI on all clients
+        // Hide lobby UI
         HideLobbyUIClientRpc();
         
-        // Subscribe to load complete event
+        // Subscribe to scene load completion
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
         
-        // Load the game scene for all clients (replace "GameScene" with your actual scene name)
+        // Load game scene
         NetworkManager.Singleton.SceneManager.LoadScene("World_01", LoadSceneMode.Single);
-        Debug.Log("🚀 Loading game scene ('GameScene') for all clients...");
     }
     
     [ClientRpc]
@@ -395,31 +370,26 @@ public class LobbyManager : NetworkBehaviour
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(false);
-            Debug.Log("🖥️ Lobby UI hidden on client");
+            Debug.Log("🖥️ Lobby UI hidden");
         }
     }
     
     private void OnLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        Debug.Log($"🎯 Scene load completed - Scene: {sceneName}, Mode: {loadSceneMode}, Completed: {clientsCompleted.Count}, TimedOut: {clientsTimedOut.Count}");
+        Debug.Log($"🎯 Scene '{sceneName}' loaded - Clients: {clientsCompleted.Count}, TimedOut: {clientsTimedOut.Count}");
         
-        // Unsubscribe to avoid multiple calls
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnLoadEventCompleted;
         
-        if (clientsTimedOut.Count > 0)
+        if (IsServer && clientsCompleted.Count > 0)
         {
-            Debug.LogWarning("⚠️ Some clients timed out during scene load - Not spawning players");
-            return;
+            SpawnAllPlayers();
         }
-        
-        // Spawn players now that the game scene is loaded for everyone
-        SpawnAllPlayers();
-        
-        Debug.Log("🚀 Game started! Players spawned in game scene.");
     }
     
     private void SpawnAllPlayers()
     {
+        Debug.Log($"🎮 SERVER: Spawning {lobbyPlayers.Count} players...");
+        
         foreach (var playerData in lobbyPlayers)
         {
             SpawnPlayerForClient(playerData.clientId);
@@ -428,24 +398,48 @@ public class LobbyManager : NetworkBehaviour
     
     private void SpawnPlayerForClient(ulong clientId)
     {
-        if (TitleScreenManager.selectedPlayerPrefab != null)
+        if (TitleScreenManager.selectedPlayerPrefab == null)
         {
-            GameObject playerPrefab = TitleScreenManager.selectedPlayerPrefab;
-            NetworkObject playerObject = Instantiate(playerPrefab).GetComponent<NetworkObject>();
+            Debug.LogError("❌ No player prefab selected!");
+            return;
+        }
+        
+        GameObject playerPrefab = TitleScreenManager.selectedPlayerPrefab;
+        NetworkObject playerObject = Instantiate(playerPrefab).GetComponent<NetworkObject>();
+        
+        if (playerObject != null)
+        {
+            Vector3 spawnPos = CalculateSpawnPosition(clientId);
+            playerObject.transform.position = spawnPos;
             
-            if (playerObject != null)
-            {
-                playerObject.SpawnAsPlayerObject(clientId, true);
-                Debug.Log($"🎮 Spawned player for client {clientId}: {playerPrefab.name}");
-                
-                Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(-3f, 3f), 0, UnityEngine.Random.Range(-3f, 3f));
-                playerObject.transform.position = spawnPos;
-            }
+            playerObject.SpawnAsPlayerObject(clientId, true);
+            
+            Debug.Log($"🎮 SERVER: Spawned player for client {clientId} at {spawnPos}");
         }
         else
         {
-            Debug.LogError("❌ No player prefab selected!");
+            Debug.LogError($"❌ Player prefab missing NetworkObject: {playerPrefab.name}");
         }
+    }
+    
+    private Vector3 CalculateSpawnPosition(ulong clientId)
+    {
+        int playerIndex = 0;
+        for (int i = 0; i < lobbyPlayers.Count; i++)
+        {
+            if (lobbyPlayers[i].clientId == clientId)
+            {
+                playerIndex = i;
+                break;
+            }
+        }
+        
+        float spacing = 3f;
+        return new Vector3(
+            (playerIndex % 2) * spacing, 
+            1f, 
+            Mathf.Floor(playerIndex / 2) * spacing
+        );
     }
     
     public void LeaveLobby()
@@ -460,24 +454,9 @@ public class LobbyManager : NetworkBehaviour
         SceneManager.LoadScene("MainMenu");
     }
     
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.H) && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsListening)
-        {
-            NetworkManager.Singleton.StartHost();
-            Debug.Log("🎮 Manual host start from LobbyScene");
-        }
-        
-        if (Input.GetKeyDown(KeyCode.C) && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsListening)
-        {
-            NetworkManager.Singleton.StartClient();
-            Debug.Log("🎮 Manual client start from LobbyScene");
-        }
-    }
-    
     public override void OnNetworkDespawn()
     {
-        Debug.Log("👋 LobbyManager network despawn");
+        Debug.Log("👋 LobbyManager.OnNetworkDespawn");
         
         if (IsServer && NetworkManager.Singleton != null)
         {
@@ -489,48 +468,5 @@ public class LobbyManager : NetworkBehaviour
         {
             lobbyPlayers.OnListChanged -= OnLobbyPlayersChanged;
         }
-    }
-}
-
-// This struct remains the same
-[System.Serializable]
-public struct LobbyPlayerData : INetworkSerializable, IEquatable<LobbyPlayerData>
-{
-    public ulong clientId;
-    public FixedString64Bytes playerName;
-    public bool isReady;
-    
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-    {
-        serializer.SerializeValue(ref clientId);
-        serializer.SerializeValue(ref playerName);
-        serializer.SerializeValue(ref isReady);
-    }
-    
-    public bool Equals(LobbyPlayerData other)
-    {
-        return clientId == other.clientId &&
-               playerName.Equals(other.playerName) &&
-               isReady == other.isReady;
-    }
-    
-    public override bool Equals(object obj)
-    {
-        return obj is LobbyPlayerData other && Equals(other);
-    }
-    
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(clientId, playerName, isReady);
-    }
-
-    public static bool operator ==(LobbyPlayerData a, LobbyPlayerData b)
-    {
-        return a.Equals(b);
-    }
-
-    public static bool operator !=(LobbyPlayerData a, LobbyPlayerData b)
-    {
-        return !a.Equals(b);
     }
 }
