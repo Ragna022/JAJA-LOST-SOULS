@@ -24,4 +24,9 @@ public class CharacterSaveData
     [Header("Stats")]
     public int vitality;
     public int endurance;
+
+    // ADDED: CHARACTER SELECTION DATA
+    [Header("Character Selection")]
+    public string characterPrefabName = "";
+    public int characterPrefabIndex = 0;
 }

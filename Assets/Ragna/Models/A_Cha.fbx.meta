@@ -1,12 +1,42 @@
 fileFormatVersion: 2
 guid: 88057ff9888273049844b3e27ba41ded
 ModelImporter:
-  serializedVersion: 21300
+  serializedVersion: 22200
   internalIDToNameTable:
   - first:
       74: -203655887218126122
     second: mixamo.com
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ch04_body
+    second: {fileID: 2100000, guid: a9c9e2ec510b7e144ae8d6aab7443f92, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch04_1001_Diffuse
+    second: {fileID: 2800000, guid: 52801ca731baa32479f77164ea54322e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch04_1001_Emissive
+    second: {fileID: 2800000, guid: fecf5d9b693ddc94ab7f89116aedd089, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch04_1001_Glossiness
+    second: {fileID: 2800000, guid: cc507063db32f9546a591e113280097c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch04_1001_Normal
+    second: {fileID: 2800000, guid: 96cee1b9ac302b342927023230401c6b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Ch04_1001_Specular
+    second: {fileID: 2800000, guid: 742f127dfc5dd3b459fe39d4ffeb5f74, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -19,8 +49,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -43,6 +71,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1
@@ -70,6 +99,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
@@ -853,6 +883,7 @@ ModelImporter:
   humanoidOversampling: 1
   avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 0
   remapMaterialsIfMaterialImportModeIsNone: 0
   additionalBone: 0
   userData: 

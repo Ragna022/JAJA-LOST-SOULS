@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0e2d905c2bb93af45983b5a283533e45
+timeCreated: 1505921868
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 100795
+  packageName: Simple Sprite Trails
+  packageVersion: 1.0
+  assetPath: Assets/SimpleSpriteTrails/Scenes/Example.unity
+  uploadId: 205503

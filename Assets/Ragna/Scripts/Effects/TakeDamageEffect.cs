@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.TextCore.Text;
@@ -20,7 +21,7 @@ public class TakeDamageEffect : InstantCharacterEffects
 
     [Header("Poise")]
     public float poiseDamage = 0;
-    public bool poiseBroken = false; // IF A CHARCATRE'S POISE IS BROKEN, THEY WILL BE "STUNNED" AND PLAY A DAMAGE ANIAMTION
+    public bool poiseIsBroken = false; // IF A CHARCATRE'S POISE IS BROKEN, THEY WILL BE "STUNNED" AND PLAY A DAMAGE ANIAMTION
 
     // TODO BUILD UPS
     // BUILD UP EFFECTS AMOUNT
@@ -52,8 +53,11 @@ public class TakeDamageEffect : InstantCharacterEffects
 
         // CHECK WHICH DIRECTIONAL DAMAGE CAMME FROM
         // PLAY A DAMAGE ANIAMTION
+        PlayDirectionalBasedDamageAnimation(character);
         // CHECK FOR BUILD UPS (POISON, BLEED ETC)
         // PLAY DAMAGE SOUND FX
+        //PlayDamageSFX(character);
+        //PlayDamageVFX(character);
         // IF CHARACTER IS AI, CHECK FOR NEW TARGET IF CHARACTER CAUSING DAMAGE IS PRESENT
     }
 
@@ -83,5 +87,70 @@ public class TakeDamageEffect : InstantCharacterEffects
         character.characterNetworkManager.currentHealth.Value -= finalDamageDealt;
 
         // CALCULATE POISE DAMAGE TO DETERMINE IF THE CHARACTER WILL BE STUNNED 
+    }
+
+    private void PlayDamageVFX(CharacterManager character)
+    {
+        // IF WE HAVE FIRE DAMAGE, PLAY FIRE PARTICLES
+        // LIGHTNING DAMAGE, LIGHTNING PARTICLES ETC
+
+        character.characterEffectsManager.PlayBloodSplatterVFX(contactPoint);
+    }
+
+    private void PlayDamageSFX(CharacterManager character)
+    {
+        AudioClip physicalDamageSFX = WorldSoundFXManager.instance.ChooseRandomSFXFromArray(WorldSoundFXManager.instance.physicalDamageSFX);
+
+        character.characterSoundFXManager.PlaySoundFX(physicalDamageSFX);
+        // IF FIRE DAMAGE IS GREATER THAN 0; PLAY BURN SFX
+        // IF LIGHTNING DAMAGE IS GREATER THAN 0, PLAY ZAP SFX
+    }
+    
+    private void PlayDirectionalBasedDamageAnimation(CharacterManager character)
+    {
+        // REMOVED: if (!character.IsOwner) return;  // Allow all clients to play the animation locally
+        
+        // TO: CALCULATE IF POISE IS BROKEN
+        poiseIsBroken = true;
+        if (angleHitFrom >= 145 && angleHitFrom <= 180)
+        {
+            // PLAY FRONT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Forward;
+        }
+        else if (angleHitFrom <= -145 && angleHitFrom >= -180)
+        {
+            // PLAY FRONT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Forward;
+        }
+        else if (angleHitFrom >= -45 && angleHitFrom <= 45)
+        {
+            // PLAY BACK ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Backwards;
+        }
+        else if (angleHitFrom >= -144 && angleHitFrom <= -45)
+        {
+            // PLAY LEFT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Left;
+        }
+        else if (angleHitFrom >= 45 && angleHitFrom <= 144)
+        {
+            // PLAY RIGHT ANIMATION
+            damageAnimation = character.characterAnimatorManager.hit_Right;
+        }
+        
+        // IF POISE IS BROKEN, PLAY A STAGGERING DAMAGE ANIMATION
+        if(poiseIsBroken)
+        {
+            if (character.IsOwner)
+            {
+                // If owner, use PlayTargetActionAnimation to play local and sync via RPC
+                character.characterAnimatorManager.PlayTargetActionAnimation(damageAnimation, true);
+            }
+            else
+            {
+                // For non-owners, play locally without RPC (since owner already sent)
+                character.animator.CrossFade(damageAnimation, 0.2f);
+            }
+        }
     }
 }

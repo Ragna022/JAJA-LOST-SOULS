@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fd9168603a7cdb64a85ff0f844761ed6
+timeCreated: 1505929695
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 100795
+  packageName: Simple Sprite Trails
+  packageVersion: 1.0
+  assetPath: Assets/SimpleSpriteTrails/ScriptReference.chm
+  uploadId: 205503

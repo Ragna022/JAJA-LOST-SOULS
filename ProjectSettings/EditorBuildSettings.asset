@@ -9,11 +9,14 @@ EditorBuildSettings:
     path: Assets/Ragna/Scenes/MainMenu.unity
     guid: 356bfd83b5862394c8d6f9a64eafbdb4
   - enabled: 1
+    path: Assets/Ragna/Scenes/URP_LostCave.unity
+    guid: d003f7299aef7c44db9aa9172f5ea054
+  - enabled: 1
     path: Assets/Ragna/Scenes/World_01.unity
     guid: f44a78ed65761e04ea41c13bec47d459
   - enabled: 1
-    path: Assets/LeartesStudios/LostCave/Scene/URP_LostCave.unity
-    guid: 65f49fb8ff5f7f34987c7904708ec358
+    path: Assets/Ragna/Scenes/LobbyScene.unity
+    guid: 6dd69e568a479ac4685c7b24980a87f6
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: ab4acffa8af899c4986f27cd0a632528, type: 3}
   m_UseUCBPForAssetBundles: 0

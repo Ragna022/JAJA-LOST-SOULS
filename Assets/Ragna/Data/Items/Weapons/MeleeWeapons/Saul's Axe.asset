@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa3771ab1fc71fc48808ee76eae4c28c, type: 3}
+  m_Name: Saul's Axe
+  m_EditorClassIdentifier: 
+  itemName: Saul's Axe
+  itemIcon: {fileID: 21300000, guid: 8f4ac77fb4b0d6940a484bc844060db3, type: 3}
+  itemDescription: 'Saul''s Weapon: Axe'
+  itemID: 2
+  weaponAnimator: {fileID: 22100000, guid: f19880df5257978448f19ab54e5d7cdd, type: 2}
+  weaponModel: {fileID: 6684052630818875841, guid: c5ccae7727d586648907ae84abfd205e, type: 3}
+  strengthREQ: 10
+  dexREQ: 10
+  intREQ: 0
+  faithREQ: 0
+  physicalDamage: 55
+  magicDamage: 0
+  fireDamage: 0
+  holyDamage: 0
+  lightningDamage: 0
+  poiseDamage: 10
+  light_Attack_Modifier: 1.1
+  light_Attack_Combo_Modifier: 1.5
+  heavy_Attack_Modifier: 1.4
+  heavy_Attack_Combo_Modifier: 1.7
+  charged_Attack_Modifier: 2
+  charged_Attack_Combo_Modifier: 2.4
+  baseStaminaCost: 20
+  lightAttackStaminaCostMultiplier: 0.9
+  oh_RB_Actions: {fileID: 11400000, guid: b1f082e9db7b0fc4d8e6154c15b69e21, type: 2}
+  oh_RT_Actions: {fileID: 11400000, guid: 8ea34347f92edeb4894c3be32ccf3341, type: 2}
