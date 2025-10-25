@@ -1,0 +1,220 @@
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using DG.Tweening;
+using TMPro;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+
+public class UIManager : MonoBehaviour
+{
+    [Header("UI Screens")]
+    [SerializeField] private RectTransform[] UIScreens;
+    [SerializeField] private GameObject mainMenuButtonHolder;
+    [SerializeField] private float fadeDuration = 1f;
+
+    [Header("Canvas Groups")]
+    [SerializeField] private CanvasGroup splashUICG, loadingUICG, menuUICG, mainMenuUICG, charSelectionUICG, settingsUICG;
+
+    [Header("Loading UI")]
+    [SerializeField] private Slider progressBar;
+    [SerializeField] private TextMeshProUGUI progressText;
+
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource musicAS;
+    [SerializeField] private AudioSource sfxAS;
+    [SerializeField] private AudioClip buttonClick;
+
+    [Header("Audio Settings")]
+    [SerializeField] private Slider musicSlider, sfxSlider;
+
+    private bool isMenu, isMainMenu;
+
+    private ColorAdjustments colorAdjustments;
+
+    private void Start()
+    {
+        StartCoroutine(CloseSplashThenLoadMain());
+
+        // Load saved prefs (defaults if not set)
+        float savedMusicVol = PlayerPrefs.GetFloat("MusicVol", 0.75f);
+        float savedSFXVol = PlayerPrefs.GetFloat("SFXVol", 0.75f);
+        float savedBrightness = PlayerPrefs.GetFloat("Brightness", 1f);
+
+        // Apply to sliders
+        musicSlider.value = savedMusicVol;
+        sfxSlider.value = savedSFXVol;
+
+        // Hook listeners
+        musicSlider.onValueChanged.AddListener(SetMusicVolume);
+        sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+
+        // Apply saved settings immediately
+        SetMusicVolume(savedMusicVol);
+        SetSFXVolume(savedSFXVol);
+    }
+
+    private IEnumerator CloseSplashThenLoadMain()
+    {
+        yield return new WaitForSeconds(Random.Range(4.5f, 8f));
+
+        splashUICG.DOFade(0, fadeDuration);
+        yield return new WaitForSeconds(fadeDuration);
+
+        yield return StartCoroutine(ShowLoadingUI(menuUICG));
+    }
+
+    public void ClosemenuUICGThenLoadSettings()
+    {
+        StartCoroutine(MenuToSettings());
+    }
+
+    private IEnumerator MenuToSettings()
+    {
+        isMenu = true;
+            yield return menuUICG.DOFade(0, fadeDuration);
+                ShowSettingsUI();
+    }
+
+    public void CloseMainMenuUICGThenLoadSettings()
+    {
+        StartCoroutine(MainMenuToSettings());
+    }
+
+    private IEnumerator MainMenuToSettings()
+    {
+        isMainMenu = true;
+            yield return mainMenuUICG.DOFade(0, fadeDuration);
+                ShowSettingsUI();
+    }
+
+    public void CloseSettingsUI()
+    {
+        if (isMenu)
+        {
+            isMenu = false;
+            menuUICG.DOFade(1, fadeDuration);
+        }
+
+        else if (isMainMenu)
+        {
+            isMainMenu = false;
+            mainMenuUICG.DOFade(1, fadeDuration);
+        }
+    }
+    
+    public IEnumerator ShowLoadingUI(CanvasGroup targetUI)
+    {
+        if (loadingUICG == null || progressBar == null || progressText == null)
+        {
+            Debug.LogWarning("UIManager: Missing references in the inspector!");
+            yield break;
+        }
+
+        loadingUICG.gameObject.SetActive(true);
+        loadingUICG.alpha = 0;
+        progressBar.value = 0f;
+        progressText.text = "0%";
+
+        yield return loadingUICG.DOFade(1, fadeDuration).WaitForCompletion();
+
+        float displayProgress = 0f;
+        float targetProgress = 0f;
+
+        while (displayProgress < 0.99f)
+        {
+            targetProgress = Mathf.Min(targetProgress + Time.deltaTime * Random.Range(0.3f, 0.6f), 1f);
+            displayProgress = Mathf.MoveTowards(displayProgress, targetProgress, Time.deltaTime * 2f);
+
+            progressBar.value = displayProgress;
+            progressText.text = Mathf.RoundToInt(displayProgress * 100) + "%";
+
+            yield return null;
+        }
+
+        displayProgress = 1f;
+        progressBar.value = 1f;
+        progressText.text = "100%";
+
+        float briefWaitSimulation = Random.Range(0.3f, 0.8f);
+        yield return new WaitForSeconds(briefWaitSimulation);
+
+        yield return loadingUICG.DOFade(0, fadeDuration).WaitForCompletion();
+        loadingUICG.gameObject.SetActive(false);
+
+        if (targetUI != null)
+        {
+            targetUI.gameObject.SetActive(true);
+            targetUI.alpha = 0;
+            targetUI.DOFade(1, fadeDuration);
+            targetUI.interactable = true;
+            targetUI.blocksRaycasts = true;
+        }
+    }
+    public void OpenMainMenu()
+    {
+        SetCanvasGroupActive(mainMenuUICG);
+    }
+
+    public void OpenCharacterSelectionUI()
+    {
+        SetCanvasGroupActive(charSelectionUICG);
+    }
+
+    #region SETTINGS UI
+    private void ShowSettingsUI()
+    {
+        UIScreens[5].DOScale(Vector2.one, 0.25f).SetEase(Ease.OutBack);
+    }
+
+    public void UndoSettingsUI()
+    {
+        UIScreens[5].DOScale(Vector2.zero, 0.25f).SetEase(Ease.InBack);
+    }
+
+    #endregion
+
+    private void SetCanvasGroupActive(CanvasGroup tUI)
+    {
+        tUI.gameObject.SetActive(true);
+        tUI.alpha = 0;
+        tUI.DOFade(1, fadeDuration);
+        tUI.interactable = true;
+        tUI.blocksRaycasts = true;
+    }
+
+    #region AUDIO
+    public void SetMusicVolume(float value)
+    {
+        if (musicAS != null)
+            musicAS.volume = Mathf.Clamp01(value);
+
+        PlayerPrefs.SetFloat("MusicVol", value);
+    }
+
+    public void SetSFXVolume(float value)
+    {
+        if (sfxAS != null)
+            sfxAS.volume = Mathf.Clamp01(value);
+
+        PlayerPrefs.SetFloat("SFXVol", value);
+    }
+
+    public void PlayClickSound()
+    {
+        if (sfxAS != null && buttonClick != null)
+            sfxAS.PlayOneShot(buttonClick, sfxAS.volume);
+    }
+
+    #endregion
+
+    public void Quit() => Application.Quit();  // Quit application ASAP ASAP
+
+    public void LoadGame()
+    {
+        Debug.Log("Load Game!");
+        // This will load the gameScene using scene manager
+    }
+    
+}
