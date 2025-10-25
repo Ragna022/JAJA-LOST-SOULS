@@ -170,20 +170,33 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
         
         if (animationID == "Death")
         {
-            Debug.Log($"[CharacterNetworkManager] FORCING DEATH ANIMATION with Play()");
+            Debug.Log($"[CharacterNetworkManager] FORCING DEATH ANIMATION with Play() for {(character.IsOwner ? "OWNER" : "NON-OWNER")}");
             
+            // Critical: Stop all ongoing actions and animations
             character.isPerformingAction = false;
+            character.canRotate = false;
+            character.canMove = false;
             character.animator.applyRootMotion = false;
             
-            int deathHash = Animator.StringToHash("Death");
-            Debug.Log($"[CharacterNetworkManager] Death state hash: {deathHash}");
+            // Get the Action Override layer index
+            int actionLayerIndex = character.animator.GetLayerIndex("Action Override");
+            if (actionLayerIndex == -1)
+            {
+                actionLayerIndex = 0;
+                Debug.LogWarning("[CharacterNetworkManager] Action Override layer not found, using Base Layer");
+            }
             
+            int deathHash = Animator.StringToHash("Death");
+            Debug.Log($"[CharacterNetworkManager] Death state hash: {deathHash}, Target Layer: {actionLayerIndex}");
+            
+            // Force animator to reset and play death immediately
             character.animator.Rebind();
             character.animator.Update(0f);
-            character.animator.Play(deathHash, 0, 0f);
-            character.animator.Play("Death", -1, 0f);
             
-            Debug.Log($"[CharacterNetworkManager] Death animation Play() called with multiple methods");
+            // Play on the correct layer
+            character.animator.Play(deathHash, actionLayerIndex, 0f);
+            
+            Debug.Log($"[CharacterNetworkManager] Death animation Play() executed on layer {actionLayerIndex}");
             
             character.applyRootMotion = applyRootMotion;
             

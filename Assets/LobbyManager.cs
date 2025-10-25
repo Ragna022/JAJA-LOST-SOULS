@@ -6,6 +6,7 @@ using Unity.Collections;
 using System;
 using TMPro;
 using UnityEngine.UI;
+using System.Linq;
 
 public class LobbyManager : NetworkBehaviour
 {
@@ -26,9 +27,12 @@ public class LobbyManager : NetworkBehaviour
     private NetworkList<LobbyPlayerData> lobbyPlayers;
     private Dictionary<ulong, GameObject> playerSlots = new Dictionary<ulong, GameObject>();
     private bool isReady = false;
+    private List<LobbyPlayerData> persistentLobbyData;
 
-    // This list will hold the player data *during* the scene transition
-    private List<LobbyPlayerData> persistentLobbyData; // <-- NEW
+    // --- FIX ---
+    // This is the public list your PlayerManager needs to access
+    public static List<LobbyPlayerData> PublicPersistentLobbyData;
+    // --- END FIX ---
     
     private void Awake()
     {
@@ -74,25 +78,25 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"🎯 LobbyManager.OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}, NetworkObjectId: {NetworkObjectId}");
         
-        // Server-only setup
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
             
-            // Add host to lobby
-            AddPlayerToLobby(NetworkManager.Singleton.LocalClientId, "Host", false);
-            Debug.Log("✅ SERVER: Added host to lobby");
+            int hostCharacterIndex = 0;
+            if (TitleScreenManager.Instance != null)
+            {
+                hostCharacterIndex = TitleScreenManager.selectedCharacterIndex;
+            }
+            AddPlayerToLobby(NetworkManager.Singleton.LocalClientId, "Host", false, hostCharacterIndex);
+            Debug.Log($"✅ SERVER: Added host to lobby (Index: {hostCharacterIndex})");
         }
         
-        // Everyone subscribes to list changes
         lobbyPlayers.OnListChanged += OnLobbyPlayersChanged;
         
-        // Setup UI for everyone
         SetupUI();
         UpdatePlayerListUI();
         
-        // Clients request their data be added after a short delay
         if (!IsServer)
         {
             StartCoroutine(DelayedSubmitData());
@@ -157,13 +161,23 @@ public class LobbyManager : NetworkBehaviour
     private void SubmitPlayerData()
     {
         string playerName = "Player_" + NetworkManager.Singleton.LocalClientId;
-        if (TitleScreenManager.selectedPlayerPrefab != null)
+        int characterIndex = 0;
+
+        if (TitleScreenManager.Instance != null) 
         {
-            playerName = TitleScreenManager.selectedPlayerPrefab.name;
+            if (TitleScreenManager.selectedPlayerPrefab != null)
+            {
+                playerName = TitleScreenManager.selectedPlayerPrefab.name;
+            }
+            characterIndex = TitleScreenManager.selectedCharacterIndex;
+        }
+        else
+        {
+            Debug.LogWarning("TitleScreenManager.Instance is null! Defaulting to index 0.");
         }
         
-        SubmitPlayerDataServerRpc(NetworkManager.Singleton.LocalClientId, playerName, false);
-        Debug.Log($"📤 CLIENT: Submitting player data: {playerName}");
+        SubmitPlayerDataServerRpc(NetworkManager.Singleton.LocalClientId, playerName, false, characterIndex);
+        Debug.Log($"📤 CLIENT: Submitting player data: {playerName} (Index: {characterIndex})");
     }
     
     private void OnClientConnected(ulong clientId)
@@ -181,15 +195,14 @@ public class LobbyManager : NetworkBehaviour
     }
     
     [ServerRpc(RequireOwnership = false)]
-    private void SubmitPlayerDataServerRpc(ulong clientId, FixedString64Bytes playerName, bool isReady, ServerRpcParams rpcParams = default)
+    private void SubmitPlayerDataServerRpc(ulong clientId, FixedString64Bytes playerName, bool isReady, int characterIndex, ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"📥 SERVER: Received player data from {clientId}: {playerName}, Ready: {isReady}");
-        AddPlayerToLobby(clientId, playerName.ToString(), isReady);
+        Debug.Log($"📥 SERVER: Received player data from {clientId}: {playerName}, Ready: {isReady}, CharIndex: {characterIndex}");
+        AddPlayerToLobby(clientId, playerName.ToString(), isReady, characterIndex);
     }
     
-    private void AddPlayerToLobby(ulong clientId, string playerName, bool isReady)
+    private void AddPlayerToLobby(ulong clientId, string playerName, bool isReady, int characterIndex)
     {
-        // Update existing player
         for (int i = 0; i < lobbyPlayers.Count; i++)
         {
             if (lobbyPlayers[i].clientId == clientId)
@@ -198,23 +211,24 @@ public class LobbyManager : NetworkBehaviour
                 {
                     clientId = clientId,
                     playerName = new FixedString64Bytes(playerName),
-                    isReady = isReady
+                    isReady = isReady,
+                    characterPrefabIndex = characterIndex 
                 };
                 lobbyPlayers[i] = updatedPlayer;
-                Debug.Log($"🔄 SERVER: Updated player: {playerName} (Ready: {isReady})");
+                Debug.Log($"🔄 SERVER: Updated player: {playerName} (Ready: {isReady}, Index: {characterIndex})");
                 return;
             }
         }
         
-        // Add new player
         lobbyPlayers.Add(new LobbyPlayerData
         {
             clientId = clientId,
             playerName = new FixedString64Bytes(playerName),
-            isReady = isReady
+            isReady = isReady,
+            characterPrefabIndex = characterIndex
         });
         
-        Debug.Log($"✅ SERVER: Added player: {playerName} (Ready: {isReady}) - Total: {lobbyPlayers.Count}");
+        Debug.Log($"✅ SERVER: Added player: {playerName} (Ready: {isReady}, Index: {characterIndex}) - Total: {lobbyPlayers.Count}");
     }
     
     private void RemovePlayerFromLobby(ulong clientId)
@@ -250,7 +264,6 @@ public class LobbyManager : NetworkBehaviour
     
     private void UpdatePlayerListUI()
     {
-        // Clear existing slots
         foreach (var slot in playerSlots.Values)
         {
             if (slot != null) 
@@ -260,7 +273,6 @@ public class LobbyManager : NetworkBehaviour
         }
         playerSlots.Clear();
         
-        // Create new slots
         foreach (var player in lobbyPlayers)
         {
             if (playerListContainer != null && playerSlotPrefab != null)
@@ -357,26 +369,21 @@ public class LobbyManager : NetworkBehaviour
         
         Debug.Log("🎯 SERVER: Starting game!");
 
-        // --- START OF FIX ---
-        // 1. Create the persistent list
-        persistentLobbyData = new List<LobbyPlayerData>(); // <-- NEW
-
-        // 2. Copy the data from the NetworkList to the normal List
-        foreach (var player in lobbyPlayers) // <-- NEW
+        persistentLobbyData = new List<LobbyPlayerData>();
+        foreach (var player in lobbyPlayers)
         {
-            persistentLobbyData.Add(player); // <-- NEW
+            persistentLobbyData.Add(player);
         }
+        Debug.Log($"📝 Copied {persistentLobbyData.Count} players to persistent list.");
         
-        Debug.Log($"📝 Copied {persistentLobbyData.Count} players to persistent list."); // <-- NEW
-        // --- END OF FIX ---
+        // --- FIX ---
+        // Copy the private list to the public static list for PlayerManager
+        PublicPersistentLobbyData = persistentLobbyData; 
+        // --- END FIX ---
         
-        // Hide lobby UI
         HideLobbyUIClientRpc();
         
-        // Subscribe to scene load completion
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
-        
-        // Load game scene
         NetworkManager.Singleton.SceneManager.LoadScene("World_01", LoadSceneMode.Single);
     }
     
@@ -404,10 +411,9 @@ public class LobbyManager : NetworkBehaviour
     
     private void SpawnAllPlayers()
     {
-        // Use the persistent list, as lobbyPlayers has been disposed
-        Debug.Log($"🎮 SERVER: Spawning {persistentLobbyData.Count} players..."); // <-- MODIFIED
+        Debug.Log($"🎮 SERVER: Spawning {persistentLobbyData.Count} players..."); 
         
-        foreach (var playerData in persistentLobbyData) // <-- MODIFIED
+        foreach (var playerData in persistentLobbyData) 
         {
             SpawnPlayerForClient(playerData.clientId);
         }
@@ -415,13 +421,41 @@ public class LobbyManager : NetworkBehaviour
     
     private void SpawnPlayerForClient(ulong clientId)
     {
-        if (TitleScreenManager.selectedPlayerPrefab == null)
+        LobbyPlayerData playerData = persistentLobbyData.FirstOrDefault(p => p.clientId == clientId);
+        
+        if (playerData.clientId != clientId && persistentLobbyData.Count > 0)
         {
-            Debug.LogError("❌ No player prefab selected!");
+            Debug.LogWarning($"Could not find persistent data for client {clientId}. Using first player's data as fallback.");
+            playerData = persistentLobbyData[0];
+        }
+
+        int characterIndex = playerData.characterPrefabIndex;
+
+        if (TitleScreenManager.Instance == null)
+        {
+            Debug.LogError("❌ TitleScreenManager.Instance is NULL! Cannot access prefab list.");
             return;
         }
+
+        if (characterIndex < 0 || characterIndex >= TitleScreenManager.Instance.availableCharacterPrefabs.Length)
+        {
+            Debug.LogError($"❌ Invalid character index {characterIndex} for client {clientId}. Defaulting to 0.");
+            characterIndex = 0;
+        }
+
+        GameObject playerPrefab = TitleScreenManager.Instance.availableCharacterPrefabs[characterIndex];
         
-        GameObject playerPrefab = TitleScreenManager.selectedPlayerPrefab;
+        if (playerPrefab == null)
+        {
+            Debug.LogError($"❌ Player prefab at index {characterIndex} is null! Defaulting to prefab 0.");
+            playerPrefab = TitleScreenManager.Instance.availableCharacterPrefabs[0];
+            if (playerPrefab == null)
+            {
+                Debug.LogError("❌ Prefab at index 0 is ALSO null! Spawning will fail.");
+                return;
+            }
+        }
+
         NetworkObject playerObject = Instantiate(playerPrefab).GetComponent<NetworkObject>();
         
         if (playerObject != null)
@@ -431,7 +465,7 @@ public class LobbyManager : NetworkBehaviour
             
             playerObject.SpawnAsPlayerObject(clientId, true);
             
-            Debug.Log($"🎮 SERVER: Spawned player for client {clientId} at {spawnPos}");
+            Debug.Log($"🎮 SERVER: Spawned '{playerPrefab.name}' for client {clientId} at {spawnPos}");
         }
         else
         {
@@ -443,10 +477,9 @@ public class LobbyManager : NetworkBehaviour
     {
         int playerIndex = 0;
         
-        // Use the persistent list here as well
-        for (int i = 0; i < persistentLobbyData.Count; i++) // <-- MODIFIED
+        for (int i = 0; i < persistentLobbyData.Count; i++) 
         {
-            if (persistentLobbyData[i].clientId == clientId) // <-- MODIFIED
+            if (persistentLobbyData[i].clientId == clientId) 
             {
                 playerIndex = i;
                 break;
@@ -469,6 +502,16 @@ public class LobbyManager : NetworkBehaviour
         {
             NetworkManager.Singleton.Shutdown();
         }
+
+        if (TitleScreenManager.Instance != null)
+        {
+            Destroy(TitleScreenManager.Instance.gameObject);
+        }
+        
+        // --- FIX ---
+        // Clear the static list when leaving
+        PublicPersistentLobbyData = null;
+        // --- END FIX ---
         
         SceneManager.LoadScene("MainMenu");
     }

@@ -9,11 +9,13 @@ using TMPro;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEditor;
+using System;
 
 public class TitleScreenManager : MonoBehaviour
 {
     public static TitleScreenManager Instance;
     public static GameObject selectedPlayerPrefab;
+    public static int selectedCharacterIndex = 0; // <-- ADDED
 
     // CHARACTER PREFAB SELECTION
     [Header("Character Prefabs")]
@@ -84,9 +86,13 @@ public class TitleScreenManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // <-- CRITICAL: Makes this object persist
+
             // Set default character prefab
             if (availableCharacterPrefabs.Length > 0)
             {
+                // <-- MODIFIED
+                selectedCharacterIndex = defaultCharacterIndex; 
                 selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
             }
 
@@ -340,12 +346,14 @@ public class TitleScreenManager : MonoBehaviour
         string savedCharacterName = PlayerPrefs.GetString("SelectedCharacter", "");
         if (!string.IsNullOrEmpty(savedCharacterName))
         {
-            foreach (var prefab in availableCharacterPrefabs)
+            for (int i = 0; i < availableCharacterPrefabs.Length; i++) // <-- MODIFIED
             {
-                if (prefab.name == savedCharacterName)
+                GameObject prefab = availableCharacterPrefabs[i];
+                if (prefab != null && prefab.name == savedCharacterName) // <-- MODIFIED
                 {
                     selectedPlayerPrefab = prefab;
-                    Debug.Log($"Loaded selected character from prefs: {savedCharacterName}");
+                    selectedCharacterIndex = i; // <-- ADDED
+                    Debug.Log($"Loaded selected character from prefs: {savedCharacterName} (Index: {i})");
                     break;
                 }
             }
@@ -371,12 +379,23 @@ public class TitleScreenManager : MonoBehaviour
         if (titleScreenCharacterCreationMenu != null) titleScreenCharacterCreationMenu.SetActive(false);
         if (titleScreenCharacterSelectionMenu != null) titleScreenCharacterSelectionMenu.SetActive(false);
 
+        // --- ADD THIS FIX ---
+        // Destroy the preview character before loading the next scene
+        if (currentPreviewCharacter != null)
+        {
+            Destroy(currentPreviewCharacter);
+            currentPreviewCharacter = null; // Clear the reference
+            Debug.Log("🧹 Destroyed character preview object.");
+        }
+        // --- END FIX ---
+
         Debug.Log("Preparing for new game...");
 
         // Make sure we have a character selected and save it
         if (selectedPlayerPrefab == null && availableCharacterPrefabs.Length > 0)
         {
             selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
+            selectedCharacterIndex = defaultCharacterIndex; // Ensure index is also set
         }
 
         // Save the selection
@@ -485,7 +504,8 @@ public class TitleScreenManager : MonoBehaviour
         if (characterIndex >= 0 && characterIndex < availableCharacterPrefabs.Length)
         {
             selectedPlayerPrefab = availableCharacterPrefabs[characterIndex];
-            Debug.Log($"Selected character: {selectedPlayerPrefab.name}");
+            selectedCharacterIndex = characterIndex; // <-- ADDED
+            Debug.Log($"Selected character: {selectedPlayerPrefab.name} (Index: {characterIndex})");
 
             // Create preview of selected character
             if (characterPreviewSpawnPoint != null)
@@ -579,7 +599,7 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
-    // CONFIRM CHARACTER SELECTION AND PROCEED TO CHARACTER CREATION
+    /// CONFIRM CHARACTER SELECTION AND PROCEED TO CHARACTER CREATION
     public void ConfirmCharacterSelection()
     {
         if (selectedPlayerPrefab != null)
@@ -595,6 +615,7 @@ public class TitleScreenManager : MonoBehaviour
             if (availableCharacterPrefabs.Length > 0)
             {
                 selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
+                selectedCharacterIndex = defaultCharacterIndex; // <-- ADDED
                 SaveSelectedCharacterToPrefs();
                 OpenCharacterCreationMenu();
             }

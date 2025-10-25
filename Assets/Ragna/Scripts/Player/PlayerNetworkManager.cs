@@ -41,7 +41,11 @@ public class PlayerNetworkManager : CharacterNetworkManager
     {
         maxHealth.Value = player.playerStatsManager.CalculateHealthBasedOnVitalityLevel(newVitality);
         PlayerUIManager.instance.playerUIHudManager.SetMaxHealthValue(maxHealth.Value);
-        currentHealth.Value = maxHealth.Value;
+        
+        // --- FIX ---
+        // maxHealth.Value is a float, but currentHealth.Value is an int
+        currentHealth.Value = (int)maxHealth.Value;
+        // --- END FIX ---
     }
 
     public void SetNewMaxStaminaValue(int oldEndurance, int newEndurance)
@@ -81,7 +85,6 @@ public class PlayerNetworkManager : CharacterNetworkManager
         player.playerCombatManager.currentWeaponBeingUsed = newWeapon;
         //player.playerEquipmentManager.LoadWeaponOnBothHands();
 
-        // WE DO NOT NEED TO RUN THIS CODE IF WE ARE THE OWNER BECAUSE WE'VE ALREADY DONE THAT LOCALLY
         if (player.IsOwner)
             return;
 
@@ -102,7 +105,6 @@ public class PlayerNetworkManager : CharacterNetworkManager
     [ClientRpc]
     private void NotifyTheServerOfWeaponActionClientRpc(ulong clientID, int actionID, int weaponID)
     {
-        // WE DO NOT PLAY THE ACTION AGAIN FOR THE CHARACTER WHO CALLED IT, BECAUSE THEY ALREADY PLAYED IT LOCALLY
         if(clientID != NetworkManager.Singleton.LocalClientId)
         {
             PerformWeaponBasedAction(actionID, weaponID);
