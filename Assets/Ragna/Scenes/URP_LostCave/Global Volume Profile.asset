@@ -74,10 +74,10 @@ MonoBehaviour:
   active: 1
   temperature:
     m_OverrideState: 1
-    m_Value: -55
+    m_Value: -8
   tint:
     m_OverrideState: 1
-    m_Value: -20
+    m_Value: 12
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,7 +120,7 @@ MonoBehaviour:
     m_Value: {x: 0.5, y: 0.5}
   intensity:
     m_OverrideState: 1
-    m_Value: 0.123
+    m_Value: 0.573
   smoothness:
     m_OverrideState: 1
     m_Value: 0.451
@@ -142,13 +142,13 @@ MonoBehaviour:
   active: 1
   lift:
     m_OverrideState: 1
-    m_Value: {x: 0.99326277, y: 0.882313, z: 1, w: -0.018691588}
+    m_Value: {x: 0.9268213, y: 0.7602091, z: 1, w: -0.018691588}
   gamma:
     m_OverrideState: 1
-    m_Value: {x: 0.9169117, y: 1, z: 0.779547, w: 0.09345796}
+    m_Value: {x: 0.97255564, y: 1, z: 0.76237154, w: 0.09345796}
   gain:
     m_OverrideState: 1
-    m_Value: {x: 1, y: 0.79927874, z: 0.9388789, w: -0.037383176}
+    m_Value: {x: 1, y: 0.9086603, z: 0.9281524, w: -0.037383176}
 --- !u!114 &4621626141652854071
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -201,7 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c01700fd266d6914ababb731e09af2eb, type: 3}
   m_Name: DepthOfField
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   mode:
     m_OverrideState: 1
     m_Value: 2
@@ -250,4 +250,4 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.141
+    m_Value: 0.217

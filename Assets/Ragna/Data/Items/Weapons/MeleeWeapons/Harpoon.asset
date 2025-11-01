@@ -38,10 +38,3 @@ MonoBehaviour:
   lightAttackStaminaCostMultiplier: 0.4
   oh_RB_Actions: {fileID: 11400000, guid: b1f082e9db7b0fc4d8e6154c15b69e21, type: 2}
   oh_RT_Actions: {fileID: 11400000, guid: 8ea34347f92edeb4894c3be32ccf3341, type: 2}
-  whooshes:
-  - {fileID: 8300000, guid: 04c711a7b6e96a24092d0e9c68d6cf4d, type: 3}
-  - {fileID: 8300000, guid: 90042ed635971d54188333057ac7b3c2, type: 3}
-  - {fileID: 8300000, guid: 9ddf94817d77ab14f8fc18692c651252, type: 3}
-  - {fileID: 8300000, guid: afbaab66eb8ada343abb091946b48a56, type: 3}
-  comboWhooshes:
-  - {fileID: 8300000, guid: 5834ad336c2166a4c954004d2869d4ae, type: 3}

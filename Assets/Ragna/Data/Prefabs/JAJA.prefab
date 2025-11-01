@@ -706,7 +706,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2141971931
+  GlobalObjectIdHash: 1707912120
   InScenePlacedSourceGlobalObjectIdHash: 2141971931
   DeferredDespawnTick: 0
   Ownership: 1
@@ -749,7 +749,7 @@ MonoBehaviour:
   canMove: 1
   damageCollider: {fileID: 0}
   respawnCharacter: 0
-  SwitchRightWeapon: 1
+  SwitchRightWeapon: 0
   playerAnimatorManager: {fileID: 0}
   playerLocomotionManager: {fileID: 0}
   playerNetworkManager: {fileID: 0}
@@ -962,22 +962,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 400d194e4fd720d46a9b6ddad03db1b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageGrunts:
-  - {fileID: 8300000, guid: 36face8ac33b3814caa19d440d6d33fa, type: 3}
-  - {fileID: 8300000, guid: c9fcdbd8bb5bb9c42981a9ba28089d98, type: 3}
-  - {fileID: 8300000, guid: ed5d0007a6aca7a4e9cfe74b94ed21a2, type: 3}
-  - {fileID: 8300000, guid: 6267fe68d4c4db24da7e77a14132ef56, type: 3}
-  attackGrunts:
-  - {fileID: 8300000, guid: 02e2707703852824d8af6258dc6ca0d9, type: 3}
-  - {fileID: 8300000, guid: 13c54bcd033772e478fd4c9381fcab28, type: 3}
-  - {fileID: 8300000, guid: 35523ddcaa9cfa04d89c4ed8da334984, type: 3}
-  - {fileID: 8300000, guid: 7bc4e2ed8974e2c43a196410f69e0dd6, type: 3}
-  comboGrunts:
-  - {fileID: 8300000, guid: 7bc4e2ed8974e2c43a196410f69e0dd6, type: 3}
-  footSteps:
-  - {fileID: 8300000, guid: ce7897ec8792ffc4c8473a51e05d7d22, type: 3}
-  RunningfootSteps:
-  - {fileID: 8300000, guid: 2aeddbb47782ca54db3d7ab27f3844ec, type: 3}
 --- !u!114 &2930533624469726399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124,8 +1108,8 @@ MonoBehaviour:
   currentLeftHandWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   weaponsInRightHandSlots:
   - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
-  - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
   - {fileID: 11400000, guid: 1a4c4a92796a62e45830e89ff52d0960, type: 2}
+  - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
   rightHandWeaponIndex: 0
   weaponsInLeftHandSlots:
   - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}

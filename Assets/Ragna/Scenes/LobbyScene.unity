@@ -1520,6 +1520,10 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 4198658355
       objectReference: {fileID: 0}
+    - target: {fileID: 1915890903626820453, guid: a91ace6a6492c71459d0494160052fe2, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3429692525
+      objectReference: {fileID: 0}
     - target: {fileID: 4474383823100227576, guid: a91ace6a6492c71459d0494160052fe2, type: 3}
       propertyPath: m_Name
       value: LobbyManager

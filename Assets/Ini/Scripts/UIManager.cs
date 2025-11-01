@@ -14,7 +14,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float fadeDuration = 1f;
 
     [Header("Canvas Groups")]
-    [SerializeField] private CanvasGroup splashUICG, loadingUICG, menuUICG, mainMenuUICG, charSelectionUICG, settingsUICG, gameModeUICG;
+    [SerializeField] private CanvasGroup splashUICG, loadingUICG, menuUICG, charSelectionUICG, gameModeUICG, hostingUI, gameIDUI, lobbyUI;
 
     [Header("Loading UI")]
     [SerializeField] private Slider progressBar;
@@ -35,7 +35,7 @@ public class UIManager : MonoBehaviour
     [Header("Audio Settings")]
     [SerializeField] private Slider musicSlider, sfxSlider;
 
-    private bool isMenu, isMainMenu;
+    private bool isMenu;
 
     private void Start()
     {
@@ -86,17 +86,8 @@ public class UIManager : MonoBehaviour
     
     public void BackToMenuUI()
     {
-        if (isMenu)
-        {
-            isMenu = false;
-                menuUICG.DOFade(1, fadeDuration);
-        }
-
-        else if (isMainMenu)
-        {
-            isMainMenu = false;
-                mainMenuUICG.DOFade(1, fadeDuration);
-        }
+        StartCoroutine(ShowLoadingUI(menuUICG));
+        SetCanvasGroupInActive(charSelectionUICG);
     }
     
     public IEnumerator ShowLoadingUI(CanvasGroup targetUI)
@@ -148,7 +139,94 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void OpenMainMenu()
+    public void StartGame()
+    {       
+        StartCoroutine(startGame());
+    }
+
+    private IEnumerator startGame()
+    {
+        SetCanvasGroupInActive(menuUICG);
+        yield return StartCoroutine(ShowLoadingUI(charSelectionUICG));
+        yield return new WaitForSeconds(0.1f); // tiny delay buffer
+        charView.InitializeDefaultCharacter();
+        camAnim.MoveToSelectionView();
+
+    }
+
+    public void CloseCharacterSelectionUI()
+    {
+            SetCanvasGroupInActive(charSelectionUICG);
+        SetCanvasGroupActive(menuUICG);
+    }
+
+    public void loadGameSelectionUI()
+    {
+        StartCoroutine(loadOutToGameMode());
+
+        // TODO: Ragna the selected character will be registered in this method
+    }
+
+    public IEnumerator loadOutToGameMode()
+    {
+        SetCanvasGroupInActive(charSelectionUICG);
+            yield return StartCoroutine(ShowLoadingUI(gameModeUICG));
+                UIScreens[1].DOScale (Vector2.one, 0.25f).SetEase(Ease.OutBack);
+    }
+
+    public void GameModeToMenu()
+    {
+        StartCoroutine(returnToGameMode());
+    }
+
+    public IEnumerator returnToGameMode()
+    {
+        yield return UIScreens[1].DOScale (Vector2.zero, 0.20f).SetEase(Ease.OutBack);
+            SetCanvasGroupInActive(gameModeUICG);
+                StartCoroutine(ShowLoadingUI(charSelectionUICG));
+    }
+
+    public void GameModeToHosting()
+    {
+        StartCoroutine(OpenHosting());
+    }
+
+    public IEnumerator OpenHosting()
+    {
+        yield return UIScreens[1].DOScale (Vector2.zero, 0.20f).SetEase(Ease.OutBack);
+            SetCanvasGroupInActive(gameModeUICG);
+                SetCanvasGroupActive(hostingUI);
+    }
+
+    public void HostingToGameMode()
+    {
+        StartCoroutine(OpenGameMode());
+    }
+
+    public IEnumerator OpenGameMode()
+    {
+        SetCanvasGroupInActive(hostingUI);
+            SetCanvasGroupActive(gameModeUICG);
+                yield return UIScreens[1].DOScale (Vector2.one, 0.20f).SetEase(Ease.OutBack);
+    }
+
+    public void FadeInGameIDInputField()
+    {
+        SetCanvasGroupActive(gameIDUI);
+    }
+
+    public void FadeOutGameIDInputField()
+    {
+        SetCanvasGroupInActive(gameIDUI);
+    }
+
+    public void FadeInLobby()
+    {
+        SetCanvasGroupActive(lobbyUI);
+        SetCanvasGroupInActive(hostingUI);
+    }
+
+    public void FadeOutLobby()
     {
         SetCanvasGroupActive(hostingUI);
         SetCanvasGroupInActive(lobbyUI);
@@ -156,38 +234,17 @@ public class UIManager : MonoBehaviour
 
     public void PlayerReady()
     {
-        StartCoroutine(openCharaterSelectionUI());
-    }
+        readyText.text = "Ready...";
 
-    private IEnumerator openCharaterSelectionUI()
-    {
-        yield return UIScreens[10].DOScale (Vector2.zero, 0.25f).SetEase(Ease.OutBack);
-            SetCanvasGroupInActive(gameModeUICG);
-                SetCanvasGroupActive(charSelectionUICG);
-    }
+        // TODO: Add other functionality to show player is ready, like enabling background colour
 
-    public void loadGameSelectionUI()
-    {
-        StartCoroutine(loadOutToGameMode());
-    }
+        // foreach(var bg in playerImageBg)
+        // {
+        //     bg.gameObject.SetActive(false);
+        // }
 
-    public IEnumerator loadOutToGameMode()
-    {
-        SetCanvasGroupInActive(mainMenuUICG);
-            yield return StartCoroutine(ShowLoadingUI(gameModeUICG));
-                UIScreens[10].DOScale (Vector2.one, 0.25f).SetEase(Ease.OutBack);
-    }
+        // playerImageBg[selectedBgInt].SetActive(true);
 
-    public void GameModeToMainMenu()
-    {
-        StartCoroutine(returnToGameMode());
-    }
-
-    public IEnumerator returnToGameMode()
-    {
-        yield return UIScreens[10].DOScale (Vector2.zero, 0.25f).SetEase(Ease.OutBack);
-            SetCanvasGroupInActive(gameModeUICG);
-                StartCoroutine(ShowLoadingUI(mainMenuUICG));
     }
 
     #region SETTINGS UI
@@ -199,18 +256,19 @@ public class UIManager : MonoBehaviour
     
     private IEnumerator undoSettings()
     {
+        yield return UIScreens[0].DOScale(Vector2.zero, 0.25f).SetEase(Ease.InBack);
+            UIScreens[0].gameObject.SetActive(false);
+    }
+
+    public void CloseSettingsUI()
+    {
+        if (isMenu)
+        {
+            isMenu = false;
+                SetCanvasGroupActive(menuUICG);
+        }
+
         StartCoroutine(undoSettings());
-    }
-
-    public void closeGameModeUI()
-    {
-        SetCanvasGroupInActive(gameModeUICG);
-            StartCoroutine(ShowLoadingUI(mainMenuUICG));
-    }
-
-    private IEnumerator undoSettings()
-    {
-        yield return UIScreens[5].DOScale(Vector2.zero, 0.25f).SetEase(Ease.InBack);
     }
     #endregion
 
