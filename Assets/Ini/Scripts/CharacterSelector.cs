@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
-using UnityEngine.SceneManagement;
 
 public class CharacterSelector : MonoBehaviour
 {
@@ -12,11 +11,11 @@ public class CharacterSelector : MonoBehaviour
     {
         public string name;
         [TextArea(2, 5)]
-        public string description;
-        public GameObject button;
-        public GameObject hoverEffect;
-        public GameObject displayCharacter;
-        public GameObject prefabToSpawn; // Prefab used in actual gameplay
+        public string description;         // Each character's unique description
+        public GameObject button;          // UI button
+        public GameObject hoverEffect;     // Optional highlight
+        public GameObject displayCharacter; // Character standing in the selection scene
+        public GameObject prefabToSpawn;   // The prefab used in actual gameplay
     }
 
     #region VARIABLES
@@ -25,25 +24,33 @@ public class CharacterSelector : MonoBehaviour
 
     [Header("UI")]
     public Button selectButton;
-    public Button startGameButton; // <-- NEW
+    public Button backButton;
     public TextMeshProUGUI charNameText;
     public TextMeshProUGUI charDescriptionText;
 
-    [Header("Scene References")]
+    [Header("Spawn/Scene Settings")]
     public Transform spawnPoint;
 
-    [Header("External References")]
-    public CameraAnimator cameraController;
+    [Header("Camera Settings")]
+    public Transform viewA;
+    public Transform viewB;
+    public float cameraMoveDuration = 1.2f;
+    public Ease cameraEase = Ease.InOutSine;
 
     private GameObject currentCharacter;
     private CharacterOption selectedCharacter;
     private bool inSelectionView = false;
+    private Camera mainCam;
+
+    public IdleCameraSway camSwayScript;
     #endregion
 
     #region UNITY METHODS
     void Start()
     {
-        // Initialize buttons and hide all characters/hover effects
+        mainCam = Camera.main;
+
+        // Initialize all characters off
         foreach (var c in characters)
         {
             if (c.displayCharacter != null)
@@ -52,21 +59,17 @@ public class CharacterSelector : MonoBehaviour
             if (c.hoverEffect != null)
                 c.hoverEffect.SetActive(false);
 
-            if (c.button != null)
-            {
-                Button btn = c.button.GetComponent<Button>();
-                btn.onClick.AddListener(() => OnCharacterClicked(c));
-            }
+            Button btn = c.button.GetComponent<Button>();
+            btn.onClick.AddListener(() => OnCharacterClicked(c));
         }
 
-        // Hook up buttons
+        if (backButton != null)
+            backButton.onClick.AddListener(ReturnToMainView);
+
         if (selectButton != null)
-            selectButton.onClick.AddListener(SaveSelectedCharacter);
+            selectButton.onClick.AddListener(OnSelectButtonPressed);
 
-        if (startGameButton != null)
-            startGameButton.onClick.AddListener(StartGame);
-
-        // Load saved selection if it exists
+        // Try to load previously selected character
         LoadSelectedCharacter();
     }
     #endregion
@@ -74,32 +77,34 @@ public class CharacterSelector : MonoBehaviour
     #region CHARACTER LOGIC
     private void OnCharacterClicked(CharacterOption clicked)
     {
-        // Disable all other displays and hover effects
+        // Disable all others
         foreach (var c in characters)
         {
             if (c.displayCharacter != null)
                 c.displayCharacter.SetActive(false);
+
             if (c.hoverEffect != null)
                 c.hoverEffect.SetActive(false);
         }
 
-        // Enable the selected one
+        // Activate clicked
         if (clicked.displayCharacter != null)
             clicked.displayCharacter.SetActive(true);
+
         if (clicked.hoverEffect != null)
             clicked.hoverEffect.SetActive(true);
 
         selectedCharacter = clicked;
         currentCharacter = clicked.displayCharacter;
 
-        // Update UI
+        // Update UI Texts
         charNameText.text = clicked.name;
         charDescriptionText.text = clicked.description;
 
-        Debug.Log($"Selected Character: {selectedCharacter.name}");
+        Debug.Log($"Selected: {selectedCharacter.name}");
     }
 
-    private void SaveSelectedCharacter()
+    private void OnSelectButtonPressed()
     {
         if (selectedCharacter == null)
         {
@@ -114,17 +119,52 @@ public class CharacterSelector : MonoBehaviour
     }
     #endregion
 
+    #region CAMERA LOGIC
+    public void MoveToSelectionView()
+    {
+        if (inSelectionView) return;
+        inSelectionView = true;
+
+        // Re-enable current or default character
+        InitializeDefaultCharacter();
+
+        mainCam.transform.DOMove(viewB.position, cameraMoveDuration).SetEase(cameraEase);
+        mainCam.transform.DORotateQuaternion(viewB.rotation, cameraMoveDuration).SetEase(cameraEase);
+
+        camSwayScript.enabled = false;
+        Debug.Log("Entering Character Selection View...");
+    }
+
+    public void ReturnToMainView()
+    {
+        if (!inSelectionView) return;
+        inSelectionView = false;
+
+        // Disable currently active character display
+        if (currentCharacter != null)
+            currentCharacter.SetActive(false);
+
+        mainCam.transform.DOMove(viewA.position, 0.1f).SetEase(cameraEase);
+        mainCam.transform.DORotateQuaternion(viewA.rotation, 0.1f).SetEase(cameraEase);
+
+        camSwayScript.enabled = true;
+        Debug.Log("Returning to Main View...");
+    }
+    #endregion
+
     #region INITIALIZATION
     public void InitializeDefaultCharacter()
     {
         if (characters == null || characters.Count == 0)
         {
-            Debug.LogWarning("No characters found to initialize!");
+            Debug.LogWarning("No characters available to initialize!");
             return;
         }
 
+        // If a previously selected character exists, show that instead of first
         CharacterOption charToShow = selectedCharacter != null ? selectedCharacter : characters[0];
 
+        // Disable all first
         foreach (var c in characters)
         {
             if (c.displayCharacter != null)
@@ -133,18 +173,21 @@ public class CharacterSelector : MonoBehaviour
                 c.hoverEffect.SetActive(false);
         }
 
+        // Activate the one to show
         if (charToShow.displayCharacter != null)
             charToShow.displayCharacter.SetActive(true);
         if (charToShow.hoverEffect != null)
             charToShow.hoverEffect.SetActive(true);
 
+        // Update text
         charNameText.text = charToShow.name;
         charDescriptionText.text = charToShow.description;
 
+        // Cache selection
         selectedCharacter = charToShow;
         currentCharacter = charToShow.displayCharacter;
 
-        Debug.Log($"Default Character Initialized: {charToShow.name}");
+        Debug.Log($"Default character initialized: {charToShow.name}");
     }
 
     private void LoadSelectedCharacter()
@@ -152,10 +195,11 @@ public class CharacterSelector : MonoBehaviour
         string savedName = PlayerPrefs.GetString("SelectedCharacter", string.Empty);
         if (string.IsNullOrEmpty(savedName))
         {
-            selectedCharacter = null;
+            selectedCharacter = null; // fallback to default later
             return;
         }
 
+        // Find the saved character
         CharacterOption found = characters.Find(c => c.name == savedName);
         if (found != null)
         {
@@ -164,26 +208,8 @@ public class CharacterSelector : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Saved character '{savedName}' not found in list!");
+            Debug.LogWarning($"Saved character '{savedName}' not found in character list!");
         }
-    }
-    #endregion
-
-    #region SCENE LOGIC
-    public void StartGame()
-    {
-        if (selectedCharacter == null)
-        {
-            Debug.LogWarning("No character selected! Cannot start game.");
-            return;
-        }
-
-        // Save before loading next scene
-        PlayerPrefs.SetString("SelectedCharacter", selectedCharacter.name);
-        PlayerPrefs.Save();
-
-        Debug.Log($"Starting game with {selectedCharacter.name}...");
-        SceneManager.LoadScene("GameScene"); // Change this to your gameplay scene name
     }
     #endregion
 }
