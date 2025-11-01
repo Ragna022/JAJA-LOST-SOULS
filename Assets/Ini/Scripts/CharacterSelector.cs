@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class CharacterSelector : MonoBehaviour
 {
@@ -24,33 +25,25 @@ public class CharacterSelector : MonoBehaviour
 
     [Header("UI")]
     public Button selectButton;
-    public Button backButton;
+    public Button startGameButton; // <-- NEW
     public TextMeshProUGUI charNameText;
     public TextMeshProUGUI charDescriptionText;
 
-    [Header("Spawn/Scene Settings")]
+    [Header("Scene References")]
     public Transform spawnPoint;
 
-    [Header("Camera Settings")]
-    public Transform viewA;
-    public Transform viewB;
-    public float cameraMoveDuration = 1.2f;
-    public Ease cameraEase = Ease.InOutSine;
+    [Header("External References")]
+    public CameraAnimator cameraController;
 
     private GameObject currentCharacter;
     private CharacterOption selectedCharacter;
     private bool inSelectionView = false;
-    private Camera mainCam;
-
-    public IdleCameraSway camSwayScript;
     #endregion
 
     #region UNITY METHODS
     void Start()
     {
-        mainCam = Camera.main;
-
-        // Initialize all characters off
+        // Initialize buttons and hide all characters/hover effects
         foreach (var c in characters)
         {
             if (c.displayCharacter != null)
@@ -59,13 +52,14 @@ public class CharacterSelector : MonoBehaviour
             if (c.hoverEffect != null)
                 c.hoverEffect.SetActive(false);
 
-            Button btn = c.button.GetComponent<Button>();
-            btn.onClick.AddListener(() => OnCharacterClicked(c));
+            if (c.button != null)
+            {
+                Button btn = c.button.GetComponent<Button>();
+                btn.onClick.AddListener(() => OnCharacterClicked(c));
+            }
         }
 
-        if (backButton != null)
-            backButton.onClick.AddListener(ReturnToMainView);
-
+        // Hook up buttons
         if (selectButton != null)
             selectButton.onClick.AddListener(OnSelectButtonPressed);
 
@@ -77,20 +71,18 @@ public class CharacterSelector : MonoBehaviour
     #region CHARACTER LOGIC
     private void OnCharacterClicked(CharacterOption clicked)
     {
-        // Disable all others
+        // Disable all other displays and hover effects
         foreach (var c in characters)
         {
             if (c.displayCharacter != null)
                 c.displayCharacter.SetActive(false);
-
             if (c.hoverEffect != null)
                 c.hoverEffect.SetActive(false);
         }
 
-        // Activate clicked
+        // Enable the selected one
         if (clicked.displayCharacter != null)
             clicked.displayCharacter.SetActive(true);
-
         if (clicked.hoverEffect != null)
             clicked.hoverEffect.SetActive(true);
 
@@ -101,10 +93,10 @@ public class CharacterSelector : MonoBehaviour
         charNameText.text = clicked.name;
         charDescriptionText.text = clicked.description;
 
-        Debug.Log($"Selected: {selectedCharacter.name}");
+        Debug.Log($"Selected Character: {selectedCharacter.name}");
     }
 
-    private void OnSelectButtonPressed()
+    private void SaveSelectedCharacter()
     {
         if (selectedCharacter == null)
         {
@@ -119,11 +111,24 @@ public class CharacterSelector : MonoBehaviour
     }
     #endregion
 
-    #region CAMERA LOGIC
-    public void MoveToSelectionView()
+    #region INITIALIZATION
+    public void InitializeDefaultCharacter()
     {
-        if (inSelectionView) return;
-        inSelectionView = true;
+        if (characters == null || characters.Count == 0)
+        {
+            Debug.LogWarning("No characters found to initialize!");
+            return;
+        }
+
+        CharacterOption charToShow = selectedCharacter != null ? selectedCharacter : characters[0];
+
+        foreach (var c in characters)
+        {
+            if (c.displayCharacter != null)
+                c.displayCharacter.SetActive(false);
+            if (c.hoverEffect != null)
+                c.hoverEffect.SetActive(false);
+        }
 
         // Re-enable current or default character
         InitializeDefaultCharacter();
@@ -131,14 +136,23 @@ public class CharacterSelector : MonoBehaviour
         mainCam.transform.DOMove(viewB.position, cameraMoveDuration).SetEase(cameraEase);
         mainCam.transform.DORotateQuaternion(viewB.rotation, cameraMoveDuration).SetEase(cameraEase);
 
-        camSwayScript.enabled = false;
-        Debug.Log("Entering Character Selection View...");
+        charNameText.text = charToShow.name;
+        charDescriptionText.text = charToShow.description;
+
+        selectedCharacter = charToShow;
+        currentCharacter = charToShow.displayCharacter;
+
+        Debug.Log($"Default Character Initialized: {charToShow.name}");
     }
 
-    public void ReturnToMainView()
+    private void LoadSelectedCharacter()
     {
-        if (!inSelectionView) return;
-        inSelectionView = false;
+        string savedName = PlayerPrefs.GetString("SelectedCharacter", string.Empty);
+        if (string.IsNullOrEmpty(savedName))
+        {
+            selectedCharacter = null;
+            return;
+        }
 
         // Disable currently active character display
         if (currentCharacter != null)
@@ -172,6 +186,8 @@ public class CharacterSelector : MonoBehaviour
             if (c.hoverEffect != null)
                 c.hoverEffect.SetActive(false);
         }
+    }
+    #endregion
 
         // Activate the one to show
         if (charToShow.displayCharacter != null)

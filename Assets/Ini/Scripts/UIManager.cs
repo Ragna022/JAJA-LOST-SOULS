@@ -11,7 +11,6 @@ public class UIManager : MonoBehaviour
 {
     [Header("UI Screens")]
     [SerializeField] private RectTransform[] UIScreens;
-    [SerializeField] private GameObject mainMenuButtonHolder;
     [SerializeField] private float fadeDuration = 1f;
 
     [Header("Canvas Groups")]
@@ -26,6 +25,13 @@ public class UIManager : MonoBehaviour
     [SerializeField] private AudioSource sfxAS;
     [SerializeField] private AudioClip buttonClick;
 
+    public GameObject[] playerImageBg;
+
+    private CameraAnimator camAnim;
+
+    public TextMeshProUGUI readyText;
+    public CharacterSelector charView;
+
     [Header("Audio Settings")]
     [SerializeField] private Slider musicSlider, sfxSlider;
 
@@ -33,12 +39,19 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        if (camAnim == null)
+        {
+            camAnim = FindFirstObjectByType<CameraAnimator>(FindObjectsInactive.Include);
+
+            if (camAnim == null)
+                Debug.LogError("UIManager: CharacterSelector (camAnim) not found in scene!");
+        }
+
         StartCoroutine(CloseSplashThenLoadMain());
 
         // Load saved prefs (defaults if not set)
         float savedMusicVol = PlayerPrefs.GetFloat("MusicVol", 0.75f);
         float savedSFXVol = PlayerPrefs.GetFloat("SFXVol", 0.75f);
-        float savedBrightness = PlayerPrefs.GetFloat("Brightness", 1f);
 
         // Apply to sliders
         musicSlider.value = savedMusicVol;
@@ -58,36 +71,20 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(4.5f, 8f));
 
         splashUICG.DOFade(0, fadeDuration);
+        SetCanvasGroupInActive(splashUICG);
         yield return new WaitForSeconds(fadeDuration);
 
         yield return StartCoroutine(ShowLoadingUI(menuUICG));
     }
 
-    public void ClosemenuUICGThenLoadSettings()
-    {
-        StartCoroutine(MenuToSettings());
-    }
-
-    private IEnumerator MenuToSettings()
+    public void MenuToSettings()
     {
         isMenu = true;
-            yield return menuUICG.DOFade(0, fadeDuration);
+            SetCanvasGroupInActive(menuUICG);
                 ShowSettingsUI();
     }
-
-    public void CloseMainMenuUICGThenLoadSettings()
-    {
-        StartCoroutine(MainMenuToSettings());
-    }
-
-    private IEnumerator MainMenuToSettings()
-    {
-        isMainMenu = true;
-            yield return mainMenuUICG.DOFade(0, fadeDuration);
-                ShowSettingsUI();
-    }
-
-    public void CloseSettingsUI()
+    
+    public void BackToMenuUI()
     {
         if (isMenu)
         {
@@ -153,10 +150,11 @@ public class UIManager : MonoBehaviour
 
     public void OpenMainMenu()
     {
-        SetCanvasGroupActive(mainMenuUICG);
+        SetCanvasGroupActive(hostingUI);
+        SetCanvasGroupInActive(lobbyUI);
     }
 
-    public void OpenCharacterSelectionUI()
+    public void PlayerReady()
     {
         StartCoroutine(openCharaterSelectionUI());
     }
@@ -195,10 +193,11 @@ public class UIManager : MonoBehaviour
     #region SETTINGS UI
     private void ShowSettingsUI()
     {
-        UIScreens[5].DOScale(Vector2.one, 0.25f).SetEase(Ease.OutBack);
+        UIScreens[0].gameObject.SetActive(true);
+            UIScreens[0].DOScale(Vector2.one, 0.25f).SetEase(Ease.OutBack);
     }
-
-    public void UndoSettingsUI()
+    
+    private IEnumerator undoSettings()
     {
         StartCoroutine(undoSettings());
     }
