@@ -41,22 +41,35 @@ public class PlayerManager : CharacterManager
     }
 
     protected override void Update()
+{
+    base.Update(); // Calls CharacterManager.Update()
+
+    if (!IsOwner)
+        return;
+
+    // ✅ If dead, don't run movement/stamina logic
+    if (isDead.Value)
     {
-        base.Update();
-
-        if (!IsOwner)
-            return;
-
-        playerLocomotionManager.HandleAllMovement();
-        playerStatsManager.RegenerateStamina();
-        DebugMenu();
+        DebugMenu(); // Keep respawn debug
+        return;      // EXIT EARLY
     }
+
+    playerLocomotionManager.HandleAllMovement(); // This sets MoveAmount and other params
+    playerStatsManager.RegenerateStamina();
+    DebugMenu();
+}
 
     protected override void LateUpdate()
     {
         if (!IsOwner)
             return;
 
+        // ✅ ================== THE FIX ==================
+        // We should probably stop the camera from moving too
+        if (isDead.Value)
+            return;
+        // ✅ ================= END OF FIX =================
+        
         base.LateUpdate();
 
         PlayerCamera.instance.HandleAllCameraActions();
@@ -102,8 +115,8 @@ public class PlayerManager : CharacterManager
 
             if (saveManager == null)
             {
-                 Debug.LogWarning($"[PlayerManager] WorldSaveGameManager not found in scene. Using default values.");
-                 SetDefaultPlayerValues();
+                Debug.LogWarning($"[PlayerManager] WorldSaveGameManager not found in scene. Using default values.");
+                SetDefaultPlayerValues();
             }
             else
             {
@@ -141,8 +154,8 @@ public class PlayerManager : CharacterManager
                     }
                     else
                     {
-                         Debug.LogError($"[PlayerManager] Could not find lobby data for client {NetworkManager.Singleton.LocalClientId}! Using defaults.");
-                         SetDefaultPlayerValues();
+                        Debug.LogError($"[PlayerManager] Could not find lobby data for client {NetworkManager.Singleton.LocalClientId}! Using defaults.");
+                        SetDefaultPlayerValues();
                     }
                 }
                 
@@ -404,6 +417,7 @@ public class PlayerManager : CharacterManager
         if (playerNetworkManager == null || playerStatsManager == null)
         {
             Debug.LogError("[PlayerManager] LoadGameData: Critical components are NULL!");
+            SetDefaultPlayerValues(); // Try to set defaults as a fallback
             return;
         }
 

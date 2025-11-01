@@ -5,9 +5,7 @@ public class IdleCameraSway : MonoBehaviour
 {
     [Header("Camera Views")]
     [SerializeField] private Transform viewA; // e.g. Main Menu view
-    [SerializeField] private Transform viewB; // e.g. Game view
-    [SerializeField] private float moveDuration = 1.5f;
-    [SerializeField] private Ease moveEase = Ease.InOutSine;
+    [SerializeField] private Transform viewB; // e.g. Game view;
 
     [Header("Sway Settings")]
     [Tooltip("How far the camera moves in local space")]
@@ -19,7 +17,6 @@ public class IdleCameraSway : MonoBehaviour
     [Tooltip("Speed of the rotation sway")]
     public float rotationSpeed = 0.2f;
 
-    private bool isAtViewA = true;
     private bool isSwaying = true;
 
     private Transform cam;

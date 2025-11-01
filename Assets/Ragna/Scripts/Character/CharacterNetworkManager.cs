@@ -47,53 +47,55 @@ public class CharacterNetworkManager : NetworkBehaviour
         character = GetComponent<CharacterManager>();
     }
 
-   public override void OnNetworkSpawn()
-{
-    base.OnNetworkSpawn();
-
-    // Delay animator setup slightly for clients to ensure animator fully initializes
-    if (IsClient)
+    public override void OnNetworkSpawn()
     {
-        StartCoroutine(WaitAndEnsureAnimatorSetup());
-    }
+        base.OnNetworkSpawn();
 
-    Debug.Log($"[CharacterNetworkManager] OnNetworkSpawn - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, Character: {gameObject.name}");
+        Debug.Log($"[CharacterNetworkManager] OnNetworkSpawn - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, OwnerClientId: {OwnerClientId}, Character: {gameObject.name}");
 
-    currentHealth.OnValueChanged += CheckHp;
-
-    Debug.Log($"[CharacterNetworkManager] Subscribed to currentHealth.OnValueChanged for {gameObject.name}");
-}
-
-// 🕓 NEW helper coroutine — ensures Action Override is fully applied on clients after spawn
-private IEnumerator WaitAndEnsureAnimatorSetup()
-{
-    // Wait 2 frames to allow Animator to initialize after network spawn
-    yield return null;
-    yield return null;
-
-    EnsureAnimatorSetup();
-
-    // Confirm that the override contains the "Death" clip (for debugging)
-    if (actionOverrideController != null)
-    {
-        bool foundDeath = false;
-        var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(actionOverrideController.overridesCount);
-        actionOverrideController.GetOverrides(overrides);
-        foreach (var pair in overrides)
+        // Delay animator setup slightly for clients to ensure animator fully initializes
+        if (IsClient)
         {
-            if (pair.Value != null && pair.Value.name == "Death")
-            {
-                foundDeath = true;
-                break;
-            }
+            Debug.Log($"[CharacterNetworkManager] Applying initial EnsureAnimatorSetup() for {gameObject.name}");
+            EnsureAnimatorSetup(); 
+            
+            // Keep coroutine as a delayed double-check for remote clients
+            StartCoroutine(WaitAndEnsureAnimatorSetup());
         }
 
-        Debug.Log(foundDeath
-            ? "[CharacterNetworkManager] Client override controller confirmed to include 'Death' clip ✅"
-            : "[CharacterNetworkManager] 'Death' clip missing from client override controller ⚠️");
-    }
-}
+        currentHealth.OnValueChanged += CheckHp;
 
+        Debug.Log($"[CharacterNetworkManager] Subscribed to currentHealth.OnValueChanged for {gameObject.name}");
+    }
+
+    private IEnumerator WaitAndEnsureAnimatorSetup()
+    {
+        // Wait 2 frames to allow Animator to initialize after network spawn
+        yield return null;
+        yield return null;
+
+        EnsureAnimatorSetup();
+
+        // Confirm that the override contains the "Death" clip (for debugging)
+        if (actionOverrideController != null)
+        {
+            bool foundDeath = false;
+            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(actionOverrideController.overridesCount);
+            actionOverrideController.GetOverrides(overrides);
+            foreach (var pair in overrides)
+            {
+                if (pair.Value != null && pair.Value.name == "Death")
+                {
+                    foundDeath = true;
+                    break;
+                }
+            }
+
+            Debug.Log(foundDeath
+                ? "[CharacterNetworkManager] Client override controller confirmed to include 'Death' clip ✅"
+                : "[CharacterNetworkManager] 'Death' clip missing from client override controller ⚠️");
+        }
+    }
 
     public override void OnNetworkDespawn()
     {
@@ -106,7 +108,7 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
 
     public void CheckHp(int oldValue, int newValue)
     {
-        Debug.Log($"[CharacterNetworkManager] CheckHp CALLED - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, OldHP: {oldValue}, NewHP: {newValue}, IsDead: {character.isDead.Value}");
+        Debug.Log($"[CharacterNetworkManager] CheckHp CALLED - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, OwnerClientId: {OwnerClientId}, OldHP: {oldValue}, NewHP: {newValue}, IsDead: {character.isDead.Value}");
 
         if (character.isDead.Value)
         {
@@ -114,9 +116,25 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             return;
         }
 
-        if (newValue <= 0)
+        // Only trigger if health *crossed* zero (prevents recursive calls)
+        if (oldValue > 0 && newValue <= 0)
         {
-            Debug.Log($"[CharacterNetworkManager] Health <= 0! Starting ProcessDeathEvent for {gameObject.name}");
+            Debug.Log($"[CharacterNetworkManager] Health <= 0! Setting isDead and starting ProcessDeathEvent for {gameObject.name}");
+            
+            // CRITICAL: Set isDead IMMEDIATELY to trigger network sync
+            if (character.IsOwner)
+            {
+                character.isDead.Value = true;
+                Debug.Log($"[CharacterNetworkManager] isDead.Value set to TRUE immediately for network sync (Owner: {OwnerClientId})");
+                
+                // BACKUP: Force sync via ClientRpc as a safety net
+                if (IsServer)
+                {
+                    Debug.Log($"[CharacterNetworkManager] Calling ForceDeathSyncClientRpc as backup");
+                    ForceDeathSyncClientRpc();
+                }
+            }
+            
             StartCoroutine(character.ProcessDeathEvent());
         }
 
@@ -127,6 +145,41 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
                 Debug.Log($"[CharacterNetworkManager] Over-healing detected, clamping to max health");
                 currentHealth.Value = maxHealth.Value;
             }
+        }
+    }
+
+    // BACKUP: ClientRpc to force death sync if NetworkVariable sync fails
+    [ClientRpc]
+    private void ForceDeathSyncClientRpc()
+    {
+        Debug.Log($"[CharacterNetworkManager] ForceDeathSyncClientRpc RECEIVED on ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, Character: {gameObject.name}");
+        
+        // Non-owners should receive this and trigger death animation
+        if (!character.IsOwner)
+        {
+            Debug.Log($"[CharacterNetworkManager] Non-owner client checking death status");
+            
+            // Wait a frame to let OnIsDeadChanged fire first
+            StartCoroutine(CheckDeathAfterFrame());
+        }
+    }
+
+    private System.Collections.IEnumerator CheckDeathAfterFrame()
+    {
+        // Wait one frame to allow OnIsDeadChanged callback to fire
+        yield return null;
+        
+        Debug.Log($"[CharacterNetworkManager] CheckDeathAfterFrame - isDead: {character.isDead.Value}, deathAnimationPlayed: {character.GetDeathAnimationPlayed()}");
+        
+        // Only force play if the character is dead but animation hasn't played
+        if (character.isDead.Value && !character.GetDeathAnimationPlayed())
+        {
+            Debug.Log($"[CharacterNetworkManager] NetworkVariable callback didn't fire, forcing death animation via backup ClientRpc");
+            character.PlayDeathAnimationDirect();
+        }
+        else if (character.GetDeathAnimationPlayed())
+        {
+            Debug.Log($"[CharacterNetworkManager] Death animation already handled by OnIsDeadChanged callback ✅");
         }
     }
     
@@ -155,7 +208,7 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
 
     public void PerformActionAnimationFromServer(string animationID, bool applyRootMotion)
     {
-        Debug.Log($"[CharacterNetworkManager] PerformActionAnimationFromServer - Animation: {animationID}, ApplyRootMotion: {applyRootMotion}, Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {character.IsOwner}");
+        Debug.Log($"[CharacterNetworkManager] PerformActionAnimationFromServer - Animation: {animationID}, ApplyRootMotion: {applyRootMotion}, Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {character.IsOwner}, OwnerClientId: {OwnerClientId}");
         
         if (character.animator == null)
         {
@@ -176,7 +229,8 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             character.isPerformingAction = false;
             character.canRotate = false;
             character.canMove = false;
-            character.animator.applyRootMotion = false;
+            
+            character.animator.applyRootMotion = applyRootMotion;
             
             // Get the Action Override layer index
             int actionLayerIndex = character.animator.GetLayerIndex("Action Override");
@@ -198,8 +252,6 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             
             Debug.Log($"[CharacterNetworkManager] Death animation Play() executed on layer {actionLayerIndex}");
             
-            character.applyRootMotion = applyRootMotion;
-            
             StartCoroutine(CheckAnimatorStateAfterFrame(animationID));
         }
         else
@@ -208,14 +260,10 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
         }
     }
 
-    // ============================
-    // REPLACED: more robust, retrying, layer-aware checker
-    // ============================
     private System.Collections.IEnumerator CheckAnimatorStateAfterFrame(string expectedAnimation)
     {
-        // We will attempt up to N retries (small waits) so clients have time to receive override data.
         const int maxAttempts = 6;
-        const float attemptDelay = 0.08f; // 80ms between attempts (total ~480ms max)
+        const float attemptDelay = 0.08f;
         int attempt = 0;
 
         if (character == null || character.animator == null)
@@ -224,7 +272,6 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             yield break;
         }
 
-        // Prefer checking the Action Override layer, fallback to layer 0 if missing
         int actionLayerIndex = character.animator.GetLayerIndex("Action Override");
         if (actionLayerIndex == -1)
         {
@@ -232,7 +279,6 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             Debug.LogWarning("[CharacterNetworkManager] 'Action Override' layer not found, defaulting to Base Layer (0)");
         }
 
-        // Retry loop: check state, then wait, then check again (gives clients time to load overrides)
         while (attempt < maxAttempts)
         {
             var state = character.animator.GetCurrentAnimatorStateInfo(actionLayerIndex);
@@ -249,18 +295,15 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
                 yield break;
             }
 
-            // small delay before next attempt
             attempt++;
             yield return new WaitForSeconds(attemptDelay);
         }
 
-        // After retries, still not matched — inspect controllers/overrides for presence of the clip (for debugging)
         RuntimeAnimatorController controller = character.animator.runtimeAnimatorController;
         bool foundClip = false;
 
         if (controller is AnimatorOverrideController overrideController)
         {
-            // Check base controller clips (the runtimeAnimatorController the override wraps)
             var baseController = overrideController.runtimeAnimatorController;
             if (baseController != null)
             {
@@ -274,19 +317,16 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
                 }
             }
 
-            // Check override mappings (the actual clips assigned by the override controller)
             var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
             overrideController.GetOverrides(overrides);
             foreach (var kv in overrides)
             {
-                // kv.Key = original clip, kv.Value = override clip (may be null)
                 if (kv.Value != null && kv.Value.name == expectedAnimation)
                 {
                     foundClip = true;
                     break;
                 }
 
-                // As a fallback, sometimes the original clip name matches
                 if (kv.Key != null && kv.Key.name == expectedAnimation)
                 {
                     foundClip = true;
@@ -294,9 +334,8 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
                 }
             }
         }
-        else
+        else if (controller != null)
         {
-            // Regular controller case
             foreach (var clip in controller.animationClips)
             {
                 if (clip != null && clip.name == expectedAnimation)
@@ -307,22 +346,15 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             }
         }
 
-        // Final log depending on whether the clip exists anywhere
         if (foundClip)
         {
-            // Clip exists in controller/overrides but the client didn't transition to it in time.
             Debug.LogWarning($"[CharacterNetworkManager] '{expectedAnimation}' animation exists in controller/overrides but was not observed playing (client delay or transition mismatch).");
         }
         else
         {
-            // Clip truly not found anywhere the script could inspect
             Debug.LogError($"[CharacterNetworkManager] '{expectedAnimation}' animation clip NOT FOUND even in override layers (checked 'Action Override' layer and controller)!");
         }
     }
-    // ============================
-    // END replaced method
-    // ============================
-
 
     [ServerRpc]
     public void NotifyTheServerOfAttackActionAnimationServerRpc(ulong clientID, string animationID, bool applyRootMotion)
@@ -404,8 +436,25 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
     {
         Debug.Log($"[CharacterNetworkManager] ProcessCharacterDamageFromServer - Looking for damaged character ID: {damagedCharacterID}");
 
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(damagedCharacterID))
+        {
+            Debug.LogError($"[CharacterNetworkManager] Damaged character ID {damagedCharacterID} not found in SpawnedObjects!");
+            return;
+        }
         CharacterManager damageCharcter = NetworkManager.Singleton.SpawnManager.SpawnedObjects[damagedCharacterID].gameObject.GetComponent<CharacterManager>();
+
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(characterCausingDamageID))
+        {
+            Debug.LogError($"[CharacterNetworkManager] Attacker character ID {characterCausingDamageID} not found in SpawnedObjects!");
+            return;
+        }
         CharacterManager characterCausingDamage = NetworkManager.Singleton.SpawnManager.SpawnedObjects[characterCausingDamageID].gameObject.GetComponent<CharacterManager>();
+
+        if (damageCharcter == null || characterCausingDamage == null)
+        {
+            Debug.LogError("[CharacterNetworkManager] Could not find CharacterManager on one of the spawned objects.");
+            return;
+        }
 
         Debug.Log($"[CharacterNetworkManager] Found characters - Damaged: {damageCharcter.gameObject.name}, Attacker: {characterCausingDamage.gameObject.name}");
 
@@ -415,6 +464,12 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
             return;
         }
 
+        if (WorldCharacterEffectsManager.instance == null)
+        {
+            Debug.LogError("[CharacterNetworkManager] WorldCharacterEffectsManager.instance is NULL!");
+            return;
+        }
+        
         TakeDamageEffect damageEffect = Instantiate(WorldCharacterEffectsManager.instance.takeDamageEffect);
 
         damageEffect.physicalDamage = physicalDamage;
@@ -432,35 +487,34 @@ private IEnumerator WaitAndEnsureAnimatorSetup()
     }
     
     private void EnsureAnimatorSetup()
-{
-    if (animator == null)
     {
-        animator = GetComponentInChildren<Animator>();
         if (animator == null)
         {
-            Debug.LogError("[CharacterNetworkManager] Animator not found on client!");
-            return;
+            animator = GetComponentInChildren<Animator>();
+            if (animator == null)
+            {
+                Debug.LogError("[CharacterNetworkManager] Animator not found on client!");
+                return;
+            }
         }
-    }
 
-    if (animator.runtimeAnimatorController == null)
-    {
-        animator.runtimeAnimatorController = defaultController;
-        Debug.Log("[CharacterNetworkManager] Default controller re-applied on client.");
-    }
-
-    if (actionOverrideController != null)
-    {
-        // Re-apply Action Override layer if missing or not set correctly
-        if (animator.runtimeAnimatorController != actionOverrideController)
+        if (animator.runtimeAnimatorController == null)
         {
-            animator.runtimeAnimatorController = actionOverrideController;
-            Debug.Log("[CharacterNetworkManager] Action Override controller re-applied for client ✅");
+            animator.runtimeAnimatorController = defaultController;
+            Debug.Log("[CharacterNetworkManager] Default controller re-applied on client.");
+        }
+
+        if (actionOverrideController != null)
+        {
+            if (animator.runtimeAnimatorController != actionOverrideController)
+            {
+                animator.runtimeAnimatorController = actionOverrideController;
+                Debug.Log("[CharacterNetworkManager] Action Override controller re-applied for client ✅");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[CharacterNetworkManager] Action Override controller reference is null!");
         }
     }
-    else
-    {
-        Debug.LogWarning("[CharacterNetworkManager] Action Override controller reference is null!");
-    }
-}
 }

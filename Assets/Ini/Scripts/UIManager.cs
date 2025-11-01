@@ -15,7 +15,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float fadeDuration = 1f;
 
     [Header("Canvas Groups")]
-    [SerializeField] private CanvasGroup splashUICG, loadingUICG, menuUICG, mainMenuUICG, charSelectionUICG, settingsUICG;
+    [SerializeField] private CanvasGroup splashUICG, loadingUICG, menuUICG, mainMenuUICG, charSelectionUICG, settingsUICG, gameModeUICG;
 
     [Header("Loading UI")]
     [SerializeField] private Slider progressBar;
@@ -30,8 +30,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider musicSlider, sfxSlider;
 
     private bool isMenu, isMainMenu;
-
-    private ColorAdjustments colorAdjustments;
 
     private void Start()
     {
@@ -94,13 +92,13 @@ public class UIManager : MonoBehaviour
         if (isMenu)
         {
             isMenu = false;
-            menuUICG.DOFade(1, fadeDuration);
+                menuUICG.DOFade(1, fadeDuration);
         }
 
         else if (isMainMenu)
         {
             isMainMenu = false;
-            mainMenuUICG.DOFade(1, fadeDuration);
+                mainMenuUICG.DOFade(1, fadeDuration);
         }
     }
     
@@ -137,7 +135,7 @@ public class UIManager : MonoBehaviour
         progressBar.value = 1f;
         progressText.text = "100%";
 
-        float briefWaitSimulation = Random.Range(0.3f, 0.8f);
+        float briefWaitSimulation = Random.Range(1f, 3);
         yield return new WaitForSeconds(briefWaitSimulation);
 
         yield return loadingUICG.DOFade(0, fadeDuration).WaitForCompletion();
@@ -152,6 +150,7 @@ public class UIManager : MonoBehaviour
             targetUI.blocksRaycasts = true;
         }
     }
+
     public void OpenMainMenu()
     {
         SetCanvasGroupActive(mainMenuUICG);
@@ -159,7 +158,38 @@ public class UIManager : MonoBehaviour
 
     public void OpenCharacterSelectionUI()
     {
-        SetCanvasGroupActive(charSelectionUICG);
+        StartCoroutine(openCharaterSelectionUI());
+    }
+
+    private IEnumerator openCharaterSelectionUI()
+    {
+        yield return UIScreens[10].DOScale (Vector2.zero, 0.25f).SetEase(Ease.OutBack);
+            SetCanvasGroupInActive(gameModeUICG);
+                SetCanvasGroupActive(charSelectionUICG);
+    }
+
+    public void loadGameSelectionUI()
+    {
+        StartCoroutine(loadOutToGameMode());
+    }
+
+    public IEnumerator loadOutToGameMode()
+    {
+        SetCanvasGroupInActive(mainMenuUICG);
+            yield return StartCoroutine(ShowLoadingUI(gameModeUICG));
+                UIScreens[10].DOScale (Vector2.one, 0.25f).SetEase(Ease.OutBack);
+    }
+
+    public void GameModeToMainMenu()
+    {
+        StartCoroutine(returnToGameMode());
+    }
+
+    public IEnumerator returnToGameMode()
+    {
+        yield return UIScreens[10].DOScale (Vector2.zero, 0.25f).SetEase(Ease.OutBack);
+            SetCanvasGroupInActive(gameModeUICG);
+                StartCoroutine(ShowLoadingUI(mainMenuUICG));
     }
 
     #region SETTINGS UI
@@ -170,9 +200,19 @@ public class UIManager : MonoBehaviour
 
     public void UndoSettingsUI()
     {
-        UIScreens[5].DOScale(Vector2.zero, 0.25f).SetEase(Ease.InBack);
+        StartCoroutine(undoSettings());
     }
 
+    public void closeGameModeUI()
+    {
+        SetCanvasGroupInActive(gameModeUICG);
+            StartCoroutine(ShowLoadingUI(mainMenuUICG));
+    }
+
+    private IEnumerator undoSettings()
+    {
+        yield return UIScreens[5].DOScale(Vector2.zero, 0.25f).SetEase(Ease.InBack);
+    }
     #endregion
 
     private void SetCanvasGroupActive(CanvasGroup tUI)
@@ -182,6 +222,15 @@ public class UIManager : MonoBehaviour
         tUI.DOFade(1, fadeDuration);
         tUI.interactable = true;
         tUI.blocksRaycasts = true;
+    }
+
+    private void SetCanvasGroupInActive(CanvasGroup tUI)
+    {
+        tUI.gameObject.SetActive(false);
+        tUI.alpha = 0;
+        tUI.DOFade(0, fadeDuration);
+        tUI.interactable = false;
+        tUI.blocksRaycasts = false;
     }
 
     #region AUDIO
@@ -206,7 +255,6 @@ public class UIManager : MonoBehaviour
         if (sfxAS != null && buttonClick != null)
             sfxAS.PlayOneShot(buttonClick, sfxAS.volume);
     }
-
     #endregion
 
     public void Quit() => Application.Quit();  // Quit application ASAP ASAP
@@ -216,5 +264,4 @@ public class UIManager : MonoBehaviour
         Debug.Log("Load Game!");
         // This will load the gameScene using scene manager
     }
-    
 }

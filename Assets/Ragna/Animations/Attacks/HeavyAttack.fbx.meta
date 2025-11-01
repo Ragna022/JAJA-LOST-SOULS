@@ -62,6 +62,13 @@ ModelImporter:
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
+      - time: 0.10383995
+        functionName: PlayForHarpoon
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       - time: 0.11018059
         functionName: DrainStaminaBasedOnAttack
         data: 
@@ -78,6 +85,34 @@ ModelImporter:
         messageOptions: 0
       - time: 0.44198895
         functionName: EnableCanDoCombo
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.20431328
+        functionName: PlayForHarpoon
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.27128264
+        functionName: PlayForHarpoon
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.34960273
+        functionName: PlayForHarpoon
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.10102157
+        functionName: PlayComboAttackGrunt
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
