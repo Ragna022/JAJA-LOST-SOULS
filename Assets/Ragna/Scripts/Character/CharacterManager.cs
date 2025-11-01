@@ -53,9 +53,15 @@ public class CharacterManager : NetworkBehaviour
 
     protected virtual void Update()
     {
-        animator.SetBool("isGrounded", isGrounded);
         if (IsOwner)
         {
+            // Only update animator parameters if we are NOT dead
+            if (!isDead.Value)
+            {
+                animator.SetBool("isGrounded", isGrounded);
+            }
+
+            // Always update network position for ragdoll sync
             characterNetworkManager.networkPosition.Value = transform.position;
             characterNetworkManager.networkRotation.Value = transform.rotation;
         }
@@ -102,7 +108,7 @@ public class CharacterManager : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        Debug.Log($"[CharacterManager] OnNetworkSpawn - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, NetworkObjectId: {NetworkObjectId}, isDead: {isDead.Value}");
+        Debug.Log($"[CharacterManager] OnNetworkSpawn - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, OwnerClientId: {OwnerClientId}, NetworkObjectId: {NetworkObjectId}, isDead: {isDead.Value}");
 
         // Subscribe to isDead changes for sync
         isDead.OnValueChanged += OnIsDeadChanged;
@@ -113,7 +119,7 @@ public class CharacterManager : NetworkBehaviour
         if (isDead.Value && !deathAnimationPlayed)
         {
             Debug.Log($"[CharacterManager] Character spawned already dead, playing death animation immediately");
-            PlayDeathAnimation();
+            Invoke(nameof(PlayDeathAnimation), 0.1f);
         }
     }
 
@@ -130,42 +136,67 @@ public class CharacterManager : NetworkBehaviour
     // Callback to play death animation on ALL clients when isDead syncs
     private void OnIsDeadChanged(bool oldValue, bool newValue)
     {
-        Debug.Log($"[CharacterManager] OnIsDeadChanged TRIGGERED - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId}, OldValue: {oldValue}, NewValue: {newValue}");
+        Debug.Log($"[CharacterManager] OnIsDeadChanged TRIGGERED - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, OwnerClientId: {OwnerClientId}, NetworkObjectId: {NetworkObjectId}, OldValue: {oldValue}, NewValue: {newValue}, deathAnimationPlayed: {deathAnimationPlayed}");
         
+        Debug.Log($"[CharacterManager] WHO AM I? LocalClient={NetworkManager.Singleton.LocalClientId}, CharacterOwner={OwnerClientId}, IsLocalPlayer={IsOwner}");
+
+        if (animator != null)
+        {
+            animator.SetBool("isDead", newValue);
+            Debug.Log($"[CharacterManager] Animator parameter 'isDead' set to: {newValue}");
+        }
+     
         if (newValue && !deathAnimationPlayed)
         {
-            Debug.Log($"[CharacterManager] isDead changed to TRUE! Playing death animation for {gameObject.name}");
+            Debug.Log($"[CharacterManager] isDead changed to TRUE! Playing death animation for {gameObject.name} (deathAnimationPlayed was: {deathAnimationPlayed})");
             PlayDeathAnimation();
+        }
+        else if (newValue && deathAnimationPlayed)
+        {
+            Debug.Log($"[CharacterManager] isDead changed to TRUE but death animation already played, skipping");
         }
     }
 
     private void PlayDeathAnimation()
-{
-    if (deathAnimationPlayed)
     {
-        Debug.Log($"[CharacterManager] Death animation already played for {gameObject.name}, skipping");
-        return;
+        if (deathAnimationPlayed)
+        {
+            Debug.Log($"[CharacterManager] Death animation already played for {gameObject.name}, skipping");
+            return;
+        }
+
+        deathAnimationPlayed = true;
+        Debug.Log($"[CharacterManager] PlayDeathAnimation called for {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+        
+        // SIMPLE: Just play the death animation
+        characterNetworkManager.PerformActionAnimationFromServer("Death", true);
     }
 
-    deathAnimationPlayed = true;
-    Debug.Log($"[CharacterManager] PlayDeathAnimation called for {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
-    
-    // SIMPLE: Just play the death animation
-    characterNetworkManager.PerformActionAnimationFromServer("Death", true);
-}
+    // Public method for forced death animation (called by ClientRpc backup)
+    public void PlayDeathAnimationDirect()
+    {
+        Debug.Log($"[CharacterManager] PlayDeathAnimationDirect called (forced via ClientRpc) for {gameObject.name}");
+        PlayDeathAnimation();
+    }
+
+    // Public getter for death animation status (used by ClientRpc backup)
+    public bool GetDeathAnimationPlayed()
+    {
+        return deathAnimationPlayed;
+    }
 
     public virtual IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
     {
-        Debug.Log($"[CharacterManager] ProcessDeathEvent STARTED - Character: {gameObject.name}, ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId}");
+        Debug.Log($"[CharacterManager] ProcessDeathEvent STARTED - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, OwnerClientId: {OwnerClientId}, NetworkObjectId: {NetworkObjectId}");
         
         if (IsOwner)
         {
-            Debug.Log($"[CharacterManager] Setting health to 0 and isDead to true for {gameObject.name}");
-            
+            Debug.Log($"[CharacterManager] Setting health to 0 for {gameObject.name}");
             characterNetworkManager.currentHealth.Value = 0;
-            isDead.Value = true;
-
-            Debug.Log($"[CharacterManager] isDead.Value set to: {isDead.Value}");
+            
+            // isDead.Value is already set in CheckHp before this coroutine starts
+            
+            Debug.Log($"[CharacterManager] isDead.Value: {isDead.Value}");
         }
         else
         {
@@ -200,7 +231,10 @@ public class CharacterManager : NetworkBehaviour
         }
 
         // ADDS OUR CHARACTER CONTROLLER COLLIDER TO THE LIST THAT WILL BE USED TO IGNORE COLLISION
-        ignoreColliders.Add(characterControllerCollider);
+        if (characterControllerCollider != null)
+        {
+            ignoreColliders.Add(characterControllerCollider);
+        }
 
         // GOES THROUGH EVERY COLLIDER ON THE LIST, AND IGNORE COLLISIONS WITH EACH OTHER
         foreach (var collider in ignoreColliders)
@@ -211,5 +245,4 @@ public class CharacterManager : NetworkBehaviour
             }
         }
     }
-    
 }

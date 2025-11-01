@@ -41,22 +41,35 @@ public class PlayerManager : CharacterManager
     }
 
     protected override void Update()
+{
+    base.Update(); // Calls CharacterManager.Update()
+
+    if (!IsOwner)
+        return;
+
+    // ✅ If dead, don't run movement/stamina logic
+    if (isDead.Value)
     {
-        base.Update();
-
-        if (!IsOwner)
-            return;
-
-        playerLocomotionManager.HandleAllMovement();
-        playerStatsManager.RegenerateStamina();
-        DebugMenu();
+        DebugMenu(); // Keep respawn debug
+        return;      // EXIT EARLY
     }
+
+    playerLocomotionManager.HandleAllMovement(); // This sets MoveAmount and other params
+    playerStatsManager.RegenerateStamina();
+    DebugMenu();
+}
 
     protected override void LateUpdate()
     {
         if (!IsOwner)
             return;
 
+        // ✅ ================== THE FIX ==================
+        // We should probably stop the camera from moving too
+        if (isDead.Value)
+            return;
+        // ✅ ================= END OF FIX =================
+        
         base.LateUpdate();
 
         PlayerCamera.instance.HandleAllCameraActions();
@@ -102,8 +115,8 @@ public class PlayerManager : CharacterManager
 
             if (saveManager == null)
             {
-                 Debug.LogWarning($"[PlayerManager] WorldSaveGameManager not found in scene. Using default values.");
-                 SetDefaultPlayerValues();
+                Debug.LogWarning($"[PlayerManager] WorldSaveGameManager not found in scene. Using default values.");
+                SetDefaultPlayerValues();
             }
             else
             {
@@ -141,8 +154,8 @@ public class PlayerManager : CharacterManager
                     }
                     else
                     {
-                         Debug.LogError($"[PlayerManager] Could not find lobby data for client {NetworkManager.Singleton.LocalClientId}! Using defaults.");
-                         SetDefaultPlayerValues();
+                        Debug.LogError($"[PlayerManager] Could not find lobby data for client {NetworkManager.Singleton.LocalClientId}! Using defaults.");
+                        SetDefaultPlayerValues();
                     }
                 }
                 
@@ -397,11 +410,14 @@ public class PlayerManager : CharacterManager
         currentCharacterData.endurance = playerNetworkManager.endurance.Value;
     }
 
+    // Inside PlayerManager.cs
+
     public void LoadGameDataFromCurrentCharacterData(ref CharacterSaveData currentCharacterData)
     {
         if (playerNetworkManager == null || playerStatsManager == null)
         {
             Debug.LogError("[PlayerManager] LoadGameData: Critical components are NULL!");
+            SetDefaultPlayerValues(); // Try to set defaults as a fallback
             return;
         }
 
@@ -414,47 +430,50 @@ public class PlayerManager : CharacterManager
 
         string charName = string.IsNullOrEmpty(currentCharacterData.characterName) ? "Player" : currentCharacterData.characterName;
         playerNetworkManager.characterName.Value = new FixedString64Bytes(charName);
-        
-        Vector3 myPosition = new Vector3(currentCharacterData.xPosition, currentCharacterData.yPosition, currentCharacterData.zPosition);
-        transform.position = myPosition;
+
+        // --- THIS IS THE FIX ---
+        // REMOVE OR COMMENT OUT the lines that set the position here.
+        // LobbyManager handles the initial spawn position. Only load position
+        // from save data if you are explicitly loading a saved game session,
+        // not during the initial spawn event.
+
+        // Vector3 myPosition = new Vector3(currentCharacterData.xPosition, currentCharacterData.yPosition, currentCharacterData.zPosition);
+        // transform.position = myPosition;
+        // --- END FIX ---
+
 
         int vitalityToSet = currentCharacterData.vitality > 0 ? currentCharacterData.vitality : DefaultVitality;
         int enduranceToSet = currentCharacterData.endurance > 0 ? currentCharacterData.endurance : DefaultEndurance;
         playerNetworkManager.vitality.Value = vitalityToSet;
         playerNetworkManager.endurance.Value = enduranceToSet;
 
+        // Note: maxHealth calculation uses vitality, which is now set.
         playerNetworkManager.maxHealth.Value = playerStatsManager.CalculateHealthBasedOnVitalityLevel(playerNetworkManager.vitality.Value);
-        
+
         float maxStamina = playerStatsManager.CalculateStaminaBasedOnEnduranceLevel(playerNetworkManager.endurance.Value);
         if (float.IsNaN(maxStamina) || float.IsInfinity(maxStamina))
         {
             Debug.LogWarning($"[PlayerManager] Loaded Max Stamina was invalid. Defaulting to {DefaultStamina}.");
             maxStamina = DefaultStamina;
         }
-        
-        // --- FIX for float/int: maxStamina is a float, but the network variable expects an int, so cast explicitly ---
         playerNetworkManager.maxStamina.Value = (int)maxStamina;
 
 
         if (PlayerUIManager.instance != null && PlayerUIManager.instance.playerUIHudManager != null)
         {
+            // Update UI Max values *after* NetworkVariables are set
             PlayerUIManager.instance.playerUIHudManager.SetMaxHealthValue(playerNetworkManager.maxHealth.Value);
             PlayerUIManager.instance.playerUIHudManager.SetMaxStaminaValue(playerNetworkManager.maxStamina.Value);
         }
 
-        // --- FIX for float/int: currentHealth is int, maxHealth is float ---
         int healthToSet = (int)Mathf.Clamp(currentCharacterData.currentHealth, 0, (int)playerNetworkManager.maxHealth.Value);
-        
-        if (healthToSet <= 0)
-        {
-            healthToSet = (int)playerNetworkManager.maxHealth.Value; // Cast here
-        }
+        if (healthToSet <= 0) healthToSet = (int)playerNetworkManager.maxHealth.Value;
         playerNetworkManager.currentHealth.Value = healthToSet;
-        // --- END FIX ---
 
         float staminaToSet = Mathf.Clamp(currentCharacterData.currentStamina, 0f, playerNetworkManager.maxStamina.Value);
+        // Ensure staminaToSet uses the *int* value of maxStamina for comparison if currentStamina is also int
         if (staminaToSet <= 0f) staminaToSet = playerNetworkManager.maxStamina.Value;
-        playerNetworkManager.currentStamina.Value = staminaToSet;
+        playerNetworkManager.currentStamina.Value = staminaToSet; // Assuming currentStamina is float
     }
 
     public void LoadOtherPlayerCharacterWhenJoiningServer()
