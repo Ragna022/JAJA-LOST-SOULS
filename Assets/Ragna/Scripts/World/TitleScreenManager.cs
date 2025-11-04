@@ -253,7 +253,7 @@ public class TitleScreenManager : MonoBehaviour
         // 1. Check NetworkManager status
         if (NetworkManager.Singleton == null)
         {
-            Debug.LogError("❌ NetworkManager.Singleton is NULL!");
+            //Debug.LogError("❌ NetworkManager.Singleton is NULL!");
             return;
         }
         else
@@ -864,7 +864,7 @@ public class TitleScreenManager : MonoBehaviour
 
                 // NOW load the lobby scene using NetworkSceneManager
                 Debug.Log("📥 HOST: Loading lobby scene...");
-                var status = NetworkManager.Singleton.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
+                var status = NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
                 if (status != SceneEventProgressStatus.Started)
                 {
                     Debug.LogError($"❌ Failed to load LobbyScene: {status}");
@@ -888,7 +888,7 @@ public class TitleScreenManager : MonoBehaviour
             // Subscribe to scene load event
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnHostSceneLoadCompleted;
             
-            var status = NetworkManager.Singleton.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
+            var status = NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
             if (status != SceneEventProgressStatus.Started)
             {
                 Debug.LogError($"❌ Failed to load LobbyScene: {status}");

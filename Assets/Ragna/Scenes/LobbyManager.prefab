@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3429692525
+  GlobalObjectIdHash: 3244775224
   InScenePlacedSourceGlobalObjectIdHash: 3429692525
   DeferredDespawnTick: 0
   Ownership: 1
@@ -79,7 +79,7 @@ MonoBehaviour:
   leaveButton: {fileID: 0}
   readyButtonText: {fileID: 0}
   playerListContainer: {fileID: 0}
-  playerSlotPrefab: {fileID: 405891499230812570, guid: 5af366ff95322b84f95b1852e6cc4e9b, type: 3}
+  playerSlotPrefab: {fileID: 54844845814494658, guid: d0c8f1c95a5980c4bb939ca37ae29248, type: 3}
   currentSpawnPattern: 3
   spawnAreaCenter: {x: 3.84, y: -3.03, z: -1.650868}
   circleRadius: 5

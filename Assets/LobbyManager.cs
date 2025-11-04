@@ -1,5 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
+using Unity.Netcode;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -310,7 +312,7 @@ public class LobbyManager : NetworkBehaviour
         if (playerUI != null)
         {
             bool isHost = playerData.clientId == NetworkManager.ServerClientId;
-            playerUI.SetPlayerData(playerData.playerName.ToString(), playerData.isReady, isHost);
+            playerUI.SetPlayerData(playerData.playerName.ToString(), playerData.isReady, isHost, playerData.characterPrefabIndex);
         }
         else
         {
@@ -322,15 +324,8 @@ public class LobbyManager : NetworkBehaviour
     {
         if (statusText != null)
         {
-            string status = $"🎮 MULTIPLAYER LOBBY\n";
-            status += $"Players: {lobbyPlayers.Count}/4\n\n";
-
-            foreach (var player in lobbyPlayers)
-            {
-                string readyStatus = player.isReady ? "✅ READY" : "❌ NOT READY";
-                string hostIndicator = player.clientId == NetworkManager.ServerClientId ? " 👑" : "";
-                status += $"{player.playerName}{hostIndicator}\n{readyStatus}\n\n";
-            }
+            string status = $"";
+            status += $"Players: {lobbyPlayers.Count}/4";
 
             statusText.text = status;
         }
