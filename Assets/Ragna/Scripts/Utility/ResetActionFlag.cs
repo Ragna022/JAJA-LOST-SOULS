@@ -17,15 +17,6 @@ public class ResetActionFlag : StateMachineBehaviour
             }
         }
 
-        // ✅ ================== THE FIX ==================
-        // Do NOT reset flags if the character is already dead!
-        // Check the NetworkVariable directly.
-        if (character.isDead.Value)
-        {
-            return; // Exit early, don't reset anything
-        }
-        // ✅ ================= END OF FIX =================
-
         // THIS IS CALLED WHEN AN ACTION ENDS, AND THE STATE RETURNS TO "EMPTY"
         // (Only run if character is NOT dead)
         character.isPerformingAction = false;

@@ -44,16 +44,16 @@ public class TakeDamageEffect : InstantCharacterEffects
         base.ProcessEffect(character);
 
         // IF THE CHARACTER IS DEAD, DO NOT PROCESS ANY ADDITIONAL DAMAGE EFFECTS
-        if (character.isDead.Value)
+        if (character.characterNetworkManager.isDead.Value)
             return;
-
-        // CHECK FOR "INVULNERABILITY"
-        // CALCULATE DAMAGE
-        CalculateDamage(character);
 
         // CHECK WHICH DIRECTIONAL DAMAGE CAMME FROM
         // PLAY A DAMAGE ANIAMTION
         PlayDirectionalBasedDamageAnimation(character);
+
+        // CALCULATE DAMAGE
+        CalculateDamage(character);
+
         // CHECK FOR BUILD UPS (POISON, BLEED ETC)
         // PLAY DAMAGE SOUND FX
         //PlayDamageSFX(character);
@@ -84,7 +84,9 @@ public class TakeDamageEffect : InstantCharacterEffects
 
         Debug.Log("FINAL DAMAGE GIVEN: " + finalDamageDealt);
 
-        character.characterNetworkManager.currentHealth.Value -= finalDamageDealt;
+        int currentHealth = character.characterNetworkManager.currentHealth.Value;
+        int newHealth = currentHealth - finalDamageDealt;
+        character.characterNetworkManager.currentHealth.Value = Mathf.Max(0, newHealth);
 
         // CALCULATE POISE DAMAGE TO DETERMINE IF THE CHARACTER WILL BE STUNNED 
     }

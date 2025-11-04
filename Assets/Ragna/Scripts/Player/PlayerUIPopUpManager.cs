@@ -4,32 +4,41 @@ using UnityEngine;
 
 public class PlayerUIPopUpManager : MonoBehaviour
 {
-    [Header("You Died Pop uP")]
-    [SerializeField] GameObject youDiedPopUpGameObject;
-    [SerializeField] TextMeshProUGUI youDiedPopUpBackgroundText;
-    [SerializeField] TextMeshProUGUI youDiedPopUpText;
-    [SerializeField] CanvasGroup youDiedPopUpCanvasGroup; // ALLOWS USTO SET THE ALPHA TO FADE OVERTIME
+    public PlayerUIPopUpManager playerUIPopUpManager;
+    
+    [Header("Defeat Panel (You Died)")]
+    [SerializeField] GameObject defeatPanelGameObject;
+    [SerializeField] TextMeshProUGUI defeatBackgroundText;
+    [SerializeField] TextMeshProUGUI defeatText;
+    [SerializeField] CanvasGroup defeatPanelCanvasGroup;
 
-    public void SendYouDiedPopUp()
+    [Header("Victory Panel")]
+    [SerializeField] GameObject victoryPanelGameObject;
+    [SerializeField] TextMeshProUGUI victoryBackgroundText;
+    [SerializeField] TextMeshProUGUI victoryText;
+    [SerializeField] CanvasGroup victoryPanelCanvasGroup;
+
+    public void SendDefeatPanel()
     {
-        //ACTIVATE POST PROCESSING EFFECTS
+        defeatPanelGameObject.SetActive(true);
+        defeatBackgroundText.characterSpacing = 0;
+        StartCoroutine(StretchPopUpTextOverTime(defeatBackgroundText, 8, 19f));
+        StartCoroutine(FadeInPopUpOverTime(defeatPanelCanvasGroup, 5));
+    }
 
-        // STRETCH OUT THE POP UP
-        youDiedPopUpGameObject.SetActive(true);
-        youDiedPopUpBackgroundText.characterSpacing = 0;
-        StartCoroutine(StretchPopUpTextOverTime(youDiedPopUpBackgroundText, 8, 19f));
-
-        // FADE IN THE POP UP
-        StartCoroutine(FadeInPopUpOverTime(youDiedPopUpCanvasGroup, 5));
-        // WAIT, THEN FADE OUT THE UP
-        StartCoroutine(waitThenFadeOutPopUpOverTime(youDiedPopUpCanvasGroup, 2, 5));
+    public void SendVictoryPanel()
+    {
+        victoryPanelGameObject.SetActive(true);
+        victoryBackgroundText.characterSpacing = 0;
+        StartCoroutine(StretchPopUpTextOverTime(victoryBackgroundText, 8, 19f));
+        StartCoroutine(FadeInPopUpOverTime(victoryPanelCanvasGroup, 5));
     }
 
     private IEnumerator StretchPopUpTextOverTime(TextMeshProUGUI text, float duration, float stretchAmount)
     {
         if (duration > 0f)
         {
-            text.characterSpacing = 0; //   RESETS OUR CHARACTER SPACING
+            text.characterSpacing = 0;
             float timer = 0;
 
             yield return null;
@@ -38,7 +47,6 @@ public class PlayerUIPopUpManager : MonoBehaviour
             {
                 timer = timer + Time.deltaTime;
                 text.characterSpacing = Mathf.Lerp(text.characterSpacing, stretchAmount, duration * (Time.deltaTime / 20));
-
                 yield return null;
             }
         }
@@ -57,41 +65,11 @@ public class PlayerUIPopUpManager : MonoBehaviour
             {
                 timer = timer + Time.deltaTime;
                 canvas.alpha = Mathf.Lerp(canvas.alpha, 1, duration * Time.deltaTime);
-
                 yield return null;
             }
         }
 
         canvas.alpha = 1;
-
-        yield return null;
-    }
-
-    private IEnumerator waitThenFadeOutPopUpOverTime(CanvasGroup canvas, float duration, float delay)
-    {
-        if (duration > 0)
-        {
-            while (delay > 0)
-            {
-                delay = delay - Time.deltaTime;
-                yield return null;
-            }
-            canvas.alpha = 1;
-            float timer = 0;
-
-            yield return null;
-
-            while (timer < duration)
-            {
-                timer = timer + Time.deltaTime;
-                canvas.alpha = Mathf.Lerp(canvas.alpha, 0, duration * Time.deltaTime);
-
-                yield return null;
-            }
-        }
-
-        canvas.alpha = 0;
-
         yield return null;
     }
 }

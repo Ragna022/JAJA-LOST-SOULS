@@ -41,34 +41,21 @@ public class PlayerManager : CharacterManager
     }
 
     protected override void Update()
-{
-    base.Update(); // Calls CharacterManager.Update()
-
-    if (!IsOwner)
-        return;
-
-    // ✅ If dead, don't run movement/stamina logic
-    if (isDead.Value)
     {
-        DebugMenu(); // Keep respawn debug
-        return;      // EXIT EARLY
-    }
+        base.Update(); // Calls CharacterManager.Update()
 
-    playerLocomotionManager.HandleAllMovement(); // This sets MoveAmount and other params
-    playerStatsManager.RegenerateStamina();
-    DebugMenu();
-}
+        if (!IsOwner)
+            return;
+
+        playerLocomotionManager.HandleAllMovement(); // This sets MoveAmount and other params
+        playerStatsManager.RegenerateStamina();
+        DebugMenu();
+    }
 
     protected override void LateUpdate()
     {
         if (!IsOwner)
             return;
-
-        // ✅ ================== THE FIX ==================
-        // We should probably stop the camera from moving too
-        if (isDead.Value)
-            return;
-        // ✅ ================= END OF FIX =================
         
         base.LateUpdate();
 
@@ -335,60 +322,6 @@ public class PlayerManager : CharacterManager
         }
     }
 
-    public override IEnumerator ProcessDeathEvent(bool manuallySelectDeathAnimation = false)
-    {
-        Debug.Log($"[PlayerManager] ProcessDeathEvent STARTED - ClientID: {OwnerClientId}, IsOwner: {IsOwner}");
-        
-        if (IsOwner)
-        {
-            Debug.Log($"[PlayerManager] Owner processing death - showing UI popup");
-            
-            if (PlayerUIManager.instance != null && PlayerUIManager.instance.playerUIPopUpManager != null)
-            {
-                PlayerUIManager.instance.playerUIPopUpManager.SendYouDiedPopUp();
-            }
-
-            if (characterNetworkManager != null)
-            {
-                characterNetworkManager.currentHealth.Value = 0;
-            }
-            isDead.Value = true;
-            
-            Debug.Log($"[PlayerManager] Set currentHealth to 0 and isDead to true");
-        }
-        else
-        {
-            Debug.Log($"[PlayerManager] Non-owner in ProcessDeathEvent, waiting for sync");
-        }
-
-        yield return new WaitForSeconds(5);
-
-        Debug.Log($"[PlayerManager] ProcessDeathEvent finished 5 second wait");
-    }
-
-    public override void ReviveCharacter()
-    {
-        base.ReviveCharacter();
-        
-        Debug.Log($"[PlayerManager] ReviveCharacter called - IsOwner: {IsOwner}");
-        
-        if (IsOwner && playerNetworkManager != null)
-        {
-            // --- FIX for float/int: currentHealth is int, maxHealth is float ---
-            playerNetworkManager.currentHealth.Value = (int)playerNetworkManager.maxHealth.Value; 
-            playerNetworkManager.currentStamina.Value = playerNetworkManager.maxStamina.Value;
-
-            if (playerAnimatorManager != null)
-            {
-                playerAnimatorManager.PlayTargetActionAnimation("Empty", false);
-            }
-
-            isDead.Value = false;
-            
-            Debug.Log($"[PlayerManager] Character revived - isDead set to false");
-        }
-    }
-
     public void SaveGameDataToCurrentCharacterData(ref CharacterSaveData currentCharacterData)
     {
         if (playerNetworkManager == null) return;
@@ -486,7 +419,6 @@ public class PlayerManager : CharacterManager
         if (respawnCharacter)
         {
             respawnCharacter = false;
-            ReviveCharacter();
         }
 
         if(SwitchRightWeapon)

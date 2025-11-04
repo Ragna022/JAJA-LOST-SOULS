@@ -29,6 +29,7 @@ public class CharacterNetworkManager : NetworkBehaviour
     public NetworkVariable<bool> isSprinting = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> isChargingAttack = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<bool> isDead = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     [Header("Resources")]
     public NetworkVariable<int> currentHealth = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -63,9 +64,8 @@ public class CharacterNetworkManager : NetworkBehaviour
             StartCoroutine(WaitAndEnsureAnimatorSetup());
         }
 
-        currentHealth.OnValueChanged += CheckHp;
-
-        Debug.Log($"[CharacterNetworkManager] Subscribed to currentHealth.OnValueChanged for {gameObject.name}");
+        currentHealth.OnValueChanged += OnHealthChanged;
+        isDead.OnValueChanged += OnDeathStateChanged;
     }
 
     private IEnumerator WaitAndEnsureAnimatorSetup()
@@ -75,114 +75,73 @@ public class CharacterNetworkManager : NetworkBehaviour
         yield return null;
 
         EnsureAnimatorSetup();
-
-        // Confirm that the override contains the "Death" clip (for debugging)
-        if (actionOverrideController != null)
-        {
-            bool foundDeath = false;
-            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(actionOverrideController.overridesCount);
-            actionOverrideController.GetOverrides(overrides);
-            foreach (var pair in overrides)
-            {
-                if (pair.Value != null && pair.Value.name == "Death")
-                {
-                    foundDeath = true;
-                    break;
-                }
-            }
-
-            Debug.Log(foundDeath
-                ? "[CharacterNetworkManager] Client override controller confirmed to include 'Death' clip ✅"
-                : "[CharacterNetworkManager] 'Death' clip missing from client override controller ⚠️");
-        }
     }
 
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-        
-        Debug.Log($"[CharacterNetworkManager] OnNetworkDespawn - Unsubscribing for {gameObject.name}");
-        
-        currentHealth.OnValueChanged -= CheckHp;
+
+        currentHealth.OnValueChanged -= OnHealthChanged;
+        isDead.OnValueChanged -= OnDeathStateChanged;
     }
 
-    public void CheckHp(int oldValue, int newValue)
+    private void OnHealthChanged(int oldValue, int newValue)
     {
-        Debug.Log($"[CharacterNetworkManager] CheckHp CALLED - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, OwnerClientId: {OwnerClientId}, OldHP: {oldValue}, NewHP: {newValue}, IsDead: {character.isDead.Value}");
+        Debug.Log($"[CharacterNetworkManager] Health changed from {oldValue} to {newValue} for {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
 
-        if (character.isDead.Value)
+        // NEW: Detect death cross-over & set isDead (owner only)
+        if (oldValue > 0 && newValue <= 0 && IsOwner)
         {
-            Debug.Log($"[CharacterNetworkManager] Character already dead, returning early");
+            Debug.Log($"[CharacterNetworkManager] *** DEATH DETECTED *** Setting isDead=true for {gameObject.name} (Owner)");
+            isDead.Value = true;  // Syncs to ALL clients
+            currentHealth.Value = 0;  // Clamp to 0
             return;
         }
 
-        // Only trigger if health *crossed* zero (prevents recursive calls)
-        if (oldValue > 0 && newValue <= 0)
+        // Existing clamp (owner only)
+        if (IsOwner && newValue > maxHealth.Value)
         {
-            Debug.Log($"[CharacterNetworkManager] Health <= 0! Setting isDead and starting ProcessDeathEvent for {gameObject.name}");
-            
-            // CRITICAL: Set isDead IMMEDIATELY to trigger network sync
-            if (character.IsOwner)
-            {
-                character.isDead.Value = true;
-                Debug.Log($"[CharacterNetworkManager] isDead.Value set to TRUE immediately for network sync (Owner: {OwnerClientId})");
-                
-                // BACKUP: Force sync via ClientRpc as a safety net
-                if (IsServer)
-                {
-                    Debug.Log($"[CharacterNetworkManager] Calling ForceDeathSyncClientRpc as backup");
-                    ForceDeathSyncClientRpc();
-                }
-            }
-            
-            StartCoroutine(character.ProcessDeathEvent());
-        }
-
-        if (character.IsOwner)
-        {
-            if (currentHealth.Value > maxHealth.Value)
-            {
-                Debug.Log($"[CharacterNetworkManager] Over-healing detected, clamping to max health");
-                currentHealth.Value = maxHealth.Value;
-            }
+            currentHealth.Value = maxHealth.Value;
         }
     }
 
-    // BACKUP: ClientRpc to force death sync if NetworkVariable sync fails
-    [ClientRpc]
-    private void ForceDeathSyncClientRpc()
+    // NEW: Callback fires on ALL clients when isDead changes
+    private void OnDeathStateChanged(bool oldValue, bool newValue)
     {
-        Debug.Log($"[CharacterNetworkManager] ForceDeathSyncClientRpc RECEIVED on ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, Character: {gameObject.name}");
-        
-        // Non-owners should receive this and trigger death animation
-        if (!character.IsOwner)
-        {
-            Debug.Log($"[CharacterNetworkManager] Non-owner client checking death status");
-            
-            // Wait a frame to let OnIsDeadChanged fire first
-            StartCoroutine(CheckDeathAfterFrame());
-        }
+        if (!newValue) return;  // Only handle -> true
+
+        Debug.Log($"[CharacterNetworkManager] isDead=true! Playing DEATH animation on {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
+
+        // Play locally on EVERY client (incl owner)
+        PlayDeathAnimation();
     }
 
-    private System.Collections.IEnumerator CheckDeathAfterFrame()
+    private void PlayDeathAnimation()
     {
-        // Wait one frame to allow OnIsDeadChanged callback to fire
-        yield return null;
-        
-        Debug.Log($"[CharacterNetworkManager] CheckDeathAfterFrame - isDead: {character.isDead.Value}, deathAnimationPlayed: {character.GetDeathAnimationPlayed()}");
-        
-        // Only force play if the character is dead but animation hasn't played
-        if (character.isDead.Value && !character.GetDeathAnimationPlayed())
+        if (character.animator == null)
         {
-            Debug.Log($"[CharacterNetworkManager] NetworkVariable callback didn't fire, forcing death animation via backup ClientRpc");
-            character.PlayDeathAnimationDirect();
+            Debug.LogError($"[CharacterNetworkManager] Animator NULL in PlayDeathAnimation for {gameObject.name}!");
+            return;
         }
-        else if (character.GetDeathAnimationPlayed())
-        {
-            Debug.Log($"[CharacterNetworkManager] Death animation already handled by OnIsDeadChanged callback ✅");
-        }
+
+        // Your existing logic (stop actions, root motion, force play)
+        character.isPerformingAction = false;  // Or true if death locks
+        character.canRotate = false;
+        character.canMove = false;
+        character.applyRootMotion = true;
+
+        // Force play "Death" (adapt your layer/override if needed)
+        int deathHash = Animator.StringToHash("Death");
+        int actionLayer = character.animator.GetLayerIndex("Action Override");
+        if (actionLayer == -1) actionLayer = 0;
+
+        character.animator.Rebind();
+        character.animator.Update(0f);
+        character.animator.Play(deathHash, actionLayer, 0f);
+
+        Debug.Log($"[CharacterNetworkManager] Death animation PLAYED on layer {actionLayer} for {gameObject.name}");
     }
-    
+
     public void OnIsChargingAttackChanged(bool oldStatus, bool newStatus)
     {
         character.animator.SetBool("IsChargingAttack", isChargingAttack.Value);
@@ -221,139 +180,7 @@ public class CharacterNetworkManager : NetworkBehaviour
         
         character.applyRootMotion = applyRootMotion;
         
-        if (animationID == "Death")
-        {
-            Debug.Log($"[CharacterNetworkManager] FORCING DEATH ANIMATION with Play() for {(character.IsOwner ? "OWNER" : "NON-OWNER")}");
-            
-            // Critical: Stop all ongoing actions and animations
-            character.isPerformingAction = false;
-            character.canRotate = false;
-            character.canMove = false;
-            
-            character.animator.applyRootMotion = applyRootMotion;
-            
-            // Get the Action Override layer index
-            int actionLayerIndex = character.animator.GetLayerIndex("Action Override");
-            if (actionLayerIndex == -1)
-            {
-                actionLayerIndex = 0;
-                Debug.LogWarning("[CharacterNetworkManager] Action Override layer not found, using Base Layer");
-            }
-            
-            int deathHash = Animator.StringToHash("Death");
-            Debug.Log($"[CharacterNetworkManager] Death state hash: {deathHash}, Target Layer: {actionLayerIndex}");
-            
-            // Force animator to reset and play death immediately
-            character.animator.Rebind();
-            character.animator.Update(0f);
-            
-            // Play on the correct layer
-            character.animator.Play(deathHash, actionLayerIndex, 0f);
-            
-            Debug.Log($"[CharacterNetworkManager] Death animation Play() executed on layer {actionLayerIndex}");
-            
-            StartCoroutine(CheckAnimatorStateAfterFrame(animationID));
-        }
-        else
-        {
-            character.animator.CrossFade(animationID, 0.2f);
-        }
-    }
-
-    private System.Collections.IEnumerator CheckAnimatorStateAfterFrame(string expectedAnimation)
-    {
-        const int maxAttempts = 6;
-        const float attemptDelay = 0.08f;
-        int attempt = 0;
-
-        if (character == null || character.animator == null)
-        {
-            Debug.LogError("[CharacterNetworkManager] Character or Animator reference missing during state check!");
-            yield break;
-        }
-
-        int actionLayerIndex = character.animator.GetLayerIndex("Action Override");
-        if (actionLayerIndex == -1)
-        {
-            actionLayerIndex = 0;
-            Debug.LogWarning("[CharacterNetworkManager] 'Action Override' layer not found, defaulting to Base Layer (0)");
-        }
-
-        while (attempt < maxAttempts)
-        {
-            var state = character.animator.GetCurrentAnimatorStateInfo(actionLayerIndex);
-            Debug.Log($"[CharacterNetworkManager] After frame check (attempt {attempt + 1}/{maxAttempts}) - Current state hash: {state.shortNameHash}, Expected: {expectedAnimation}, IsPlaying: {character.animator.isActiveAndEnabled}");
-
-            bool matched =
-                state.IsName(expectedAnimation) ||
-                state.IsName($"Action Override.{expectedAnimation}") ||
-                state.IsTag(expectedAnimation);
-
-            if (matched)
-            {
-                Debug.Log($"[CharacterNetworkManager] '{expectedAnimation}' animation confirmed on '{character.animator.GetLayerName(actionLayerIndex)}' layer ✅");
-                yield break;
-            }
-
-            attempt++;
-            yield return new WaitForSeconds(attemptDelay);
-        }
-
-        RuntimeAnimatorController controller = character.animator.runtimeAnimatorController;
-        bool foundClip = false;
-
-        if (controller is AnimatorOverrideController overrideController)
-        {
-            var baseController = overrideController.runtimeAnimatorController;
-            if (baseController != null)
-            {
-                foreach (var clip in baseController.animationClips)
-                {
-                    if (clip != null && clip.name == expectedAnimation)
-                    {
-                        foundClip = true;
-                        break;
-                    }
-                }
-            }
-
-            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
-            overrideController.GetOverrides(overrides);
-            foreach (var kv in overrides)
-            {
-                if (kv.Value != null && kv.Value.name == expectedAnimation)
-                {
-                    foundClip = true;
-                    break;
-                }
-
-                if (kv.Key != null && kv.Key.name == expectedAnimation)
-                {
-                    foundClip = true;
-                    break;
-                }
-            }
-        }
-        else if (controller != null)
-        {
-            foreach (var clip in controller.animationClips)
-            {
-                if (clip != null && clip.name == expectedAnimation)
-                {
-                    foundClip = true;
-                    break;
-                }
-            }
-        }
-
-        if (foundClip)
-        {
-            Debug.LogWarning($"[CharacterNetworkManager] '{expectedAnimation}' animation exists in controller/overrides but was not observed playing (client delay or transition mismatch).");
-        }
-        else
-        {
-            Debug.LogError($"[CharacterNetworkManager] '{expectedAnimation}' animation clip NOT FOUND even in override layers (checked 'Action Override' layer and controller)!");
-        }
+        character.animator.CrossFade(animationID, 0.2f);
     }
 
     [ServerRpc]
@@ -457,12 +284,6 @@ public class CharacterNetworkManager : NetworkBehaviour
         }
 
         Debug.Log($"[CharacterNetworkManager] Found characters - Damaged: {damageCharcter.gameObject.name}, Attacker: {characterCausingDamage.gameObject.name}");
-
-        if (damageCharcter.isDead.Value)
-        {
-            Debug.Log($"[CharacterNetworkManager] Target already dead, skipping damage processing");
-            return;
-        }
 
         if (WorldCharacterEffectsManager.instance == null)
         {
