@@ -1649,7 +1649,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Ready
+  m_text: READY
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f0fa6cfa29ef6bc44ba227d1274db920, type: 2}
   m_sharedMaterial: {fileID: -4293701634966610641, guid: f0fa6cfa29ef6bc44ba227d1274db920, type: 2}
@@ -2622,7 +2622,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: StartGame
+  m_text: STARTGAME
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f0fa6cfa29ef6bc44ba227d1274db920, type: 2}
   m_sharedMaterial: {fileID: -4293701634966610641, guid: f0fa6cfa29ef6bc44ba227d1274db920, type: 2}

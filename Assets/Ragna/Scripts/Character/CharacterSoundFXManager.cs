@@ -58,11 +58,11 @@ public class CharacterSoundFXManager : MonoBehaviour
 
     public virtual void PlayFootSteps()
     {
-        PlaySoundFX(WorldSoundFXManager.instance.ChooseRandomSFXFromArray(footSteps));
+        //PlaySoundFX(WorldSoundFXManager.instance.ChooseRandomSFXFromArray(footSteps));
     }
 
     public virtual void PlayRunningFootSteps()
     {
-        PlaySoundFX(WorldSoundFXManager.instance.ChooseRandomSFXFromArray(RunningfootSteps));
+        //PlaySoundFX(WorldSoundFXManager.instance.ChooseRandomSFXFromArray(RunningfootSteps));
     }
 }
