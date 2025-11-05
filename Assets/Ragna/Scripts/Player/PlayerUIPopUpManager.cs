@@ -1,36 +1,33 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerUIPopUpManager : MonoBehaviour
 {
     public PlayerUIPopUpManager playerUIPopUpManager;
-    
+
     [Header("Defeat Panel (You Died)")]
     [SerializeField] GameObject defeatPanelGameObject;
-    [SerializeField] TextMeshProUGUI defeatBackgroundText;
-    [SerializeField] TextMeshProUGUI defeatText;
     [SerializeField] CanvasGroup defeatPanelCanvasGroup;
 
     [Header("Victory Panel")]
     [SerializeField] GameObject victoryPanelGameObject;
-    [SerializeField] TextMeshProUGUI victoryBackgroundText;
-    [SerializeField] TextMeshProUGUI victoryText;
     [SerializeField] CanvasGroup victoryPanelCanvasGroup;
+
+    public static List<LobbyPlayerData> PublicPersistentLobbyData;
 
     public void SendDefeatPanel()
     {
         defeatPanelGameObject.SetActive(true);
-        defeatBackgroundText.characterSpacing = 0;
-        StartCoroutine(StretchPopUpTextOverTime(defeatBackgroundText, 8, 19f));
         StartCoroutine(FadeInPopUpOverTime(defeatPanelCanvasGroup, 5));
     }
 
     public void SendVictoryPanel()
     {
         victoryPanelGameObject.SetActive(true);
-        victoryBackgroundText.characterSpacing = 0;
-        StartCoroutine(StretchPopUpTextOverTime(victoryBackgroundText, 8, 19f));
         StartCoroutine(FadeInPopUpOverTime(victoryPanelCanvasGroup, 5));
     }
 
@@ -71,5 +68,24 @@ public class PlayerUIPopUpManager : MonoBehaviour
 
         canvas.alpha = 1;
         yield return null;
+    }
+
+    public void LeaveLobby()
+    {
+        Debug.Log("👋 Leaving lobby...");
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        if (TitleScreenManager.Instance != null)
+        {
+            Destroy(TitleScreenManager.Instance.gameObject);
+        }
+
+        PublicPersistentLobbyData = null;
+
+        SceneManager.LoadScene("MainMenu");
     }
 }
