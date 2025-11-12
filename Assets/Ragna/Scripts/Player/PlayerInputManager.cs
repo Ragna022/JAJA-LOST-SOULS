@@ -21,6 +21,12 @@ public class PlayerInputManager : MonoBehaviour
     public float cameraHorizontalInput;
     public float cameraVerticalInput;
 
+    [Header("Lock On Input")]
+    [SerializeField] bool lockOn_Input;
+    [SerializeField] bool lockOn_Left_Input;
+    [SerializeField] bool lockOn_Right_Input;
+    private Coroutine lockOnCoroutine;
+
     [Header("Player Actions Input")]
     [SerializeField] bool dodgeInput = false;
     [SerializeField] bool sprintInput = false;
@@ -131,6 +137,11 @@ public class PlayerInputManager : MonoBehaviour
             playerControls.PlayerActions.Jump.performed += i => jumpInput = true;
             playerControls.PlayerActions.RB.performed += i => RB_Input = true;
 
+            // LOCK ON
+            playerControls.PlayerActions.LockOn.performed += i => lockOn_Input = true;
+            playerControls.PlayerActions.SeekLeftLockOnTarget.performed += i => lockOn_Left_Input = true;
+            playerControls.PlayerActions.SeekRightLockOnTarget.performed += i => lockOn_Right_Input = true;
+
             // TRIGGERS
             playerControls.PlayerActions.RT.performed += i => RT_Input = true;
             playerControls.PlayerActions.HoldRT.performed += i => Hold_RT_Input = true;
@@ -181,6 +192,8 @@ public class PlayerInputManager : MonoBehaviour
         if (!isReady || player == null)
             return;
 
+        HandleLockOnInput();
+        HandleLockOnSwitchTargetInput();
         HandlePlayerMovementInput();
         HandleCameraMovementInput();
         HandleDodgeInput();
@@ -189,6 +202,82 @@ public class PlayerInputManager : MonoBehaviour
         HandleRBInput();
         HandleRTInput();
         HandleChargeRTInput();
+    }
+
+    // Lock ON
+    private void HandleLockOnInput()
+    {
+
+        if (player.playerNetworkManager.isLockedOn.Value)
+        {
+            if (player.playerCombatManager.currentTarget == null)
+                return;
+
+            if (player.playerCombatManager.currentTarget.isDead)
+            {
+                player.playerNetworkManager.isLockedOn.Value = false;
+            }
+
+            if (lockOnCoroutine != null)
+                StopCoroutine(lockOnCoroutine);
+                
+            lockOnCoroutine = StartCoroutine(PlayerCamera.instance.WaitThenFindNewTarget());
+        }
+
+        if (lockOn_Input && player.playerNetworkManager.isLockedOn.Value)
+        {
+            lockOn_Input = false;
+            PlayerCamera.instance.ClearLockOnTargets();
+            player.playerNetworkManager.isLockedOn.Value = false;
+            return;
+        }
+
+        if (lockOn_Input && !player.playerNetworkManager.isLockedOn.Value)
+        {
+            lockOn_Input = false;
+
+            PlayerCamera.instance.HandleLocatingLockedOnTarget();
+
+            if (PlayerCamera.instance.nearestLockOnTarget != null)
+            {
+                player.playerCombatManager.SetTarget(PlayerCamera.instance.nearestLockOnTarget);
+                player.playerNetworkManager.isLockedOn.Value = true;
+            }
+
+        }
+    }
+
+    private void HandleLockOnSwitchTargetInput()
+    {
+        if (lockOn_Left_Input)
+        {
+            lockOn_Left_Input = false;
+
+            if (player.playerNetworkManager.isLockedOn.Value)
+            {
+                PlayerCamera.instance.HandleLocatingLockedOnTarget();
+
+                if (PlayerCamera.instance.leftLockOnTarget != null)
+                {
+                    player.playerCombatManager.SetTarget(PlayerCamera.instance.leftLockOnTarget);
+                }
+            }
+        }
+        
+        if(lockOn_Right_Input)
+        {
+            lockOn_Right_Input = false;
+
+            if(player.playerNetworkManager.isLockedOn.Value)
+            {
+                PlayerCamera.instance.HandleLocatingLockedOnTarget();
+
+                if(PlayerCamera.instance.rightLockOnTarget != null)
+                {
+                    player.playerCombatManager.SetTarget(PlayerCamera.instance.rightLockOnTarget);
+                }
+            }
+        }
     }
 
     // MOVEMENT
@@ -209,9 +298,18 @@ public class PlayerInputManager : MonoBehaviour
             moveAmount = 1;
         }
 
-        // REMOVED: Redundant null check since we check in HandleAllInput
+        if(player == null)
+            return;//
 
-        player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
+        // REMOVED: Redundant null check since we check in HandleAllInput
+        if (!player.playerNetworkManager.isLockedOn.Value || player.playerNetworkManager.isSprinting.Value)
+        {
+            player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
+        }
+        else
+        {
+            player.playerAnimatorManager.UpdateAnimatorMovementParameters(horizontalInput, verticalInput, player.playerNetworkManager.isSprinting.Value);
+        }
     }
 
     private void HandleCameraMovementInput()

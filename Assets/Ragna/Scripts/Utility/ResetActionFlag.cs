@@ -23,6 +23,7 @@ public class ResetActionFlag : StateMachineBehaviour
         character.applyRootMotion = false;
         character.canRotate = true;
         character.canMove = true;
+        character.characterLocomotionManager.isRolling = false;
 
         // Ensure characterAnimatorManager is not null before accessing it
         if (character.characterAnimatorManager != null)

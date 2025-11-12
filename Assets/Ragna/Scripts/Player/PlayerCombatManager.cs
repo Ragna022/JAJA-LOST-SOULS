@@ -9,6 +9,7 @@ public class PlayerCombatManager : CharacterCombatManager
 
     [Header("Flags")]
     public bool canComboWithMainHandWeapon = false;
+ 
     //public bool canComboWithOffHandWeapon = false;
 
     protected override void Awake()
@@ -52,5 +53,15 @@ public class PlayerCombatManager : CharacterCombatManager
         Debug.Log("STAMINA DEDUCTED: " + staminaDeducted);
         Debug.Log("Stamina should be deducted");
         player.playerNetworkManager.currentStamina.Value -= Mathf.RoundToInt(staminaDeducted);
+    }
+
+    public override void SetTarget(CharacterManager newTarget)
+    {
+        base.SetTarget(newTarget);
+
+        if(player.IsOwner)
+        {
+            PlayerCamera.instance.SetLockCameraHeight();
+        }
     }
 }

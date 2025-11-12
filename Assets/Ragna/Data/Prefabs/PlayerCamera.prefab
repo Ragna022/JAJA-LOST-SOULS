@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5571759791676537794}
   - component: {fileID: 4615254713206362469}
+  - component: {fileID: 2950331820768138677}
   m_Layer: 0
   m_Name: PlayerCamera
   m_TagString: Untagged
@@ -58,6 +59,23 @@ MonoBehaviour:
     m_Bits: 1
   leftAndRightLookAngle: 0
   upAndDownLookAngle: 0
+--- !u!114 &2950331820768138677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 805013562298965093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ef61e7a3b6f9f4cb3ce55de56239f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  viewA: {fileID: 0}
+  viewB: {fileID: 0}
+  cameraMoveDuration: 1.2
+  cameraEase: 4
+  camSwayScript: {fileID: 0}
 --- !u!1 &2195023563042840723
 GameObject:
   m_ObjectHideFlags: 0
@@ -101,10 +119,10 @@ GameObject:
   - component: {fileID: 1422449533543801531}
   - component: {fileID: 230415604397606152}
   - component: {fileID: 424265307283798193}
-  - component: {fileID: 308329040188168677}
+  - component: {fileID: 5714415522516512240}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -169,7 +187,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -183,7 +201,7 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6621889844555152431}
   m_Enabled: 1
---- !u!114 &308329040188168677
+--- !u!114 &5714415522516512240
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -206,7 +224,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
+  m_RenderPostProcessing: 0
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0

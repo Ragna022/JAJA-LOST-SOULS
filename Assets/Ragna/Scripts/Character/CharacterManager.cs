@@ -14,6 +14,7 @@ public class CharacterManager : NetworkBehaviour
     [HideInInspector] public CharacterCombatManager characterCombatManager;
     [HideInInspector] public CharacterSoundFXManager characterSoundFXManager;
     [HideInInspector] public CharacterUIManager characterUIManager;
+    [HideInInspector] public CharacterLocomotionManager characterLocomotionManager;
 
     [Header("Flags")]
     public bool isPerformingAction = false;
@@ -21,6 +22,7 @@ public class CharacterManager : NetworkBehaviour
     public bool applyRootMotion = false;
     public bool canRotate = true;
     public bool canMove = true;
+    public bool isDead = false;
 
     [Header("Equipment")]
     public DamageCollider damageCollider;
@@ -38,6 +40,7 @@ public class CharacterManager : NetworkBehaviour
         characterCombatManager = GetComponent<CharacterCombatManager>();
         characterSoundFXManager = GetComponent<CharacterSoundFXManager>();
         characterUIManager = GetComponent<CharacterUIManager>();
+        characterLocomotionManager = GetComponent<CharacterLocomotionManager>();
     }
 
     protected virtual void Start()

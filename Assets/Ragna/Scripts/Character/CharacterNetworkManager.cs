@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -25,7 +26,11 @@ public class CharacterNetworkManager : NetworkBehaviour
     public NetworkVariable<float> verticalMovement = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> moveAmount = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+    [Header("Target")]
+    public NetworkVariable<ulong> currentTargetNetworkObjectID = new NetworkVariable<ulong>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     [Header("Flags")]
+    public NetworkVariable<bool> isLockedOn = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> isSprinting = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> isChargingAttack = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -255,6 +260,22 @@ public class CharacterNetworkManager : NetworkBehaviour
         character.animator.Play(deathHash, actionLayer, 0f);
 
         Debug.Log($"[CharacterNetworkManager] Death animation PLAYED on layer {actionLayer} for {gameObject.name}");
+    }
+
+    public void OnLockOnTargetIDChabge(ulong oldID, ulong newID)
+    {
+        if (IsOwner)
+        {
+            character.characterCombatManager.currentTarget = NetworkManager.Singleton.SpawnManager.SpawnedObjects[newID].gameObject.GetComponent<CharacterManager>();
+        }
+    }
+    
+    public void OnIsLockedOnChanged(bool old, bool isLockedOn)
+    {
+        if(!isLockedOn)
+        {
+            character.characterCombatManager.currentTarget = null;
+        }
     }
 
     public void OnIsChargingAttackChanged(bool oldStatus, bool newStatus)

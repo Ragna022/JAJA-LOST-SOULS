@@ -166,8 +166,8 @@ public class NetworkObjectScanner : MonoBehaviour
             
             if (!isRegistered && !isSceneObject)
             {
-                Debug.LogError($"❌ UNREGISTERED PREFAB INSTANCE: {sceneObj.name} (InstanceID: {sceneObjHash})");
-                Debug.LogError($"   This object is a prefab instance but its prefab is not registered with NetworkManager!");
+                //Debug.LogError($"❌ UNREGISTERED PREFAB INSTANCE: {sceneObj.name} (InstanceID: {sceneObjHash})");
+                //Debug.LogError($"   This object is a prefab instance but its prefab is not registered with NetworkManager!");
             }
         }
     }

@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1335949047170791862
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 785419362199322916}
+  m_Layer: 7
+  m_Name: LineCast
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &785419362199322916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1335949047170791862}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8122540554191064964}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1594742736510627706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -507,6 +538,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2739313125061487062, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2355700803641639880}
+    - targetCorrespondingSourceObject: {fileID: 4452149840710077660, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 785419362199322916}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5381944382838098503, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
       insertIndex: -1
@@ -732,8 +766,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  isDead:
-    m_InternalValue: 0
   characterController: {fileID: 0}
   animator: {fileID: 0}
   characterNetworkManager: {fileID: 0}
@@ -747,6 +779,7 @@ MonoBehaviour:
   applyRootMotion: 0
   canRotate: 1
   canMove: 1
+  isDead: 0
   damageCollider: {fileID: 0}
   respawnCharacter: 0
   SwitchRightWeapon: 1
@@ -819,11 +852,17 @@ MonoBehaviour:
     m_InternalValue: 0
   moveAmount:
     m_InternalValue: 0
+  isLockedOn:
+    m_InternalValue: 0
   isSprinting:
     m_InternalValue: 0
   isJumping:
     m_InternalValue: 0
   isChargingAttack:
+    m_InternalValue: 0
+  isDead:
+    m_InternalValue: 0
+  hasWon:
     m_InternalValue: 0
   currentHealth:
     m_InternalValue: 0
@@ -1172,7 +1211,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lastAttackAnimationPerformed: 
+  currentTarget: {fileID: 0}
   currentAttackType: 0
+  lockOnTransform: {fileID: 785419362199322916}
   currentWeaponBeingUsed: {fileID: 0}
   canComboWithMainHandWeapon: 0
 --- !u!114 &2090346054566184892
@@ -1612,6 +1653,11 @@ CapsuleCollider:
 --- !u!4 &7742752010668059278 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2739313125061487062, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
+  m_PrefabInstance: {fileID: 5580022783751308120}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8122540554191064964 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4452149840710077660, guid: 2316139bcd602b64a888400a16cf6797, type: 3}
   m_PrefabInstance: {fileID: 5580022783751308120}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &8766741595628239232 stripped

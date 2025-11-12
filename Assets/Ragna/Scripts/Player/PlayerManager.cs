@@ -97,8 +97,8 @@ public class PlayerManager : CharacterManager
                 PlayerInputManager.instance.player = this;
                 PlayerInputManager.instance.SetPlayer(this);
             }
-            
-            WorldSaveGameManager saveManager = FindFirstObjectByType<WorldSaveGameManager>(); 
+
+            WorldSaveGameManager saveManager = FindFirstObjectByType<WorldSaveGameManager>();
 
             if (saveManager == null)
             {
@@ -110,7 +110,7 @@ public class PlayerManager : CharacterManager
                 if (saveManager.currentCharacterData == null)
                 {
                     Debug.Log("[PlayerManager] Lobby flow detected: currentCharacterData is null. Creating temporary data...");
-                    
+
                     LobbyPlayerData? myLobbyData = null;
                     if (LobbyManager.PublicPersistentLobbyData != null)
                     {
@@ -125,7 +125,7 @@ public class PlayerManager : CharacterManager
                         saveManager.currentCharacterData.characterPrefabIndex = myLobbyData.Value.characterPrefabIndex;
                         saveManager.currentCharacterData.vitality = DefaultVitality;
                         saveManager.currentCharacterData.endurance = DefaultEndurance;
-                        
+
                         int maxHealth = playerStatsManager.CalculateHealthBasedOnVitalityLevel(DefaultVitality);
                         float maxStamina = playerStatsManager.CalculateStaminaBasedOnEnduranceLevel(DefaultEndurance);
 
@@ -133,10 +133,10 @@ public class PlayerManager : CharacterManager
                         {
                             maxStamina = DefaultStamina;
                         }
-                        
+
                         saveManager.currentCharacterData.currentHealth = maxHealth; // int to float is fine
                         saveManager.currentCharacterData.currentStamina = maxStamina;
-                        
+
                         Debug.Log($"[PlayerManager] Created temporary save data for {saveManager.currentCharacterData.characterName}");
                     }
                     else
@@ -145,7 +145,7 @@ public class PlayerManager : CharacterManager
                         SetDefaultPlayerValues();
                     }
                 }
-                
+
                 Debug.Log($"[PlayerManager] Loading from currentCharacterData...");
                 LoadGameDataFromCurrentCharacterData(ref saveManager.currentCharacterData);
             }
@@ -160,6 +160,10 @@ public class PlayerManager : CharacterManager
                 characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;
             }
         }
+
+        // LOCK ON
+        playerNetworkManager.isLockedOn.OnValueChanged += playerNetworkManager.OnIsLockedOnChanged;
+        playerNetworkManager.currentTargetNetworkObjectID.OnValueChanged += playerNetworkManager.OnLockOnTargetIDChabge;
 
         if (playerNetworkManager != null)
         {
@@ -412,6 +416,13 @@ public class PlayerManager : CharacterManager
     public void LoadOtherPlayerCharacterWhenJoiningServer()
     {
         // SYNC WEAPONS
+        //playerNetworkManager.OnCurrentRightHandWeaponIDChange(0, playerNetworkManager.currentRightHandWeaponID.Value);
+        //playerNetworkManager.OnCurrentLeftHandWeaponIDChange(0, playerNetworkManager.currentLeftHandWeaponID.Value);
+
+        if(playerNetworkManager.isLockedOn.Value)
+        {
+            playerNetworkManager.OnLockOnTargetIDChabge(0, playerNetworkManager.currentTargetNetworkObjectID.Value);
+        }
     }
 
     private void DebugMenu()
