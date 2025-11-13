@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 public class CharacterManager : NetworkBehaviour
 {
@@ -15,6 +16,9 @@ public class CharacterManager : NetworkBehaviour
     [HideInInspector] public CharacterSoundFXManager characterSoundFXManager;
     [HideInInspector] public CharacterUIManager characterUIManager;
     [HideInInspector] public CharacterLocomotionManager characterLocomotionManager;
+
+    [Header("Character Group")]
+    public CharacterGroup characterGroup;
 
     [Header("Flags")]
     public bool isPerformingAction = false;
@@ -71,6 +75,11 @@ public class CharacterManager : NetworkBehaviour
                 characterNetworkManager.networkRotation.Value,
                 characterNetworkManager.networkRotationSmoothTime);
         }
+    }
+
+    protected virtual void FixedUpdate()
+    {
+
     }
 
     protected virtual void LateUpdate()
