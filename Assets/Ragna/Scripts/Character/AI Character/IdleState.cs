@@ -8,13 +8,11 @@ public class IdleState : AIState
         if (aiCharacter.characterCombatManager.currentTarget != null)
         {
             // RETURN THE PURSUE TARGET STATE (CHANGE THE STATE TO THE PURSUE TARGET STATE)
-            Debug.Log("WE HAVE A TARGET");
-            return this; 
+            return SwitchState(aiCharacter, aiCharacter.pursueTarget);
         }
         else
         {
             aiCharacter.aiCharacterCombatManager.FindATargetViaLineOfOfSight(aiCharacter);
-            Debug.Log("SEARCHIGN FOR A TARGET");
             return this;
         }
          

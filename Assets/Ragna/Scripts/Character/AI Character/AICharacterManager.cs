@@ -1,17 +1,32 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class AICharacterManager : CharacterManager
 {
-    public AICharacterCombatManager aiCharacterCombatManager;
+    [HideInInspector] public AICharacterCombatManager aiCharacterCombatManager;
 
-    [Header("CUrrent States")]
+    [Header("Navmesh Agent")]
+    public NavMeshAgent navMeshAgent;
+
+    [Header("Current States")]
     [SerializeField] AIState currentState;
+
+    [Header("States")]
+    public IdleState idle;
+    public PursueTargetState pursueTarget;
 
     protected override void Awake()
     {
         base.Awake();
 
         aiCharacterCombatManager = GetComponent<AICharacterCombatManager>();
+
+        navMeshAgent = GetComponentInChildren<NavMeshAgent>();
+
+        idle = Instantiate(idle);
+        pursueTarget = Instantiate(pursueTarget);
+
+        currentState = idle;
     }
 
     protected override void FixedUpdate()
