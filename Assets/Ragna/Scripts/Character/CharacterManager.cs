@@ -104,6 +104,8 @@ public class CharacterManager : NetworkBehaviour
         base.OnNetworkSpawn();
 
         Debug.Log($"[CharacterManager] OnNetworkSpawn - Character: {gameObject.name}, LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}, IsServer: {IsServer}, OwnerClientId: {OwnerClientId}, NetworkObjectId: {NetworkObjectId}");
+
+        characterNetworkManager.isMoving.OnValueChanged += characterNetworkManager.OnIsMovingChanged;
     }
 
     public override void OnNetworkDespawn()
@@ -111,6 +113,9 @@ public class CharacterManager : NetworkBehaviour
         base.OnNetworkDespawn();
 
         Debug.Log($"[CharacterManager] OnNetworkDespawn - Unsubscribing for {gameObject.name}");
+
+        characterNetworkManager.isMoving.OnValueChanged -= characterNetworkManager.OnIsMovingChanged;
+
     }
 
     protected virtual void IgnoreMyColliders()

@@ -298,9 +298,18 @@ public class PlayerInputManager : MonoBehaviour
             moveAmount = 1;
         }
 
-        if(player == null)
+        if (player == null)
             return;//
 
+        if (moveAmount != 0)
+        {
+            player.playerNetworkManager.isMoving.Value = true;
+        }
+        else
+        {
+            player.playerNetworkManager.isMoving.Value = false;
+        }
+        
         // REMOVED: Redundant null check since we check in HandleAllInput
         if (!player.playerNetworkManager.isLockedOn.Value || player.playerNetworkManager.isSprinting.Value)
         {

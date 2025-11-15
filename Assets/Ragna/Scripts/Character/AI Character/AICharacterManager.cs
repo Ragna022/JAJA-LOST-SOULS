@@ -1,8 +1,10 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class AICharacterManager : CharacterManager
 {
+    [HideInInspector] public AICharacterNetworkManager aiCharacterNetworkManager;
     [HideInInspector] public AICharacterCombatManager aiCharacterCombatManager;
 
     [Header("Navmesh Agent")]
@@ -20,6 +22,7 @@ public class AICharacterManager : CharacterManager
         base.Awake();
 
         aiCharacterCombatManager = GetComponent<AICharacterCombatManager>();
+        aiCharacterNetworkManager = GetComponent<AICharacterNetworkManager>();
 
         navMeshAgent = GetComponentInChildren<NavMeshAgent>();
 
@@ -40,9 +43,28 @@ public class AICharacterManager : CharacterManager
     {
         AIState nextState = currentState?.Tick(this);
 
-        if(nextState != null)
+        if (nextState != null)
         {
             currentState = nextState;
+        }
+
+        if (navMeshAgent.enabled)
+        {
+            Vector3 agentDestination = navMeshAgent.destination;
+            float remainingDistance = Vector3.Distance(agentDestination, transform.position);
+
+            if (remainingDistance > navMeshAgent.stoppingDistance)
+            {
+                aiCharacterNetworkManager.isMoving.Value = true;
+            }
+            else
+            {
+                aiCharacterNetworkManager.isMoving.Value = false;
+            }
+        }
+        else 
+        {
+            aiCharacterNetworkManager.isMoving.Value = false;
         }
     }
 }
