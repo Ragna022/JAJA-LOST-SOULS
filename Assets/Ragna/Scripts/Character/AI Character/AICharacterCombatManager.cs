@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AICharacterCombatManager : CharacterCombatManager
 {
-    [Header("Detection")]
+    [Header("Detection")] 
     [SerializeField] float detectionRadius = 15;
     [SerializeField] float minimumDetectionAngle = -35;
     [SerializeField] float maximumDetectionAngle = 35;
@@ -13,6 +13,7 @@ public class AICharacterCombatManager : CharacterCombatManager
             return;
 
         Collider[] colliders = Physics.OverlapSphere(aiCharacter.transform.position, detectionRadius, WorldUtilityManager.Instance.GetCharacterLayers());
+        
         for(int i = 0; i < colliders.Length; i++)
         {
             CharacterManager targetCharacter = colliders[i].transform.GetComponent<CharacterManager>();
@@ -20,7 +21,7 @@ public class AICharacterCombatManager : CharacterCombatManager
             if (targetCharacter == null)
                 continue;
 
-            if (targetCharacter == null)
+            if (targetCharacter == aiCharacter)
                 continue;
 
             /*if (targetCharacter.isDead.Value)

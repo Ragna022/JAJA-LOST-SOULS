@@ -8,12 +8,12 @@ public class WorldAIManager : MonoBehaviour
 {
     public static WorldAIManager instance;
 
-    /*[Header("Debug")]
+    [Header("Debug")]
     [SerializeField] bool despawnCharacters = false;
-    [SerializeField] bool respawnCharacters = false;*/
+    [SerializeField] bool respawnCharacters = false;
 
     [Header("Characters")]
-    [SerializeField] GameObject[] AICharacters;
+    [SerializeField] GameObject[] aiCharacters;
     [SerializeField] List<GameObject> spawnedInCharacters;
 
     private void Awake()
@@ -37,7 +37,7 @@ public class WorldAIManager : MonoBehaviour
         }
     }
     
-    /*private void Update()
+    private void Update()
     {
         if (respawnCharacters)
         {
@@ -50,7 +50,7 @@ public class WorldAIManager : MonoBehaviour
             despawnCharacters = false;
             DespawnAllCharacters();
         }
-    }*/
+    }
 
     private IEnumerator WaitForSceneToLoadThenSpawnCharacters()
     {
@@ -64,7 +64,7 @@ public class WorldAIManager : MonoBehaviour
 
     private void SpawnAllCharacters()
     {
-        foreach (var character in AICharacters)
+        foreach (var character in aiCharacters)
         {
             GameObject instantiatedCharacter = Instantiate(character);
             instantiatedCharacter.GetComponent<NetworkObject>().Spawn();
@@ -72,13 +72,13 @@ public class WorldAIManager : MonoBehaviour
         }
     }
 
-    /*private void DespawnAllCharacters()
+    private void DespawnAllCharacters()
     {
         foreach (var character in spawnedInCharacters)
         {
             character.GetComponent<NetworkObject>().Despawn();
         }
-    }*/
+    }
     
     private void DisableAllCharacters()
     {

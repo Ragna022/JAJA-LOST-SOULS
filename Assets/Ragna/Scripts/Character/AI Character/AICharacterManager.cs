@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AICharacterManager : CharacterManager
 {
-    public AICharacterCombatManager aICharacterCombatManager;
+    public AICharacterCombatManager aiCharacterCombatManager;
 
     [Header("CUrrent States")]
     [SerializeField] AIState currentState;
@@ -11,7 +11,7 @@ public class AICharacterManager : CharacterManager
     {
         base.Awake();
 
-        aICharacterCombatManager = GetComponent<AICharacterCombatManager>();
+        aiCharacterCombatManager = GetComponent<AICharacterCombatManager>();
     }
 
     protected override void FixedUpdate()

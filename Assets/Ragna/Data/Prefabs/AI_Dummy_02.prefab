@@ -268,8 +268,9 @@ GameObject:
   - component: {fileID: 2796819819473576156}
   - component: {fileID: 4163893064407131174}
   - component: {fileID: 7935808196724953818}
-  - component: {fileID: 3071960134849681425}
   - component: {fileID: 812302879379207449}
+  - component: {fileID: 8676050685755059950}
+  - component: {fileID: 3071960134849681425}
   - component: {fileID: 1712915918836190726}
   - component: {fileID: 5162996933885652977}
   - component: {fileID: 8118225893674478749}
@@ -277,7 +278,6 @@ GameObject:
   - component: {fileID: 6815910800353380617}
   - component: {fileID: 1964248427668333372}
   - component: {fileID: 6657410610875191977}
-  - component: {fileID: 8676050685755059950}
   m_Layer: 6
   m_Name: AI_Dummy_02
   m_TagString: Untagged
@@ -499,6 +499,58 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &812302879379207449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2173bf3e1e93834c8b8cec830abf5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterController: {fileID: 0}
+  animator: {fileID: 0}
+  characterNetworkManager: {fileID: 0}
+  characterEffectsManager: {fileID: 0}
+  characterAnimatorManager: {fileID: 0}
+  characterCombatManager: {fileID: 0}
+  characterSoundFXManager: {fileID: 0}
+  characterUIManager: {fileID: 0}
+  characterLocomotionManager: {fileID: 0}
+  characterGroup: 1
+  isPerformingAction: 0
+  isGrounded: 0
+  applyRootMotion: 0
+  canRotate: 1
+  canMove: 1
+  isDead: 0
+  damageCollider: {fileID: 0}
+  aiCharacterCombatManager: {fileID: 0}
+  currentState: {fileID: 11400000, guid: 632328b7b5f10624bae550224c486ca6, type: 2}
+--- !u!114 &8676050685755059950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef9f1241ef3226a4fbc7c4a7840ef6c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  lastAttackAnimationPerformed: 
+  currentTarget: {fileID: 0}
+  currentAttackType: 0
+  lockOnTransform: {fileID: 2533164993726103773}
+  detectionRadius: 15
+  minimumDetectionAngle: -35
+  maximumDetectionAngle: 35
 --- !u!114 &3071960134849681425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,38 +610,6 @@ MonoBehaviour:
     m_InternalValue: 1
   intelligence:
     m_InternalValue: 1
---- !u!114 &812302879379207449
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 520558538851839239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2173bf3e1e93834c8b8cec830abf5dc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  characterController: {fileID: 0}
-  animator: {fileID: 0}
-  characterNetworkManager: {fileID: 0}
-  characterEffectsManager: {fileID: 0}
-  characterAnimatorManager: {fileID: 0}
-  characterCombatManager: {fileID: 0}
-  characterSoundFXManager: {fileID: 0}
-  characterUIManager: {fileID: 0}
-  characterLocomotionManager: {fileID: 0}
-  characterGroup: 1
-  isPerformingAction: 0
-  isGrounded: 0
-  applyRootMotion: 0
-  canRotate: 1
-  canMove: 1
-  isDead: 0
-  damageCollider: {fileID: 0}
-  aICharacterCombatManager: {fileID: 0}
-  currentState: {fileID: 11400000, guid: 632328b7b5f10624bae550224c486ca6, type: 2}
 --- !u!114 &1712915918836190726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -695,26 +715,6 @@ MonoBehaviour:
   hit_Backwards: hit_back
   hit_Left: hit_left
   hit_Right: hit_right
---- !u!114 &8676050685755059950
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 520558538851839239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef9f1241ef3226a4fbc7c4a7840ef6c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  lastAttackAnimationPerformed: 
-  currentTarget: {fileID: 0}
-  currentAttackType: 0
-  lockOnTransform: {fileID: 2533164993726103773}
-  detectionRadius: 15
-  minimumDetectionAngle: -35
-  maximumDetectionAngle: 35
 --- !u!1 &570601081163563941
 GameObject:
   m_ObjectHideFlags: 0
