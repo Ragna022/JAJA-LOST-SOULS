@@ -10,7 +10,7 @@ public class PlayerAnimatorManager : CharacterAnimatorManager
 
         player = GetComponent<PlayerManager>();
     }
-    private void OAnimatorMove()
+    private void OnAnimatorMove()
     {
         if (player.applyRootMotion)
         {

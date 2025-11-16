@@ -3,7 +3,7 @@ using UnityEngine.TextCore.Text;
 
 public class CharacterLocomotionManager : MonoBehaviour
 {
-   CharacterManager character;
+   [HideInInspector] public CharacterManager character;
 
    [Header("Ground Check & Jumping")]
    [SerializeField] protected float gravityForce = -5.55f;

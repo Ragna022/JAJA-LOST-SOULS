@@ -15,6 +15,8 @@ public class PursueTargetState : AIState
         if (!aiCharacter.navMeshAgent.enabled)
             aiCharacter.navMeshAgent.enabled = true;
 
+        //aiCharacter.aiCharacterLocomotionManager.RotateTowardsAgent(aiCharacter);
+
 
         NavMeshPath path = new NavMeshPath();
         aiCharacter.navMeshAgent.CalculatePath(aiCharacter.aiCharacterCombatManager.currentTarget.transform.position, path);

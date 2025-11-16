@@ -271,8 +271,8 @@ GameObject:
   - component: {fileID: 812302879379207449}
   - component: {fileID: -1890071688005073241}
   - component: {fileID: 4599607522949923257}
+  - component: {fileID: -8061554925151528957}
   - component: {fileID: 1712915918836190726}
-  - component: {fileID: 5162996933885652977}
   - component: {fileID: 8118225893674478749}
   - component: {fileID: 6070432711130595314}
   - component: {fileID: 6815910800353380617}
@@ -317,7 +317,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 0f4998d2b14343c4e9ba2e2f046ca88d, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -532,6 +532,7 @@ MonoBehaviour:
   damageCollider: {fileID: 0}
   aiCharacterNetworkManager: {fileID: 0}
   aiCharacterCombatManager: {fileID: 0}
+  aiCharacterLocomotionManager: {fileID: 0}
   navMeshAgent: {fileID: 0}
   currentState: {fileID: 11400000, guid: 632328b7b5f10624bae550224c486ca6, type: 2}
   idle: {fileID: 11400000, guid: 632328b7b5f10624bae550224c486ca6, type: 2}
@@ -617,6 +618,30 @@ MonoBehaviour:
     m_InternalValue: 1
   intelligence:
     m_InternalValue: 1
+--- !u!114 &-8061554925151528957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f269d8929c385044595e7213c81ce53f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  character: {fileID: 0}
+  gravityForce: -5.55
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 1
+  groundCheckSphereRadius: 1
+  yVelocity: {x: 0, y: 0, z: 0}
+  groundedYVelocity: -20
+  fallStartYVelocity: -5
+  isRolling: 0
+  movementSpeed: 3
+  rotationSpeed: 10
 --- !u!114 &1712915918836190726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,27 +656,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   staminaRenegenAmount: 2
   staminaRegenerationDelay: 2
---- !u!114 &5162996933885652977
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 520558538851839239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c6bc4a5a1c78a74b833e3ffa2d6a6c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gravityForce: -5.55
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 1
-  groundCheckSphereRadius: 1
-  yVelocity: {x: 0, y: 0, z: 0}
-  groundedYVelocity: -20
-  fallStartYVelocity: -5
-  isRolling: 0
 --- !u!114 &8118225893674478749
 MonoBehaviour:
   m_ObjectHideFlags: 0

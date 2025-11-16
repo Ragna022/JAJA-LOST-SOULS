@@ -6,6 +6,7 @@ public class AICharacterManager : CharacterManager
 {
     [HideInInspector] public AICharacterNetworkManager aiCharacterNetworkManager;
     [HideInInspector] public AICharacterCombatManager aiCharacterCombatManager;
+    [HideInInspector] public AICharacterLocomotionManager aiCharacterLocomotionManager;
 
     [Header("Navmesh Agent")]
     public NavMeshAgent navMeshAgent;
@@ -23,13 +24,45 @@ public class AICharacterManager : CharacterManager
 
         aiCharacterCombatManager = GetComponent<AICharacterCombatManager>();
         aiCharacterNetworkManager = GetComponent<AICharacterNetworkManager>();
+        aiCharacterLocomotionManager = GetComponent<AICharacterLocomotionManager>();
 
         navMeshAgent = GetComponentInChildren<NavMeshAgent>();
+
+        // Ensure CharacterController is enabled first
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+        }
+
+        // CRITICAL: Configure NavMeshAgent to NOT control position/rotation
+        // We only use it for pathfinding data
+        if (navMeshAgent != null)
+        {
+            navMeshAgent.updatePosition = false; // CharacterController handles position
+            navMeshAgent.updateRotation = false; // We handle rotation manually
+            navMeshAgent.updateUpAxis = false;   // CharacterController handles this
+        }
 
         idle = Instantiate(idle);
         pursueTarget = Instantiate(pursueTarget);
 
         currentState = idle;
+    }
+    
+    protected override void Start()
+    {
+        base.Start();
+        
+        // Additional safety check after all components are initialized
+        if (characterController != null && !characterController.enabled)
+        {
+            characterController.enabled = true;
+        }
+    }
+
+    protected override void Update()
+    {
+        base.Update(); // This now handles movement via AICharacterLocomotionManager
     }
 
     protected override void FixedUpdate()
@@ -48,14 +81,25 @@ public class AICharacterManager : CharacterManager
             currentState = nextState;
         }
 
-        if (navMeshAgent.enabled)
-        {
-            Vector3 agentDestination = navMeshAgent.destination;
-            float remainingDistance = Vector3.Distance(agentDestination, transform.position);
+        /*navMeshAgent.transform.localPosition = Vector3.zero;
+        navMeshAgent.transform.localRotation = Quaternion.identity;*/
 
-            if (remainingDistance > navMeshAgent.stoppingDistance)
+        // Update isMoving based on NavMeshAgent path status
+        if (navMeshAgent != null && navMeshAgent.enabled)
+        {
+            // Check if agent has a path and is beyond stopping distance
+            if (navMeshAgent.hasPath && !navMeshAgent.pathPending)
             {
-                aiCharacterNetworkManager.isMoving.Value = true;
+                float remainingDistance = navMeshAgent.remainingDistance;
+                
+                if (remainingDistance > navMeshAgent.stoppingDistance)
+                {
+                    aiCharacterNetworkManager.isMoving.Value = true;
+                }
+                else
+                {
+                    aiCharacterNetworkManager.isMoving.Value = false;
+                }
             }
             else
             {
@@ -65,6 +109,15 @@ public class AICharacterManager : CharacterManager
         else 
         {
             aiCharacterNetworkManager.isMoving.Value = false;
+        }
+    }
+
+    // Helper method to set destination (call from AI states)
+    public void SetDestination(Vector3 destination)
+    {
+        if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+        {
+            navMeshAgent.SetDestination(destination);
         }
     }
 }
