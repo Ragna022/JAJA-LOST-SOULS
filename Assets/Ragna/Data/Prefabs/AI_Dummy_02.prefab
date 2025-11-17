@@ -272,6 +272,7 @@ GameObject:
   - component: {fileID: 8676050685755059950}
   - component: {fileID: -7618207794992714734}
   - component: {fileID: -7298423749975718418}
+  - component: {fileID: 1177206006581927180}
   - component: {fileID: 1712915918836190726}
   - component: {fileID: 8118225893674478749}
   - component: {fileID: 6070432711130595314}
@@ -554,9 +555,11 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   currentAttackType: 0
   lockOnTransform: {fileID: 2533164993726103773}
+  viewableAngle: 0
+  targetsDirection: {x: 0, y: 0, z: 0}
   detectionRadius: 15
-  minimumDetectionAngle: -35
-  maximumDetectionAngle: 35
+  minimumFOV: -35
+  maximumFOV: 35
 --- !u!114 &-7618207794992714734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -642,6 +645,22 @@ MonoBehaviour:
   isRolling: 0
   movementSpeed: 3.5
   rotationSpeed: 10
+--- !u!114 &1177206006581927180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbc0b18e7386db4b9f3f0f169c54475, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hit_Forward: hit_front
+  hit_Backwards: hit_back
+  hit_Left: hit_left
+  hit_Right: hit_right
 --- !u!114 &1712915918836190726
 MonoBehaviour:
   m_ObjectHideFlags: 0

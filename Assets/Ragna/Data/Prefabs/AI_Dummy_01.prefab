@@ -272,12 +272,12 @@ GameObject:
   - component: {fileID: -1890071688005073241}
   - component: {fileID: 4599607522949923257}
   - component: {fileID: -8061554925151528957}
+  - component: {fileID: -6665033707874931769}
   - component: {fileID: 1712915918836190726}
   - component: {fileID: 8118225893674478749}
   - component: {fileID: 6070432711130595314}
   - component: {fileID: 6815910800353380617}
   - component: {fileID: 1964248427668333372}
-  - component: {fileID: 6657410610875191977}
   m_Layer: 6
   m_Name: AI_Dummy_01
   m_TagString: Untagged
@@ -554,9 +554,11 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   currentAttackType: 0
   lockOnTransform: {fileID: 2533164993726103773}
+  viewableAngle: 0
+  targetsDirection: {x: 0, y: 0, z: 0}
   detectionRadius: 15
-  minimumDetectionAngle: -35
-  maximumDetectionAngle: 35
+  minimumFOV: -35
+  maximumFOV: 35
 --- !u!114 &4599607522949923257
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -642,6 +644,22 @@ MonoBehaviour:
   isRolling: 0
   movementSpeed: 3
   rotationSpeed: 10
+--- !u!114 &-6665033707874931769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbc0b18e7386db4b9f3f0f169c54475, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hit_Forward: hit_front
+  hit_Backwards: hit_back
+  hit_Left: hit_left
+  hit_Right: hit_right
 --- !u!114 &1712915918836190726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -710,22 +728,6 @@ MonoBehaviour:
   comboGrunts: []
   footSteps: []
   RunningfootSteps: []
---- !u!114 &6657410610875191977
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 520558538851839239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15ff78421ebd66b4084545c540f6e7bb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hit_Forward: hit_front
-  hit_Backwards: hit_back
-  hit_Left: hit_left
-  hit_Right: hit_right
 --- !u!1 &570601081163563941
 GameObject:
   m_ObjectHideFlags: 0

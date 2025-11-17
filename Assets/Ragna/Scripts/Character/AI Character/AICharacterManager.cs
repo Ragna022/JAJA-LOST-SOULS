@@ -69,7 +69,8 @@ public class AICharacterManager : CharacterManager
     {
         base.FixedUpdate();
 
-        ProcessStateMachine();
+        if(IsOwner)
+            ProcessStateMachine();
     }
 
     private void ProcessStateMachine()
@@ -83,6 +84,12 @@ public class AICharacterManager : CharacterManager
 
         /*navMeshAgent.transform.localPosition = Vector3.zero;
         navMeshAgent.transform.localRotation = Quaternion.identity;*/
+
+        /*if(aiCharacterCombatManager.currentTarget != null)
+        {
+            aiCharacterCombatManager.targetsDirection = aiCharacterCombatManager.currentTarget.transform.position - transform.position;
+            aiCharacterCombatManager.viewableAngle = WorldUtilityManager.Instance.GetAngleOfTarget(transform, aiCharacterCombatManager.targetsDirection);
+        }*/
 
         // Update isMoving based on NavMeshAgent path status
         if (navMeshAgent != null && navMeshAgent.enabled)

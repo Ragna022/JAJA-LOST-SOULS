@@ -2,10 +2,14 @@ using UnityEngine;
 
 public class AICharacterCombatManager : CharacterCombatManager
 {
+    [Header("Target Information")]
+    public float viewableAngle;
+    public Vector3 targetsDirection;
+
     [Header("Detection")] 
-    [SerializeField] float detectionRadius = 15;
-    [SerializeField] float minimumDetectionAngle = -35;
-    [SerializeField] float maximumDetectionAngle = 35;
+    public float detectionRadius = 15;
+    public float minimumFOV = -35;
+    public float maximumFOV = 35;
 
     public void FindATargetViaLineOfOfSight(AICharacterManager aiCharacter)
     {
@@ -13,8 +17,8 @@ public class AICharacterCombatManager : CharacterCombatManager
             return;
 
         Collider[] colliders = Physics.OverlapSphere(aiCharacter.transform.position, detectionRadius, WorldUtilityManager.Instance.GetCharacterLayers());
-        
-        for(int i = 0; i < colliders.Length; i++)
+
+        for (int i = 0; i < colliders.Length; i++)
         {
             CharacterManager targetCharacter = colliders[i].transform.GetComponent<CharacterManager>();
 
@@ -27,27 +31,68 @@ public class AICharacterCombatManager : CharacterCombatManager
             /*if (targetCharacter.isDead.Value)
                 continue;*/
 
-            if(WorldUtilityManager.Instance.CanIDamageThisTarget(aiCharacter.characterGroup, targetCharacter.characterGroup))
+            if (WorldUtilityManager.Instance.CanIDamageThisTarget(aiCharacter.characterGroup, targetCharacter.characterGroup))
             {
                 Vector3 targetDirection = targetCharacter.transform.position - aiCharacter.transform.position;
-                float viewableAngle = Vector3.Angle(targetDirection, aiCharacter.transform.forward);
-                
-                if(viewableAngle > minimumDetectionAngle && viewableAngle < maximumDetectionAngle)
+                float angleOfPotentialTarget = Vector3.Angle(targetDirection, aiCharacter.transform.forward);
+
+                if (angleOfPotentialTarget > minimumFOV && angleOfPotentialTarget < maximumFOV)
                 {
-                    if(Physics.Linecast(
+                    if (Physics.Linecast(
                         aiCharacter.characterCombatManager.lockOnTransform.position,
                         targetCharacter.characterCombatManager.lockOnTransform.position,
                         WorldUtilityManager.Instance.GetEnviroLayers()))
                     {
                         Debug.DrawLine(aiCharacter.characterCombatManager.lockOnTransform.position, targetCharacter.characterCombatManager.lockOnTransform.position);
-                        Debug.Log("BLOCKED");
                     }
                     else
                     {
+                        targetDirection = targetCharacter.transform.position - transform.position;
+                        viewableAngle = WorldUtilityManager.Instance.GetAngleOfTarget(transform, targetDirection);
                         aiCharacter.characterCombatManager.SetTarget(targetCharacter);
+                        //PivotTowardsTarget(aiCharacter);
                     }
                 }
             }
+        }
+    }
+    
+    public void PivotTowardsTarget(AICharacterManager aiCharacter)
+    {
+        if (aiCharacter.isPerformingAction)
+            return;
+
+        if (viewableAngle >= 20 && viewableAngle <= 60)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        else if (viewableAngle <= -20 && viewableAngle >= -60)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        else if (viewableAngle >= 61 && viewableAngle <= 110)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        else if (viewableAngle <= -61 && viewableAngle >= -110)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        if (viewableAngle >= 110 && viewableAngle <= 145)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        else if (viewableAngle <= -110 && viewableAngle >= -145)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        if (viewableAngle >= 146 && viewableAngle <= 180)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
+        }
+        else if (viewableAngle <= -146 && viewableAngle >= -180)
+        {
+            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
         }
     }
 }

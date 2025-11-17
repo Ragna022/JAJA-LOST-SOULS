@@ -790,6 +790,8 @@ MonoBehaviour:
   characterCombatManager: {fileID: 0}
   characterSoundFXManager: {fileID: 0}
   characterUIManager: {fileID: 0}
+  characterLocomotionManager: {fileID: 0}
+  characterGroup: 0
   isPerformingAction: 0
   isGrounded: 0
   applyRootMotion: 0
@@ -818,6 +820,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 945e59e92d2cc184c9c247d097abb202, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 0}
   gravityForce: -5.55
   groundLayer:
     serializedVersion: 2
@@ -826,6 +829,7 @@ MonoBehaviour:
   yVelocity: {x: 0, y: 0, z: 0}
   groundedYVelocity: -20
   fallStartYVelocity: -5
+  isRolling: 0
   verticalMovement: 0
   horizontalMovement: 0
   moveAmount: 0
@@ -862,11 +866,15 @@ MonoBehaviour:
   networkPositionVelocity: {x: 0, y: 0, z: 0}
   networkPositionSmoothTime: 0.1
   networkRotationSmoothTime: 0.1
+  isMoving:
+    m_InternalValue: 0
   horizontalMovement:
     m_InternalValue: 0
   verticalMovement:
     m_InternalValue: 0
   moveAmount:
+    m_InternalValue: 0
+  currentTargetNetworkObjectID:
     m_InternalValue: 0
   isLockedOn:
     m_InternalValue: 0
@@ -1096,9 +1104,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e30cfd654d93994b9c775c56aea8861, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   lastAttackAnimationPerformed: 
   currentTarget: {fileID: 0}
   currentAttackType: 0
+  lockOnTransform: {fileID: 2868149460638654235}
   currentWeaponBeingUsed: {fileID: 0}
   canComboWithMainHandWeapon: 0
 --- !u!1 &1823910584896135400
@@ -1428,12 +1438,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3201118966222814614}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.000021504286, y: -0.000016795759, z: 0.06872631, w: 0.99763554}
+  m_LocalPosition: {x: -0.15228213, y: 0, z: 0.000045099314}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2267978290565105940}
+  m_Father: {fileID: 5177492093681712649}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3440978487248129420
 GameObject:
@@ -2326,7 +2336,6 @@ Transform:
   - {fileID: 2203619332607493560}
   - {fileID: 763399146495545307}
   - {fileID: 2937826807950369605}
-  - {fileID: 2868149460638654235}
   m_Father: {fileID: 5177492093681712649}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &524928879307764909
@@ -2843,6 +2852,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2267978290565105940}
+  - {fileID: 2868149460638654235}
   m_Father: {fileID: 1513719979823265594}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &2127481883781336897
