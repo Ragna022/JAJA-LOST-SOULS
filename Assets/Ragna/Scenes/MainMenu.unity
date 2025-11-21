@@ -4758,6 +4758,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c6bc4a5a1c78a74b833e3ffa2d6a6c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 0}
   gravityForce: -5.55
   groundLayer:
     serializedVersion: 2
@@ -4851,6 +4852,8 @@ MonoBehaviour:
   networkPositionVelocity: {x: 0, y: 0, z: 0}
   networkPositionSmoothTime: 0.1
   networkRotationSmoothTime: 0.1
+  isMoving:
+    m_InternalValue: 0
   horizontalMovement:
     m_InternalValue: 0
   verticalMovement:
@@ -17689,6 +17692,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c6bc4a5a1c78a74b833e3ffa2d6a6c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 0}
   gravityForce: -5.55
   groundLayer:
     serializedVersion: 2
@@ -20217,11 +20221,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3687202949584520525, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -134.9408
       objectReference: {fileID: 0}
     - target: {fileID: 3687202949584520525, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 114.55505
       objectReference: {fileID: 0}
     - target: {fileID: 3687202949584520525, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -20245,11 +20249,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4187242624808661034, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -134.9408
       objectReference: {fileID: 0}
     - target: {fileID: 4187242624808661034, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 66.635056
       objectReference: {fileID: 0}
     - target: {fileID: 4187242624808661034, guid: 20b37a5d81099de40b2900a356320c35, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -26151,6 +26155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c6bc4a5a1c78a74b833e3ffa2d6a6c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 0}
   gravityForce: -5.55
   groundLayer:
     serializedVersion: 2
@@ -26244,6 +26249,8 @@ MonoBehaviour:
   networkPositionVelocity: {x: 0, y: 0, z: 0}
   networkPositionSmoothTime: 0.1
   networkRotationSmoothTime: 0.1
+  isMoving:
+    m_InternalValue: 0
   horizontalMovement:
     m_InternalValue: 0
   verticalMovement:
@@ -27116,6 +27123,8 @@ MonoBehaviour:
   networkPositionVelocity: {x: 0, y: 0, z: 0}
   networkPositionSmoothTime: 0.1
   networkRotationSmoothTime: 0.1
+  isMoving:
+    m_InternalValue: 0
   horizontalMovement:
     m_InternalValue: 0
   verticalMovement:

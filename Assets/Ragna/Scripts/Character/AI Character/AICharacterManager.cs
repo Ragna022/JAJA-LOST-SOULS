@@ -17,6 +17,8 @@ public class AICharacterManager : CharacterManager
     [Header("States")]
     public IdleState idle;
     public PursueTargetState pursueTarget;
+    public CombatStanceState combatStance;
+    public AttackState attack;
 
     protected override void Awake()
     {
@@ -62,7 +64,9 @@ public class AICharacterManager : CharacterManager
 
     protected override void Update()
     {
-        base.Update(); // This now handles movement via AICharacterLocomotionManager
+        base.Update();
+        
+        aiCharacterCombatManager.HandleActionRecovery(this);
     }
 
     protected override void FixedUpdate()
@@ -85,11 +89,12 @@ public class AICharacterManager : CharacterManager
         /*navMeshAgent.transform.localPosition = Vector3.zero;
         navMeshAgent.transform.localRotation = Quaternion.identity;*/
 
-        /*if(aiCharacterCombatManager.currentTarget != null)
+        if(aiCharacterCombatManager.currentTarget != null)
         {
             aiCharacterCombatManager.targetsDirection = aiCharacterCombatManager.currentTarget.transform.position - transform.position;
             aiCharacterCombatManager.viewableAngle = WorldUtilityManager.Instance.GetAngleOfTarget(transform, aiCharacterCombatManager.targetsDirection);
-        }*/
+            aiCharacterCombatManager.distanceFromTarget = Vector3.Distance(transform.position, aiCharacterCombatManager.currentTarget.transform.position);
+        }
 
         // Update isMoving based on NavMeshAgent path status
         if (navMeshAgent != null && navMeshAgent.enabled)
