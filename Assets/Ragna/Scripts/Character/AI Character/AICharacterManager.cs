@@ -136,4 +136,20 @@ public class AICharacterManager : CharacterManager
             navMeshAgent.SetDestination(destination);
         }
     }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+
+        if(characterUIManager.hasFloatingHPBar)
+            characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
+        if(characterUIManager.hasFloatingHPBar)
+            characterNetworkManager.currentHealth.OnValueChanged -= characterUIManager.OnHPChanged;
+    }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 public class UI_Character_HP_Bar : UI_StatBar
 {
     private CharacterManager character;
-    //private AICharacterManager aiCharacter;
+    private AICharacterManager aiCharacter;
     private PlayerManager playerCharacter;
 
     [SerializeField] bool displayCharacterNameAndDamage = false;
@@ -26,6 +26,11 @@ public class UI_Character_HP_Bar : UI_StatBar
         {
             playerCharacter = character as PlayerManager;
         }
+
+        if(character != null)
+        {
+            aiCharacter = character as AICharacterManager;
+        }
     }
 
     protected override void Start()
@@ -43,10 +48,13 @@ public class UI_Character_HP_Bar : UI_StatBar
 
             if (playerCharacter != null)
                 characterName.text = playerCharacter.playerNetworkManager.characterName.Value.ToString();
+
+            if (aiCharacter != null)
+                characterName.text = aiCharacter.name;
+                
         }
 
         slider.maxValue = character.characterNetworkManager.maxHealth.Value;
-
 
         currentDamageTaken = Mathf.RoundToInt(currentDamageTaken + (oldHealthValue - newValue));
 

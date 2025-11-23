@@ -65,11 +65,17 @@ public class PlayerManager : CharacterManager
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        //if(!IsOwner)
+            //characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
+
+        //if(!IsOwner)
+            //characterNetworkManager.currentHealth.OnValueChanged -= characterUIManager.OnHPChanged;
     }
 
     public override void OnNetworkSpawn()

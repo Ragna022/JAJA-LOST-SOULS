@@ -319,6 +319,7 @@ GameObject:
   - component: {fileID: 6070432711130595314}
   - component: {fileID: 6815910800353380617}
   - component: {fileID: 1964248427668333372}
+  - component: {fileID: 6269987111799369551}
   m_Layer: 6
   m_Name: AI_Dummy_01
   m_TagString: Untagged
@@ -358,7 +359,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 43a7c7c5e22a7ac439017434d3ef6a4e, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -779,6 +780,20 @@ MonoBehaviour:
   comboGrunts: []
   footSteps: []
   RunningfootSteps: []
+--- !u!114 &6269987111799369551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520558538851839239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3b7551567be2e448ee53202bde1b1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hasFloatingHPBar: 1
+  characterHPBar: {fileID: 755854139357361311}
 --- !u!1 &570601081163563941
 GameObject:
   m_ObjectHideFlags: 0

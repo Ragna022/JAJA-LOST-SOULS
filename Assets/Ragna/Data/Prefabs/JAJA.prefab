@@ -774,6 +774,8 @@ MonoBehaviour:
   characterCombatManager: {fileID: 0}
   characterSoundFXManager: {fileID: 0}
   characterUIManager: {fileID: 0}
+  characterLocomotionManager: {fileID: 0}
+  characterGroup: 0
   isPerformingAction: 0
   isGrounded: 0
   applyRootMotion: 0
@@ -802,6 +804,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 945e59e92d2cc184c9c247d097abb202, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 0}
   gravityForce: -40
   groundLayer:
     serializedVersion: 2
@@ -810,6 +813,7 @@ MonoBehaviour:
   yVelocity: {x: 0, y: 0, z: 0}
   groundedYVelocity: -20
   fallStartYVelocity: -5
+  isRolling: 0
   verticalMovement: 0
   horizontalMovement: 0
   moveAmount: 0
@@ -846,11 +850,15 @@ MonoBehaviour:
   networkPositionVelocity: {x: 0, y: 0, z: 0}
   networkPositionSmoothTime: 0.1
   networkRotationSmoothTime: 0.1
+  isMoving:
+    m_InternalValue: 0
   horizontalMovement:
     m_InternalValue: 0
   verticalMovement:
     m_InternalValue: 0
   moveAmount:
+    m_InternalValue: 0
+  currentTargetNetworkObjectID:
     m_InternalValue: 0
   isLockedOn:
     m_InternalValue: 0
@@ -1210,6 +1218,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e30cfd654d93994b9c775c56aea8861, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   lastAttackAnimationPerformed: 
   currentTarget: {fileID: 0}
   currentAttackType: 0
@@ -1228,7 +1237,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3b7551567be2e448ee53202bde1b1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasFloatingHPBar: 0
+  hasFloatingHPBar: 1
   characterHPBar: {fileID: 6798562241009404520}
 --- !u!1 &849678091291849737 stripped
 GameObject:
