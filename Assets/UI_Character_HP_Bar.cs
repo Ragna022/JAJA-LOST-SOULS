@@ -5,6 +5,7 @@ using UnityEngine;
 public class UI_Character_HP_Bar : UI_StatBar
 {
     private CharacterManager character;
+    //private AICharacterManager aiCharacter;
     private PlayerManager playerCharacter;
 
     [SerializeField] bool displayCharacterNameAndDamage = false;

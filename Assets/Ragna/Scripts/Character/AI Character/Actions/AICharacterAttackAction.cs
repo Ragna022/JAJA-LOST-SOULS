@@ -20,8 +20,20 @@ public class AICharacterAttackAction : ScriptableObject
 
     public void AttemptToPerformAction(AICharacterManager aiCharacter)
     {
-        //aiCharacter.characterAnimatorManager.PlayTargetAttackActionAnimation(attackType, attackAnimation, true);
-
-        Debug.Log("AI Performing Attack: ");
+        Debug.Log("=== AttemptToPerformAction CALLED ===");
+        Debug.Log("Attack Animation: " + attackAnimation);
+        Debug.Log("ScriptableObject Name: " + name);
+        Debug.Log("Attack Type: " + attackType);
+        Debug.Log("Recovery Time: " + actionRecoveryTime);
+        
+        // Use the AI-specific attack animation method
+        aiCharacter.characterAnimatorManager.PlayTargetAttackActionAnimationForAI(
+            attackType,      // AttackType
+            attackAnimation, // string targetAnimation
+            true,            // bool isPerformingAction
+            true,            // bool applyRootMotion
+            true,            // bool canRotate
+            false            // bool canMove
+        );
     }
 }

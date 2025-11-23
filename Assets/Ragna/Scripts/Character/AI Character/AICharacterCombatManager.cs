@@ -18,6 +18,49 @@ public class AICharacterCombatManager : CharacterCombatManager
     [Header("Attack Rotation Speed")]
     public float attackRotationSpeed = 25;
 
+    [SerializeField] AI_Enemy_DamageCollider rightHandDamageCollider;
+    [SerializeField] AI_Enemy_DamageCollider leftHandDamageCollider;
+
+    [Header("Damage")]
+    [SerializeField] int baseDamage = 25;
+    [SerializeField] float attack01DamageMultiplier = 1f;
+    [SerializeField] float attack02DamageMultiplier = 1.4f;
+
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        lockOnTransform = GetComponentInChildren<LockOnTransform>().transform;
+    }
+
+    public void SetAttack01Damage()
+    {
+        rightHandDamageCollider.physicalDamage = baseDamage * attack01DamageMultiplier;
+        leftHandDamageCollider.physicalDamage = baseDamage * attack01DamageMultiplier;
+    }
+
+    public void SetAttack02Damage()
+    {
+        rightHandDamageCollider.physicalDamage = baseDamage * attack02DamageMultiplier;
+        leftHandDamageCollider.physicalDamage = baseDamage * attack02DamageMultiplier;
+    }
+
+    public void OpenRightHandDamage()
+    {
+        rightHandDamageCollider.EnableDamageCollider();
+    }
+
+    public void CloseRightHandDamage()
+    {
+        rightHandDamageCollider.DisableDamageCollider();
+    }
+
+    public void OpenLeftHandDamage()
+    {
+        leftHandDamageCollider.EnableDamageCollider();
+    }
+
     public void FindATargetViaLineOfOfSight(AICharacterManager aiCharacter)
     {
         if (currentTarget != null)

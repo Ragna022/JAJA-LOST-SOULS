@@ -22,6 +22,8 @@ public class AttackState : AIState
         /*if(aiCharacter.aiCharacterCombatManager.currentTarget.isDead.Value)
             return SwitchState(aiCharacter, aiCharacter.idle);*/
 
+        aiCharacter.aiCharacterCombatManager.RotateTowardsTargetWhilstAttacking(aiCharacter);
+
         aiCharacter.characterAnimatorManager.UpdateAnimatorMovementParameters(0, 0, false);
 
         if(willPerformCombo && !hasPerformedCombo)
@@ -33,21 +35,24 @@ public class AttackState : AIState
             }
         }
 
+        if(aiCharacter.isPerformingAction)
+            return this;
+
         if(!hasPerformedAttack)
         {
             if(aiCharacter.aiCharacterCombatManager.actionRecoveryTimer > 0)
                 return this;
 
-            if(aiCharacter.isPerformingAction)
-                return this;
+            //if(aiCharacter.isPerformingAction)
+                //return this;
 
             PerformAttack(aiCharacter);
 
             return this;
         }
 
-        if(pivotAfterAttatck)
-            aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);
+        /*if(pivotAfterAttatck)
+            aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);*/
 
         return SwitchState(aiCharacter, aiCharacter.combatStance);
     }

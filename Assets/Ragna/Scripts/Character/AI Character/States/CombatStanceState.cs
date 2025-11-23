@@ -32,8 +32,8 @@ public class CombatStanceState : AIState
 
         if(!aiCharacter.aiCharacterNetworkManager.isMoving.Value)
         {
-            if(aiCharacter.aiCharacterCombatManager.viewableAngle < -30 || aiCharacter.aiCharacterCombatManager.viewableAngle > 30)
-                aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);
+            /*if(aiCharacter.aiCharacterCombatManager.viewableAngle < -30 || aiCharacter.aiCharacterCombatManager.viewableAngle > 30)
+                aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);*/
         }
 
         aiCharacter.aiCharacterCombatManager.RotateTowardsAgent(aiCharacter);
@@ -47,8 +47,8 @@ public class CombatStanceState : AIState
         }
         else
         {
+            Debug.Log("CombatStance: Has attack, switching to AttackState");
             aiCharacter.attack.currentAttack = choosenAttack;
-
             return SwitchState(aiCharacter, aiCharacter.attack);
         }
 
@@ -64,25 +64,59 @@ public class CombatStanceState : AIState
 
     protected virtual void GetNewAttack(AICharacterManager aiCharacter)
     {
+        Debug.Log("=== GetNewAttack Called ===");
+        Debug.Log("Current Distance: " + aiCharacter.aiCharacterCombatManager.distanceFromTarget);
+        Debug.Log("Current Angle: " + aiCharacter.aiCharacterCombatManager.viewableAngle);
+        Debug.Log("Available attacks in list: " + aiCharacterAttacks.Count);
+
         potentialAttacks = new List<AICharacterAttackAction>();
 
         foreach(var potentialAttack in aiCharacterAttacks)
         {
+            Debug.Log("Checking attack: " + potentialAttack.name);
+            Debug.Log("  Min Distance: " + potentialAttack.minimumAttackDistance + " | Max Distance: " + potentialAttack.maximumAttackDistance);
+            Debug.Log("  Min Angle: " + potentialAttack.minimumAttackAngle + " | Max Angle: " + potentialAttack.maximumAttackAngle);
+
+            // Check minimum distance
             if(potentialAttack.minimumAttackDistance > aiCharacter.aiCharacterCombatManager.distanceFromTarget)
+            {
+                Debug.Log("  ❌ FAILED: Distance too close");
                 continue;
+            }
 
+            // Check maximum distance
             if(potentialAttack.maximumAttackDistance < aiCharacter.aiCharacterCombatManager.distanceFromTarget)
+            {
+                Debug.Log("  ❌ FAILED: Distance too far");
                 continue;
+            }
 
+            // Check minimum angle
             if(potentialAttack.minimumAttackAngle > aiCharacter.aiCharacterCombatManager.viewableAngle)
+            {
+                Debug.Log("  ❌ FAILED: Angle too low");
                 continue;
+            }
 
-            if(potentialAttack.maximumAttackDistance < aiCharacter.aiCharacterCombatManager.viewableAngle)
+            // FIXED: Was checking maximumAttackDistance instead of maximumAttackAngle
+            if(potentialAttack.maximumAttackAngle < aiCharacter.aiCharacterCombatManager.viewableAngle)
+            {
+                Debug.Log("  ❌ FAILED: Angle too high");
                 continue;
+            }
+
+            // CRITICAL FIX: Actually add the attack to the list!
+            Debug.Log("  ✅ PASSED: Attack added to potential attacks!");
+            potentialAttacks.Add(potentialAttack);
         }
 
+        Debug.Log("Total potential attacks after filtering: " + potentialAttacks.Count);
+
         if(potentialAttacks.Count <= 0)
+        {
+            Debug.LogWarning("No valid attacks found!");
             return;
+        }
 
         var totalWeight = 0;
 
@@ -90,6 +124,8 @@ public class CombatStanceState : AIState
         {
             totalWeight += attack.attackWeight;
         }
+
+        Debug.Log("Total weight of attacks: " + totalWeight);
 
         var randomWeightValue = Random.Range(1, totalWeight + 1);
         var processedWeight = 0;
@@ -103,6 +139,8 @@ public class CombatStanceState : AIState
                 choosenAttack = attack;
                 previousAttack = choosenAttack;
                 hasAttack = true;
+                Debug.Log("✅ Attack chosen: " + attack.name);
+                return; // Exit after choosing
             }
         }
     }

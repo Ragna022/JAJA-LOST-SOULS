@@ -14,15 +14,15 @@ public class PursueTargetState : AIState
 
         if (!aiCharacter.navMeshAgent.enabled)
             aiCharacter.navMeshAgent.enabled = true;
-
+//
         /*if (aiCharacter.aiCharacterCombatManager.viewableAngle < aiCharacter.aiCharacterCombatManager.minimumFOV
             || aiCharacter.aiCharacterCombatManager.viewableAngle > aiCharacter.aiCharacterCombatManager.maximumFOV)
             aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);*/
 
-        //aiCharacter.aiCharacterLocomotionManager.RotateTowardsAgent(aiCharacter);
+        aiCharacter.aiCharacterLocomotionManager.RotateTowardsAgent(aiCharacter);
 
-        //if(aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.combatStance.maximumEngagementDistance)
-            //return SwitchState(aiCharacter, aiCharacter.combatStance);
+        if(aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.combatStance.maximumEngagementDistance)
+            return SwitchState(aiCharacter, aiCharacter.combatStance);//
 
         if(aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.navMeshAgent.stoppingDistance)
             return SwitchState(aiCharacter, aiCharacter.combatStance);

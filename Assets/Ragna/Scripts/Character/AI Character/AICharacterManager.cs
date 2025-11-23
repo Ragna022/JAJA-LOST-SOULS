@@ -45,8 +45,11 @@ public class AICharacterManager : CharacterManager
             navMeshAgent.updateUpAxis = false;   // CharacterController handles this
         }
 
+        // FIXED: Instantiate ALL states
         idle = Instantiate(idle);
         pursueTarget = Instantiate(pursueTarget);
+        combatStance = Instantiate(combatStance);
+        attack = Instantiate(attack);
 
         currentState = idle;
     }
@@ -86,8 +89,9 @@ public class AICharacterManager : CharacterManager
             currentState = nextState;
         }
 
-        /*navMeshAgent.transform.localPosition = Vector3.zero;
-        navMeshAgent.transform.localRotation = Quaternion.identity;*/
+        //
+        navMeshAgent.transform.localPosition = Vector3.zero;
+        navMeshAgent.transform.localRotation = Quaternion.identity;
 
         if(aiCharacterCombatManager.currentTarget != null)
         {

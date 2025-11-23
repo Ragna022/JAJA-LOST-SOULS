@@ -23,9 +23,6 @@ public class CharacterAnimatorManager : MonoBehaviour
 
     public void UpdateAnimatorMovementParameters(float horizontalMovement, float verticalMovement, bool isSprinting)
     {
-        // This method would typically update animator parameters.
-        // Implementation depends on the specific animator setup.
-
         float snappedHorizontal;
         float snappedVertical;
 
@@ -49,7 +46,6 @@ public class CharacterAnimatorManager : MonoBehaviour
         {
             snappedHorizontal = 0;
         }
-
 
         if (verticalMovement > 0 && verticalMovement <= 0.5f)
         {
@@ -92,15 +88,10 @@ public class CharacterAnimatorManager : MonoBehaviour
 
         character.applyRootMotion = applyRootMotion;
         character.animator.CrossFade(targetAnimation, 0.2f);
-        // CAN BE USED TO STOP CHARACTER FROM ATTEMPTING NEW ACTIONS
-        // E.G IF YOU GET DAMAGED, AND BEGIN PERFORMING A DAMAGE ANIMATION
-        // THIS FLAG WILL TURN TRUE IF YOU ARE STUNNED
-        // WE CAN THEN CHECK FOR THIS BEFORE ATTEMPTING NEW ACTIONS
         character.isPerformingAction = isPerformingAction;
         character.canRotate = canRotate;
         character.canMove = canMove;
 
-        // TELL THE SERVER /HOST TO PLAY THE ANIMATION, AMD TO PLAY THAT ANIMATION FOR EVERYBODY ELSE PRESENT
         character.characterNetworkManager.NotifyTheServerOfActionAnimationServerRpc(NetworkManager.Singleton.LocalClientId, targetAnimation, applyRootMotion);
     }
 
@@ -112,11 +103,6 @@ public class CharacterAnimatorManager : MonoBehaviour
         bool canRotate = false,
         bool canMove = false)
     {
-        // KEEP TRACK OF LAST ATTACK PERFORMED (FOR COMBOS)
-        // KEEP TRACK OF CURRENT ATTACK TYPE (LIGHT, HEAVY, ETC)
-        // UPDATE ANIMATION SET TO CURRENT WEAPONS ANIMATIONS
-        // DECIDE IF OUR ATTACK CAN BE PARRIED
-        // TELL THE NETWORK OUR "ISATTACKING" FLAG IS ACTIVE (FOR COUNTER DAMAGE ETC)
         character.characterCombatManager.currentAttackType = attackType;
         character.characterCombatManager.lastAttackAnimationPerformed = targetAnimation;
         UpdateAnimatorController(weapon.weaponAnimator);
@@ -126,8 +112,36 @@ public class CharacterAnimatorManager : MonoBehaviour
         character.canRotate = canRotate;
         character.canMove = canMove;
 
-        // TELL THE SERVER /HOST TO PLAY THE ANIMATION, AMD TO PLAY THAT ANIMATION FOR EVERYBODY ELSE PRESENT
         character.characterNetworkManager.NotifyTheServerOfAttackActionAnimationServerRpc(NetworkManager.Singleton.LocalClientId, targetAnimation, applyRootMotion);
+    }
+
+    // NEW METHOD: For AI attacks without weapon requirements
+    public virtual void PlayTargetAttackActionAnimationForAI(
+        AttackType attackType,
+        string targetAnimation,
+        bool isPerformingAction,
+        bool applyRootMotion = true,
+        bool canRotate = false,
+        bool canMove = false)
+    {
+        Debug.Log($"[AI ATTACK] Playing animation: {targetAnimation}, AttackType: {attackType}");
+
+        // Track attack info
+        character.characterCombatManager.currentAttackType = attackType;
+        character.characterCombatManager.lastAttackAnimationPerformed = targetAnimation;
+        
+        character.applyRootMotion = applyRootMotion;
+        character.animator.CrossFade(targetAnimation, 0.2f);
+        character.isPerformingAction = isPerformingAction;
+        character.canRotate = canRotate;
+        character.canMove = canMove;
+
+        // Notify network
+        character.characterNetworkManager.NotifyTheServerOfAttackActionAnimationServerRpc(
+            NetworkManager.Singleton.LocalClientId, 
+            targetAnimation, 
+            applyRootMotion
+        );
     }
 
     public virtual void EnableCanDoCombo()
