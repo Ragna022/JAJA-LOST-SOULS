@@ -64,18 +64,18 @@ public class CombatStanceState : AIState
 
     protected virtual void GetNewAttack(AICharacterManager aiCharacter)
     {
-        Debug.Log("=== GetNewAttack Called ===");
+        /*Debug.Log("=== GetNewAttack Called ===");
         Debug.Log("Current Distance: " + aiCharacter.aiCharacterCombatManager.distanceFromTarget);
         Debug.Log("Current Angle: " + aiCharacter.aiCharacterCombatManager.viewableAngle);
-        Debug.Log("Available attacks in list: " + aiCharacterAttacks.Count);
+        Debug.Log("Available attacks in list: " + aiCharacterAttacks.Count);*/
 
         potentialAttacks = new List<AICharacterAttackAction>();
 
         foreach(var potentialAttack in aiCharacterAttacks)
         {
-            Debug.Log("Checking attack: " + potentialAttack.name);
+            /*Debug.Log("Checking attack: " + potentialAttack.name);
             Debug.Log("  Min Distance: " + potentialAttack.minimumAttackDistance + " | Max Distance: " + potentialAttack.maximumAttackDistance);
-            Debug.Log("  Min Angle: " + potentialAttack.minimumAttackAngle + " | Max Angle: " + potentialAttack.maximumAttackAngle);
+            Debug.Log("  Min Angle: " + potentialAttack.minimumAttackAngle + " | Max Angle: " + potentialAttack.maximumAttackAngle);*/
 
             // Check minimum distance
             if(potentialAttack.minimumAttackDistance > aiCharacter.aiCharacterCombatManager.distanceFromTarget)

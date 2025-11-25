@@ -20,52 +20,113 @@ public class UI_Character_HP_Bar : UI_StatBar
     {
         base.Awake();
 
+        Debug.Log($"[UI_Character_HP_Bar] Awake called for {gameObject.name}");
+
         character = GetComponentInParent<CharacterManager>();
+        Debug.Log($"[UI_Character_HP_Bar] character found: {(character != null ? character.name : "NULL")}");
 
         if(character != null)
         {
             playerCharacter = character as PlayerManager;
+            Debug.Log($"[UI_Character_HP_Bar] playerCharacter cast: {(playerCharacter != null ? "SUCCESS" : "NULL (not a player)")}");
         }
 
         if(character != null)
         {
             aiCharacter = character as AICharacterManager;
+            Debug.Log($"[UI_Character_HP_Bar] aiCharacter cast: {(aiCharacter != null ? "SUCCESS" : "NULL (not an AI)")}");
         }
+
+        // Check if TextMeshProUGUI references are assigned
+        Debug.Log($"[UI_Character_HP_Bar] characterName TextMeshPro assigned: {characterName != null}");
+        Debug.Log($"[UI_Character_HP_Bar] characterDamage TextMeshPro assigned: {characterDamage != null}");
     }
 
     protected override void Start()
     {
         base.Start();
 
+        Debug.Log($"[UI_Character_HP_Bar] Start called for {(character != null ? character.name : "unknown")}");
+
+        if (character != null)
+        {
+            if (character.characterUIManager == null)
+            {
+                Debug.Log($"[UI_Character_HP_Bar] characterUIManager is NULL for {character.name}! Adding CharacterUIManager component.");
+
+                CharacterUIManager uiManager = character.gameObject.AddComponent<CharacterUIManager>();
+                uiManager.hasFloatingHPBar = true;
+                uiManager.characterHPBar = this;
+                character.characterUIManager = uiManager; // Assign to the public field if it exists
+
+                // Subscribe to health changes
+                character.characterNetworkManager.currentHealth.OnValueChanged += uiManager.OnHPChanged;
+
+                // Initialize with current health
+                oldHealthValue = character.characterNetworkManager.currentHealth.Value;
+                uiManager.OnHPChanged(oldHealthValue, oldHealthValue);
+            }
+            else
+            {
+                Debug.Log($"[UI_Character_HP_Bar] characterUIManager EXISTS, hasFloatingHPBar: {character.characterUIManager.hasFloatingHPBar}");
+            }
+        }
+
         gameObject.SetActive(false);
     }
 
     public override void SetStat(int newValue)
     {
+        Debug.Log($"[UI_Character_HP_Bar] ===== SetStat CALLED ===== for {(character != null ? character.name : "unknown")}");
+        Debug.Log($"[UI_Character_HP_Bar] newValue: {newValue}, oldHealthValue: {oldHealthValue}");
+
         if (displayCharacterNameAndDamage)
         {
+            if (characterName == null)
+            {
+                Debug.LogError("[UI_Character_HP_Bar] characterName TextMeshProUGUI is NULL!");
+                return;
+            }
+
             characterName.enabled = true;
 
             if (playerCharacter != null)
-                characterName.text = playerCharacter.playerNetworkManager.characterName.Value.ToString();
+            {
+                string playerName = playerCharacter.playerNetworkManager.characterName.Value.ToString();
+                characterName.text = playerName;
+                Debug.Log($"[UI_Character_HP_Bar] Set PLAYER name to: {playerName}");
+            }
+            else if (aiCharacter != null)
+            {
+                string aiName = aiCharacter.name;
+                characterName.text = aiName;
+                Debug.Log($"[UI_Character_HP_Bar] Set AI name to: {aiName}");
+            }
+        }
 
-            if (aiCharacter != null)
-                characterName.text = aiCharacter.name;
-                
+        if (character == null)
+        {
+            Debug.LogError("[UI_Character_HP_Bar] character is NULL!");
+            return;
         }
 
         slider.maxValue = character.characterNetworkManager.maxHealth.Value;
+        Debug.Log($"[UI_Character_HP_Bar] slider.maxValue set to: {slider.maxValue}");
 
         currentDamageTaken = Mathf.RoundToInt(currentDamageTaken + (oldHealthValue - newValue));
+        Debug.Log($"[UI_Character_HP_Bar] currentDamageTaken: {currentDamageTaken}");
 
-        if (currentDamageTaken < 0)
+        if (characterDamage != null)
         {
-            currentDamageTaken = Mathf.Abs(currentDamageTaken);
-            characterDamage.text = "+ " + currentDamageTaken.ToString();
-        }
-        else
-        {
-            characterDamage.text = "- " + currentDamageTaken.ToString();
+            if (currentDamageTaken < 0)
+            {
+                currentDamageTaken = Mathf.Abs(currentDamageTaken);
+                characterDamage.text = "+ " + currentDamageTaken.ToString();
+            }
+            else
+            {
+                characterDamage.text = "- " + currentDamageTaken.ToString();
+            }
         }
 
         slider.value = newValue;
@@ -74,6 +135,7 @@ public class UI_Character_HP_Bar : UI_StatBar
         {
             hideTimer = defaultTimeBeforeBarHides;
             gameObject.SetActive(true);
+            Debug.Log($"[UI_Character_HP_Bar] HP bar activated for {character.name}");
         }
     }
 
@@ -87,12 +149,16 @@ public class UI_Character_HP_Bar : UI_StatBar
         }
         else
         {
-            gameObject.SetActive(false);
+            if (gameObject.activeSelf)
+            {
+                gameObject.SetActive(false);
+            }
         }
     }
 
     private void OnDisable()
     {
+        Debug.Log($"[UI_Character_HP_Bar] OnDisable called for {(character != null ? character.name : "unknown")}");
         currentDamageTaken = 0;
     }
 }
