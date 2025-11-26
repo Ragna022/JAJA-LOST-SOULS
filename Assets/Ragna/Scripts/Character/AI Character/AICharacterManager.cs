@@ -69,7 +69,11 @@ public class AICharacterManager : CharacterManager
     {
         base.Update();
         
-        aiCharacterCombatManager.HandleActionRecovery(this);
+        // CRITICAL: Don't process action recovery if dead
+        if (!isDead)
+        {
+            aiCharacterCombatManager.HandleActionRecovery(this);
+        }
     }
 
     protected override void FixedUpdate()
@@ -82,6 +86,25 @@ public class AICharacterManager : CharacterManager
 
     private void ProcessStateMachine()
     {
+        // *** CRITICAL: Stop ALL AI processing if dead ***
+        if (isDead)
+        {
+            Debug.Log($"[AICharacterManager] AI is DEAD, stopping state machine for {gameObject.name}");
+            
+            // Stop the NavMeshAgent
+            if (navMeshAgent != null && navMeshAgent.enabled)
+            {
+                navMeshAgent.isStopped = true;
+                navMeshAgent.ResetPath();
+            }
+            
+            // Set isMoving to false
+            aiCharacterNetworkManager.isMoving.Value = false;
+            
+            return; // Exit immediately - no more AI processing
+        }
+
+        // Normal AI state machine processing
         AIState nextState = currentState?.Tick(this);
 
         if (nextState != null)
@@ -89,10 +112,11 @@ public class AICharacterManager : CharacterManager
             currentState = nextState;
         }
 
-        //
+        // Keep NavMeshAgent transform synced
         navMeshAgent.transform.localPosition = Vector3.zero;
         navMeshAgent.transform.localRotation = Quaternion.identity;
 
+        // Update target tracking
         if(aiCharacterCombatManager.currentTarget != null)
         {
             aiCharacterCombatManager.targetsDirection = aiCharacterCombatManager.currentTarget.transform.position - transform.position;
@@ -131,6 +155,10 @@ public class AICharacterManager : CharacterManager
     // Helper method to set destination (call from AI states)
     public void SetDestination(Vector3 destination)
     {
+        // Don't set destination if dead
+        if (isDead)
+            return;
+            
         if (navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
         {
             navMeshAgent.SetDestination(destination);
@@ -141,15 +169,25 @@ public class AICharacterManager : CharacterManager
     {
         base.OnEnable();
 
-        if(characterUIManager.hasFloatingHPBar)
+        if(characterUIManager != null && characterUIManager.hasFloatingHPBar)
+        {
             characterNetworkManager.currentHealth.OnValueChanged += characterUIManager.OnHPChanged;
+            Debug.Log($"[AICharacterManager] HP bar subscription enabled for {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[AICharacterManager] Could not subscribe to HP changes for {gameObject.name} - characterUIManager null or hasFloatingHPBar false");
+        }
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
 
-        if(characterUIManager.hasFloatingHPBar)
+        if(characterUIManager != null && characterUIManager.hasFloatingHPBar)
+        {
             characterNetworkManager.currentHealth.OnValueChanged -= characterUIManager.OnHPChanged;
+            Debug.Log($"[AICharacterManager] HP bar subscription disabled for {gameObject.name}");
+        }
     }
 }

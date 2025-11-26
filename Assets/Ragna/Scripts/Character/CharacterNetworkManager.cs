@@ -96,14 +96,24 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         Debug.Log($"[CharacterNetworkManager] Health changed from {oldValue} to {newValue} for {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
 
-        if (oldValue > 0 && newValue <= 0 && IsOwner)
+        // CRITICAL: Clamp health to 0 minimum - never allow negative health
+        if (newValue < 0 && IsOwner)
         {
-            Debug.Log($"[CharacterNetworkManager] *** DEATH DETECTED *** Setting isDead=true for {gameObject.name} (Owner)");
-            isDead.Value = true;
+            Debug.LogWarning($"[CharacterNetworkManager] Health went negative ({newValue}), clamping to 0 for {gameObject.name}");
             currentHealth.Value = 0;
             return;
         }
 
+        // Check for death: health reached 0 or below
+        if (oldValue > 0 && newValue <= 0 && IsOwner)
+        {
+            Debug.Log($"[CharacterNetworkManager] *** DEATH DETECTED *** Setting isDead=true for {gameObject.name} (Owner)");
+            currentHealth.Value = 0; // Ensure it's exactly 0
+            isDead.Value = true;
+            return;
+        }
+
+        // Clamp to max health
         if (IsOwner && newValue > maxHealth.Value)
         {
             currentHealth.Value = maxHealth.Value;
@@ -114,10 +124,19 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         if (!newValue) return;
 
-        Debug.Log($"[CharacterNetworkManager] isDead=true! Playing DEATH animation on {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
+        Debug.Log($"[CharacterNetworkManager] *** DEATH STATE CHANGED *** isDead=true for {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
 
+        // IMMEDIATELY stop all actions and play death animation
         PlayDeathAnimation();
 
+        // AUTO DESTROY AI AFTER DEATH
+        if (character is AICharacterManager && IsServer)
+        {
+            StartCoroutine(AutoDestroyAIAfterDelay());
+        }
+
+
+        // Check if this is a player to show defeat UI
         if (IsOwner)
         {
             PlayerManager player = character as PlayerManager;
@@ -131,6 +150,7 @@ public class CharacterNetworkManager : NetworkBehaviour
             }
         }
 
+        // Check victory condition on server
         if (IsServer)
         {
             StartCoroutine(CheckVictoryNextFrame());
@@ -172,11 +192,15 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        Debug.Log($"[CheckVictory] Total SpawnedObjects: {NetworkManager.Singleton.SpawnManager.SpawnedObjects.Count}");
+        Debug.Log($"[CheckVictory] ===== VICTORY CHECK STARTED ===== Total SpawnedObjects: {NetworkManager.Singleton.SpawnManager.SpawnedObjects.Count}");
 
-        // Track ALIVE status by OwnerClientId
+        // Track ALIVE status by OwnerClientId for PLAYERS
         Dictionary<ulong, bool> ownerAliveStatus = new Dictionary<ulong, bool>();
         Dictionary<ulong, CharacterManager> ownerToCharacter = new Dictionary<ulong, CharacterManager>();
+        
+        // Track AI characters
+        int totalAICharacters = 0;
+        int aliveAICharacters = 0;
         
         foreach (var spawnedObj in NetworkManager.Singleton.SpawnManager.SpawnedObjects.Values)
         {
@@ -185,13 +209,15 @@ public class CharacterNetworkManager : NetworkBehaviour
                 continue;
 
             PlayerManager playerManager = charManager as PlayerManager;
+            AICharacterManager aiManager = charManager as AICharacterManager;
             
+            // Handle PLAYER characters
             if (playerManager != null)
             {
                 ulong ownerClientId = spawnedObj.OwnerClientId;
                 bool isAlive = !charManager.characterNetworkManager.isDead.Value;
                 
-                Debug.Log($"[CheckVictory] Found Player: {charManager.gameObject.name} (NetworkID: {spawnedObj.NetworkObjectId}, OwnerID: {ownerClientId}), IsAlive: {isAlive}");
+                Debug.Log($"[CheckVictory] Found PLAYER: {charManager.gameObject.name} (NetworkID: {spawnedObj.NetworkObjectId}, OwnerID: {ownerClientId}), IsAlive: {isAlive}");
                 
                 // If this owner is dead in ANY of their instances, mark them as dead
                 if (!ownerAliveStatus.ContainsKey(ownerClientId))
@@ -214,58 +240,128 @@ public class CharacterNetworkManager : NetworkBehaviour
                     }
                 }
             }
-        }
-
-        // Find alive owners
-        List<ulong> aliveOwners = new List<ulong>();
-        foreach (var kvp in ownerAliveStatus)
-        {
-            Debug.Log($"[CheckVictory] OwnerID {kvp.Key}: IsAlive={kvp.Value}");
-            if (kvp.Value)
+            // Handle AI characters
+            else if (aiManager != null)
             {
-                aliveOwners.Add(kvp.Key);
+                totalAICharacters++;
+                bool isAlive = !charManager.characterNetworkManager.isDead.Value;
+                
+                if (isAlive)
+                {
+                    aliveAICharacters++;
+                }
+                
+                Debug.Log($"[CheckVictory] Found AI: {charManager.gameObject.name} (NetworkID: {spawnedObj.NetworkObjectId}), IsAlive: {isAlive}");
             }
         }
 
-        Debug.Log($"[CheckVictory] Total unique owners: {ownerAliveStatus.Count}, Alive owners: {aliveOwners.Count}");
-
-        if (aliveOwners.Count == 1)
+        // Find alive player owners
+        List<ulong> alivePlayerOwners = new List<ulong>();
+        foreach (var kvp in ownerAliveStatus)
         {
-            ulong winnerOwnerId = aliveOwners[0];
-            CharacterManager winner = ownerToCharacter[winnerOwnerId];
-            
-            Debug.Log($"[CheckVictory] *** VICTORY! *** Winner OwnerID: {winnerOwnerId}, Character: {winner.gameObject.name} (NetworkID: {winner.NetworkObjectId})");
-            
-            winner.characterNetworkManager.hasWon.Value = true;
+            Debug.Log($"[CheckVictory] Player OwnerID {kvp.Key}: IsAlive={kvp.Value}");
+            if (kvp.Value)
+            {
+                alivePlayerOwners.Add(kvp.Key);
+            }
         }
-        else if (aliveOwners.Count == 0)
+
+        Debug.Log($"[CheckVictory] ===== SUMMARY =====");
+        Debug.Log($"[CheckVictory] Total unique player owners: {ownerAliveStatus.Count}, Alive player owners: {alivePlayerOwners.Count}");
+        Debug.Log($"[CheckVictory] Total AI characters: {totalAICharacters}, Alive AI characters: {aliveAICharacters}");
+        Debug.Log($"[CheckVictory] ====================");
+
+        // VICTORY CONDITIONS:
+        // 1. Only ONE player alive AND all AI are dead
+        // 2. Multiple players can be alive as long as all AI are dead
+        
+        bool allAIDead = (aliveAICharacters == 0 && totalAICharacters > 0);
+        bool anyPlayerAlive = alivePlayerOwners.Count > 0;
+        
+        if (allAIDead && anyPlayerAlive)
         {
-            Debug.LogWarning("[CheckVictory] No players alive - draw or all died simultaneously!");
+            Debug.Log($"[CheckVictory] *** VICTORY CONDITION MET! *** All AI defeated, {alivePlayerOwners.Count} player(s) alive!");
+            
+            // Award victory to ALL alive players
+            foreach (ulong winnerOwnerId in alivePlayerOwners)
+            {
+                CharacterManager winner = ownerToCharacter[winnerOwnerId];
+                Debug.Log($"[CheckVictory] Awarding VICTORY to OwnerID: {winnerOwnerId}, Character: {winner.gameObject.name} (NetworkID: {winner.NetworkObjectId})");
+                winner.characterNetworkManager.hasWon.Value = true;
+            }
+        }
+        else if (alivePlayerOwners.Count == 0)
+        {
+            Debug.LogWarning("[CheckVictory] All players are dead - DEFEAT!");
+        }
+        else if (aliveAICharacters > 0)
+        {
+            Debug.Log($"[CheckVictory] Victory not yet achieved - {aliveAICharacters} AI character(s) still alive");
+        }
+        else if (totalAICharacters == 0)
+        {
+            Debug.LogWarning("[CheckVictory] No AI characters found in the scene - cannot determine victory condition");
         }
     }
 
     private void PlayDeathAnimation()
     {
+        if (character == null)
+        {
+            Debug.LogError($"[CharacterNetworkManager] Character is NULL in PlayDeathAnimation!");
+            return;
+        }
+
         if (character.animator == null)
         {
             Debug.LogError($"[CharacterNetworkManager] Animator NULL in PlayDeathAnimation for {gameObject.name}!");
             return;
         }
 
-        character.isPerformingAction = false;
+        Debug.Log($"[CharacterNetworkManager] *** PLAYING DEATH ANIMATION *** for {gameObject.name}");
+
+        // CRITICAL: Set character flags to stop all actions
+        character.isPerformingAction = true; // Lock character from performing new actions
         character.canRotate = false;
         character.canMove = false;
+        character.isDead = true;
         character.applyRootMotion = true;
 
+        // For AI characters, stop their AI state machine
+        AICharacterManager aiCharacter = character as AICharacterManager;
+        if (aiCharacter != null)
+        {
+            Debug.Log($"[CharacterNetworkManager] AI Character detected - stopping AI behavior for {gameObject.name}");
+            // The AI state machine will check isDead flag and stop processing
+        }
+
+        // STOP all current animations and play death immediately
         int deathHash = Animator.StringToHash("Death");
         int actionLayer = character.animator.GetLayerIndex("Action Override");
         if (actionLayer == -1) actionLayer = 0;
 
+        // Force animator to rebind and update to ensure clean state
         character.animator.Rebind();
         character.animator.Update(0f);
+        
+        // Play death animation immediately with no crossfade
         character.animator.Play(deathHash, actionLayer, 0f);
 
-        Debug.Log($"[CharacterNetworkManager] Death animation PLAYED on layer {actionLayer} for {gameObject.name}");
+        Debug.Log($"[CharacterNetworkManager] Death animation FORCED on layer {actionLayer} for {gameObject.name}");
+
+        // Disable character collision after a short delay to let death animation play
+        StartCoroutine(DisableCollisionAfterDeath());
+    }
+
+    private IEnumerator DisableCollisionAfterDeath()
+    {
+        yield return new WaitForSeconds(0.5f);
+        
+        if (character != null && character.characterController != null)
+        {
+            character.characterController.enabled = false;
+            Debug.Log($"[CharacterNetworkManager] Character controller disabled for {gameObject.name}");
+        }
     }
 
     public void OnLockOnTargetIDChabge(ulong oldID, ulong newID)
@@ -480,4 +576,17 @@ public class CharacterNetworkManager : NetworkBehaviour
             Debug.LogWarning("[CharacterNetworkManager] Action Override controller reference is null!");
         }
     }
+
+    private IEnumerator AutoDestroyAIAfterDelay()
+    {
+        yield return new WaitForSeconds(3f);
+
+        if (character != null &&
+            character.NetworkObject != null &&
+            character.NetworkObject.IsSpawned)
+        {
+            character.NetworkObject.Despawn(true); // true = destroy GameObject
+        }
+    }
+
 }
