@@ -7,7 +7,7 @@ using UnityEngine.AI;
 public class CombatStanceState : AIState
 {
    [Header("Attacks")]
-   public List<AICharacterAttackAction> aiCharacterAttacks;
+   public List<AICharacterAttackAction> aiCharacterAttacks; 
    protected List<AICharacterAttackAction> potentialAttacks;
    private AICharacterAttackAction choosenAttack;
    private AICharacterAttackAction previousAttack;

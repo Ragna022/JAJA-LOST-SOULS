@@ -107,44 +107,6 @@ public class AICharacterCombatManager : CharacterCombatManager
         }
     }
     
-    public void PivotTowardsTarget(AICharacterManager aiCharacter)
-    {
-        if (aiCharacter.isPerformingAction)
-            return;
-
-        if (viewableAngle >= 20 && viewableAngle <= 60)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        else if (viewableAngle <= -20 && viewableAngle >= -60)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        else if (viewableAngle >= 61 && viewableAngle <= 110)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        else if (viewableAngle <= -61 && viewableAngle >= -110)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        if (viewableAngle >= 110 && viewableAngle <= 145)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        else if (viewableAngle <= -110 && viewableAngle >= -145)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        if (viewableAngle >= 146 && viewableAngle <= 180)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-        else if (viewableAngle <= -146 && viewableAngle >= -180)
-        {
-            aiCharacter.characterAnimatorManager.PlayTargetActionAnimation("Turn_Right_45", true);
-        }
-    }
 
     public void HandleActionRecovery(AICharacterManager aiCharacter)
     {

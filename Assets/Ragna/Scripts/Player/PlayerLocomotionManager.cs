@@ -88,6 +88,9 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         //if (!player.canMove)
         //    return;
 
+       if (player.isPerformingAction && !player.playerNetworkManager.isJumping.Value && !player.playerLocomotionManager.isRolling)
+            return;
+
         GetMovementValues();
         //Movement direction is based on camera perspective and directions
         moveDirection = PlayerCamera.instance.transform.forward * verticalMovement;
@@ -95,19 +98,23 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         moveDirection.Normalize();
         moveDirection.y = 0;
 
-        if (player.playerNetworkManager.isSprinting.Value)
+        // We check if the controller is enabled before moving
+        if (player.characterController.enabled)
         {
-            player.characterController.Move(moveDirection * sprintingSpeed * Time.deltaTime);
-        }
-        else
-        {
-            if (PlayerInputManager.instance.moveAmount > 0.5f)
+            if (player.playerNetworkManager.isSprinting.Value)
             {
-                player.characterController.Move(moveDirection * runningSpeed * Time.deltaTime);
+                player.characterController.Move(moveDirection * sprintingSpeed * Time.deltaTime);
             }
-            else if (PlayerInputManager.instance.moveAmount <= 0.5f)
+            else
             {
-                player.characterController.Move(moveDirection * walkingSpeed * Time.deltaTime);
+                if (PlayerInputManager.instance.moveAmount > 0.5f)
+                {
+                    player.characterController.Move(moveDirection * runningSpeed * Time.deltaTime);
+                }
+                else if (PlayerInputManager.instance.moveAmount <= 0.5f)
+                {
+                    player.characterController.Move(moveDirection * walkingSpeed * Time.deltaTime);
+                }
             }
         }
     }
@@ -116,7 +123,11 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
     {
         if (player.playerNetworkManager.isJumping.Value)
         {
-            player.characterController.Move(jumpDirection * jumpForwardSpeed * Time.deltaTime);
+            // --- FIX ADDED HERE ---
+            if (player.characterController.enabled)
+            {
+                player.characterController.Move(jumpDirection * jumpForwardSpeed * Time.deltaTime);
+            }
         }
     }
 
@@ -130,7 +141,11 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
             freeFallDirection = freeFallDirection + PlayerCamera.instance.transform.right * PlayerInputManager.instance.horizontalInput;
             freeFallDirection.y = 0;
 
-            player.characterController.Move(freeFallDirection * freeFallSpeed * Time.deltaTime);
+            // --- FIX ADDED HERE ---
+            if (player.characterController.enabled)
+            {
+                player.characterController.Move(freeFallDirection * freeFallSpeed * Time.deltaTime);
+            }
         }
     }
 

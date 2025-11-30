@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 
 public class CharacterLocomotionManager : MonoBehaviour
 {
@@ -9,9 +8,9 @@ public class CharacterLocomotionManager : MonoBehaviour
    [SerializeField] protected float gravityForce = -5.55f;
    [SerializeField] LayerMask groundLayer;
    [SerializeField] float groundCheckSphereRadius = 1;
-   [SerializeField] protected Vector3 yVelocity; // THE FORCE AT WHICH OUR CHARACTER I SPULLED UP OR DOWN (JUMPING OR FALLING)
-   [SerializeField] protected float groundedYVelocity = -20; ///THE FORCE AT WHICH OUR CHARACTER IS STICKING TOT THE GROUND WHILST THEY ARE GROUNDED
-   [SerializeField] protected float fallStartYVelocity = -5; // THE FORCE AT WHICH OUR CHARACTER BEGINS TO FALL WHEN THEY BECOME UNGROUNDED (RISES AS THEY FALL LONGER)
+   [SerializeField] protected Vector3 yVelocity;
+   [SerializeField] protected float groundedYVelocity = -20;
+   [SerializeField] protected float fallStartYVelocity = -5;
    protected bool fallingVelocityhasBeenSet = false;
    protected float inAirTimer = 0;
 
@@ -29,7 +28,6 @@ public class CharacterLocomotionManager : MonoBehaviour
 
       if (character.isGrounded)
       {
-         // IF WE ARE NOT ATTEMPTING TO JUMP OR MOVE UPWARD
          if (yVelocity.y < 0)
          {
             inAirTimer = 0;
@@ -39,7 +37,6 @@ public class CharacterLocomotionManager : MonoBehaviour
       }
       else
       {
-         // IF WE ARE NOT JUMPING, AND OUR FALLING VELOCITY HAS NOT BEEN SET
          if (!character.characterNetworkManager.isJumping.Value && !fallingVelocityhasBeenSet)
          {
             fallingVelocityhasBeenSet = true;
@@ -51,16 +48,21 @@ public class CharacterLocomotionManager : MonoBehaviour
          yVelocity.y += gravityForce * Time.deltaTime;
       }
       
-      // THERE SHOULD ALWAY BE SOME FORCE APPLIED TO THE Y VELOCITY 
-      character.characterController.Move(yVelocity * Time.deltaTime);
+      if (character.characterController.enabled)
+      {
+          character.characterController.Move(yVelocity * Time.deltaTime);
+      }
    }
 
    protected void HandleGroundCheck()
    {
+      // Don't update grounded state during jumps or rolls
+      if (character.characterNetworkManager.isJumping.Value || isRolling)
+         return;
+         
       character.isGrounded = Physics.CheckSphere(character.transform.position, groundCheckSphereRadius, groundLayer);
    }
 
-   // DRAWS OUR GROUNDED CHECK SPHERE IN SCENE VIEW
    protected void OnDrawGizmosSelected()
    {
       //Gizmos.DrawSphere(character.transform.position, groundCheckSphereRadius);
