@@ -1,232 +1,222 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
-public class MobileCameraTouch : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+public class MobileCameraTouch : MonoBehaviour
 {
     [Header("Camera Sensitivity")]
     [SerializeField] private float cameraSensitivity = 1f;
     [SerializeField] private bool invertY = false;
     
     [Header("Touch Settings")]
-    [SerializeField] private bool ignoreUITouches = true; // Don't rotate camera when touching UI elements
-    
+    [SerializeField] private bool ignoreUITouches = true;
+    [SerializeField] private float deadZone = 10f; 
+    [Tooltip("0.5 means the camera works on the Right Half of the screen.")]
+    [Range(0.1f, 0.9f)]
+    [SerializeField] private float rightSideThreshold = 0.4f;
+
+    [Header("Debug")]
+    [SerializeField] private bool showDebugLogs = false;
+
     private Vector2 touchDelta;
+    private Vector2 touchStartPosition;
     private Vector2 lastTouchPosition;
     private bool isDragging = false;
-    private int currentFingerId = -1;
+    private bool validCameraTouch = false;
+    private int activeTouchId = -1;
 
-    // For detecting if we're over UI
-    private bool isOverUI = false;
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        // Check if we're touching a UI element
-        if (ignoreUITouches && IsPointerOverUIElement(eventData))
-        {
-            isOverUI = true;
-            return;
-        }
-
-        isOverUI = false;
-        isDragging = true;
-        currentFingerId = eventData.pointerId;
-        lastTouchPosition = eventData.position;
-        touchDelta = Vector2.zero;
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        // Ignore if we started on UI
-        if (isOverUI || !isDragging || eventData.pointerId != currentFingerId)
-            return;
-
-        // Calculate delta from last position
-        Vector2 currentPosition = eventData.position;
-        Vector2 delta = currentPosition - lastTouchPosition;
-        
-        // Apply sensitivity
-        touchDelta = delta * cameraSensitivity * 0.1f;
-        
-        // Invert Y if needed
-        if (invertY)
-        {
-            touchDelta.y = -touchDelta.y;
-        }
-
-        lastTouchPosition = currentPosition;
-    }
-
-    public void OnPointerUp(PointerEventData eventData)
-    {
-        if (eventData.pointerId == currentFingerId)
-        {
-            isDragging = false;
-            currentFingerId = -1;
-            touchDelta = Vector2.zero;
-        }
-    }
-
-    // Alternative: Use Unity's Touch Input (works without EventSystem)
     private void Update()
     {
-        // If using event system and it's working, we don't need this
-        // But keeping it as backup for non-UI touch detection
-        if (Input.touchCount > 0 && !isDragging)
+        touchDelta = Vector2.zero;
+
+        // 1. If we have touches, process them
+        if (Input.touchCount > 0)
         {
-            Touch touch = Input.GetTouch(0);
-            
-            if (touch.phase == TouchPhase.Began)
-            {
-                // Check if touch is over UI
-                if (ignoreUITouches && IsTouchOverUI(touch))
-                    return;
-                    
-                lastTouchPosition = touch.position;
-                isDragging = true;
-            }
+            HandleTouchInput();
+        }
+        // 2. If no touches at all, reset immediately
+        else 
+        {
+            ResetTouch();
         }
 
-        if (isDragging && Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            
-            if (touch.phase == TouchPhase.Moved)
-            {
-                Vector2 delta = touch.deltaPosition;
-                touchDelta = delta * cameraSensitivity * 0.1f;
-                
-                if (invertY)
-                {
-                    touchDelta.y = -touchDelta.y;
-                }
-            }
-            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-            {
-                isDragging = false;
-                touchDelta = Vector2.zero;
-            }
-        }
-
-        // Mouse support for testing in editor
         #if UNITY_EDITOR || UNITY_STANDALONE
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (ignoreUITouches && IsMouseOverUI())
-                return;
-                
-            lastTouchPosition = Input.mousePosition;
-            isDragging = true;
-        }
-
-        if (isDragging && Input.GetMouseButton(0))
-        {
-            Vector2 currentPosition = Input.mousePosition;
-            Vector2 delta = currentPosition - lastTouchPosition;
-            touchDelta = delta * cameraSensitivity * 0.1f;
-            
-            if (invertY)
-            {
-                touchDelta.y = -touchDelta.y;
-            }
-            
-            lastTouchPosition = currentPosition;
-        }
-
-        if (Input.GetMouseButtonUp(0))
-        {
-            isDragging = false;
-            touchDelta = Vector2.zero;
-        }
+        HandleMouseInput();
         #endif
     }
 
-    public Vector2 GetCameraInput()
+    private void HandleTouchInput()
     {
-        return touchDelta;
-    }
-
-    public float GetHorizontal()
-    {
-        return touchDelta.x;
-    }
-
-    public float GetVertical()
-    {
-        return touchDelta.y;
-    }
-
-    public bool IsDragging()
-    {
-        return isDragging;
-    }
-
-    // Helper method to check if pointer is over UI element
-    private bool IsPointerOverUIElement(PointerEventData eventData)
-    {
-        // Check if we're clicking on a UI element (like the joystick)
-        if (eventData.pointerEnter != null)
+        // A. IF WE ALREADY HAVE A CAMERA FINGER
+        if (activeTouchId != -1)
         {
-            // Check if the object we're clicking has any of these components
-            if (eventData.pointerEnter.GetComponent<MobileJoystick>() != null ||
-                eventData.pointerEnter.GetComponent<MobileButton>() != null ||
-                eventData.pointerEnter.GetComponentInParent<MobileJoystick>() != null ||
-                eventData.pointerEnter.GetComponentInParent<MobileButton>() != null)
+            bool foundActive = false;
+            for (int i = 0; i < Input.touchCount; i++)
             {
-                return true;
+                Touch t = Input.GetTouch(i);
+                if (t.fingerId == activeTouchId)
+                {
+                    ProcessCameraTouch(t);
+                    foundActive = true;
+                    break;
+                }
+            }
+
+            // If the finger we were tracking was lifted/lost, reset
+            if (!foundActive)
+            {
+                ResetTouch();
             }
         }
-        return false;
+        
+        // B. IF WE DON'T HAVE A CAMERA FINGER (This fixes the "2 Finger" bug)
+        // We look for ANY finger on the right side, even if it's already "Moved" or "Stationary"
+        if (activeTouchId == -1)
+        {
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                Touch t = Input.GetTouch(i);
+
+                // Check 1: Is it on the right side?
+                if (!IsTouchOnRightSide(t.position)) 
+                    continue;
+
+                // Check 2: Is it hitting a BUTTON? (We ignore Joysticks here)
+                if (ignoreUITouches && IsTouchBlockedByUI(t.position))
+                    continue;
+
+                // ✅ FOUND A VALID FINGER! Grab it.
+                activeTouchId = t.fingerId;
+                touchStartPosition = t.position;
+                lastTouchPosition = t.position;
+                isDragging = true;
+                
+                // If it's a fresh touch, reset deadzone logic. 
+                // If it's an existing touch (Stationary/Moved), we accept it immediately.
+                validCameraTouch = (t.phase == TouchPhase.Moved); 
+
+                if (showDebugLogs) Debug.Log($"Grabbed Finger {t.fingerId} at {t.position}");
+                break; // Stop looking, we found one
+            }
+        }
     }
 
-    // Helper method for touch input
-    private bool IsTouchOverUI(Touch touch)
+    private void ProcessCameraTouch(Touch touch)
     {
-        if (EventSystem.current == null)
-            return false;
+        if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+        {
+            // Deadzone Check
+            if (!validCameraTouch)
+            {
+                if (Vector2.Distance(touch.position, touchStartPosition) > deadZone)
+                {
+                    validCameraTouch = true;
+                }
+            }
 
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = touch.position;
-        
-        var results = new System.Collections.Generic.List<RaycastResult>();
+            // Apply Movement
+            if (validCameraTouch)
+            {
+                Vector2 delta = touch.position - lastTouchPosition;
+                touchDelta = delta * cameraSensitivity * 0.15f;
+                
+                if (invertY) touchDelta.y = -touchDelta.y;
+            }
+
+            lastTouchPosition = touch.position;
+        }
+        else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+        {
+            ResetTouch();
+        }
+    }
+
+    private void HandleMouseInput()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (IsTouchOnRightSide(Input.mousePosition) && !IsTouchBlockedByUI(Input.mousePosition))
+            {
+                activeTouchId = 999;
+                touchStartPosition = Input.mousePosition;
+                lastTouchPosition = Input.mousePosition;
+                isDragging = true;
+                validCameraTouch = false;
+            }
+        }
+        else if (Input.GetMouseButton(0) && activeTouchId == 999)
+        {
+            Vector2 pos = Input.mousePosition;
+            if (!validCameraTouch && Vector2.Distance(pos, touchStartPosition) > deadZone) validCameraTouch = true;
+            
+            if (validCameraTouch)
+            {
+                Vector2 delta = pos - lastTouchPosition;
+                touchDelta = delta * cameraSensitivity * 0.15f;
+                if (invertY) touchDelta.y = -touchDelta.y;
+            }
+            lastTouchPosition = pos;
+        }
+        else if (Input.GetMouseButtonUp(0) && activeTouchId == 999)
+        {
+            ResetTouch();
+        }
+    }
+
+    private void ResetTouch()
+    {
+        isDragging = false;
+        validCameraTouch = false;
+        activeTouchId = -1;
+    }
+
+    private bool IsTouchOnRightSide(Vector2 position)
+    {
+        return position.x > Screen.width * rightSideThreshold;
+    }
+
+    // Renamed for clarity: This only returns true if we hit a BAD UI element (Buttons)
+    private bool IsTouchBlockedByUI(Vector2 position)
+    {
+        if (EventSystem.current == null) return false;
+
+        PointerEventData eventData = new PointerEventData(EventSystem.current) { position = position };
+        List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
-        
-        foreach (RaycastResult result in results)
+
+        foreach (RaycastResult r in results)
         {
-            if (result.gameObject.GetComponent<MobileJoystick>() != null ||
-                result.gameObject.GetComponent<MobileButton>() != null ||
-                result.gameObject.GetComponentInParent<MobileJoystick>() != null ||
-                result.gameObject.GetComponentInParent<MobileButton>() != null)
+            GameObject hit = r.gameObject;
+            if (hit == gameObject) continue; // Ignore self
+
+            // Check for Buttons (ALWAYS BLOCK)
+            if (hit.GetComponentInParent<UnityEngine.UI.Button>() != null || 
+                hit.GetComponentInParent<MobileButton>() != null)
             {
-                return true;
+                if (showDebugLogs) Debug.Log($"Blocked by Button: {hit.name}");
+                return true; 
             }
+
+            // Check for Joystick
+            if (hit.GetComponentInParent<MobileJoystick>() != null)
+            {
+                // If we hit a joystick, but we are on the Right Side -> IGNORE IT (Don't block)
+                if (IsTouchOnRightSide(position))
+                {
+                    continue; 
+                }
+                else
+                {
+                    return true; // Joystick on left side -> Block
+                }
+            }
+            
+            // Note: We deliberately ignore generic "Images" or "Panels" here.
+            // This ensures invisible containers don't break the camera.
         }
-        
+
         return false;
     }
 
-    // Helper for mouse in editor
-    private bool IsMouseOverUI()
-    {
-        if (EventSystem.current == null)
-            return false;
-
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
-        
-        var results = new System.Collections.Generic.List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-        
-        foreach (RaycastResult result in results)
-        {
-            if (result.gameObject.GetComponent<MobileJoystick>() != null ||
-                result.gameObject.GetComponent<MobileButton>() != null ||
-                result.gameObject.GetComponentInParent<MobileJoystick>() != null ||
-                result.gameObject.GetComponentInParent<MobileButton>() != null)
-            {
-                return true;
-            }
-        }
-        
-        return false;
-    }
+    public Vector2 GetCameraInput() => touchDelta;
 }

@@ -43,6 +43,13 @@ public class MobileJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, 
             Debug.LogError($"MobileJoystick '{gameObject.name}': Joystick Handle is not assigned!");
         }
 
+        // Ensure this joystick has an Image component with Raycast Target enabled
+        UnityEngine.UI.Image img = GetComponent<UnityEngine.UI.Image>();
+        if (img != null)
+        {
+            img.raycastTarget = true;
+        }
+
         Debug.Log($"MobileJoystick '{gameObject.name}' initialized successfully");
     }
 

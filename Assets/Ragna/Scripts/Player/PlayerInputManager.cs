@@ -357,12 +357,21 @@ public class PlayerInputManager : MonoBehaviour
             player.playerNetworkManager.isMoving.Value = false;
         }
         
-        if (!player.playerNetworkManager.isLockedOn.Value || player.playerNetworkManager.isSprinting.Value)
+        // When using mobile input and not locked on, use camera-relative movement
+        if (useMobileInput && !player.playerNetworkManager.isLockedOn.Value && !player.playerNetworkManager.isSprinting.Value)
         {
+            // For mobile, always use forward movement (0 horizontal, moveAmount vertical)
+            // The player rotation will be handled by your PlayerLocomotionManager
+            player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
+        }
+        else if (!player.playerNetworkManager.isLockedOn.Value || player.playerNetworkManager.isSprinting.Value)
+        {
+            // Standard non-locked movement
             player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
         }
         else
         {
+            // Locked on movement - use strafe
             player.playerAnimatorManager.UpdateAnimatorMovementParameters(horizontalInput, verticalInput, player.playerNetworkManager.isSprinting.Value);
         }
     }
