@@ -23,7 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Ragna/Scenes/Live UI_.unity
     guid: aa4c9a6820b53a741abbbfbad36cc94d
-  - enabled: 1
+  - enabled: 0
     path: Assets/Ragna/Scenes/Live UI_ 1.unity
     guid: f8fe7a567612a0d499e5239e5c127a13
   - enabled: 1

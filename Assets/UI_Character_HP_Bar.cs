@@ -20,40 +20,27 @@ public class UI_Character_HP_Bar : UI_StatBar
     {
         base.Awake();
 
-        Debug.Log($"[UI_Character_HP_Bar] Awake called for {gameObject.name}");
-
         character = GetComponentInParent<CharacterManager>();
-        Debug.Log($"[UI_Character_HP_Bar] character found: {(character != null ? character.name : "NULL")}");
 
         if(character != null)
         {
             playerCharacter = character as PlayerManager;
-            Debug.Log($"[UI_Character_HP_Bar] playerCharacter cast: {(playerCharacter != null ? "SUCCESS" : "NULL (not a player)")}");
         }
 
         if(character != null)
         {
             aiCharacter = character as AICharacterManager;
-            Debug.Log($"[UI_Character_HP_Bar] aiCharacter cast: {(aiCharacter != null ? "SUCCESS" : "NULL (not an AI)")}");
         }
-
-        // Check if TextMeshProUGUI references are assigned
-        Debug.Log($"[UI_Character_HP_Bar] characterName TextMeshPro assigned: {characterName != null}");
-        Debug.Log($"[UI_Character_HP_Bar] characterDamage TextMeshPro assigned: {characterDamage != null}");
     }
 
     protected override void Start()
     {
         base.Start();
 
-        Debug.Log($"[UI_Character_HP_Bar] Start called for {(character != null ? character.name : "unknown")}");
-
         if (character != null)
         {
             if (character.characterUIManager == null)
             {
-                Debug.Log($"[UI_Character_HP_Bar] characterUIManager is NULL for {character.name}! Adding CharacterUIManager component.");
-
                 CharacterUIManager uiManager = character.gameObject.AddComponent<CharacterUIManager>();
                 uiManager.hasFloatingHPBar = true;
                 uiManager.characterHPBar = this;
@@ -68,7 +55,7 @@ public class UI_Character_HP_Bar : UI_StatBar
             }
             else
             {
-                Debug.Log($"[UI_Character_HP_Bar] characterUIManager EXISTS, hasFloatingHPBar: {character.characterUIManager.hasFloatingHPBar}");
+                //Debug.Log($"[UI_Character_HP_Bar] characterUIManager EXISTS, hasFloatingHPBar: {character.characterUIManager.hasFloatingHPBar}");
             }
         }
 
@@ -77,14 +64,14 @@ public class UI_Character_HP_Bar : UI_StatBar
 
     public override void SetStat(int newValue)
     {
-        Debug.Log($"[UI_Character_HP_Bar] ===== SetStat CALLED ===== for {(character != null ? character.name : "unknown")}");
-        Debug.Log($"[UI_Character_HP_Bar] newValue: {newValue}, oldHealthValue: {oldHealthValue}");
+        //Debug.Log($"[UI_Character_HP_Bar] ===== SetStat CALLED ===== for {(character != null ? character.name : "unknown")}");
+       // Debug.Log($"[UI_Character_HP_Bar] newValue: {newValue}, oldHealthValue: {oldHealthValue}");
 
         if (displayCharacterNameAndDamage)
         {
             if (characterName == null)
             {
-                Debug.LogError("[UI_Character_HP_Bar] characterName TextMeshProUGUI is NULL!");
+                //Debug.LogError("[UI_Character_HP_Bar] characterName TextMeshProUGUI is NULL!");
                 return;
             }
 
@@ -94,27 +81,27 @@ public class UI_Character_HP_Bar : UI_StatBar
             {
                 string playerName = playerCharacter.playerNetworkManager.characterName.Value.ToString();
                 characterName.text = playerName;
-                Debug.Log($"[UI_Character_HP_Bar] Set PLAYER name to: {playerName}");
+                //Debug.Log($"[UI_Character_HP_Bar] Set PLAYER name to: {playerName}");
             }
             else if (aiCharacter != null)
             {
                 string aiName = aiCharacter.name;
                 characterName.text = aiName;
-                Debug.Log($"[UI_Character_HP_Bar] Set AI name to: {aiName}");
+                //Debug.Log($"[UI_Character_HP_Bar] Set AI name to: {aiName}");
             }
         }
 
         if (character == null)
         {
-            Debug.LogError("[UI_Character_HP_Bar] character is NULL!");
+            //Debug.LogError("[UI_Character_HP_Bar] character is NULL!");
             return;
         }
 
         slider.maxValue = character.characterNetworkManager.maxHealth.Value;
-        Debug.Log($"[UI_Character_HP_Bar] slider.maxValue set to: {slider.maxValue}");
+        //Debug.Log($"[UI_Character_HP_Bar] slider.maxValue set to: {slider.maxValue}");
 
         currentDamageTaken = Mathf.RoundToInt(currentDamageTaken + (oldHealthValue - newValue));
-        Debug.Log($"[UI_Character_HP_Bar] currentDamageTaken: {currentDamageTaken}");
+        //Debug.Log($"[UI_Character_HP_Bar] currentDamageTaken: {currentDamageTaken}");
 
         if (characterDamage != null)
         {
@@ -135,7 +122,7 @@ public class UI_Character_HP_Bar : UI_StatBar
         {
             hideTimer = defaultTimeBeforeBarHides;
             gameObject.SetActive(true);
-            Debug.Log($"[UI_Character_HP_Bar] HP bar activated for {character.name}");
+            //Debug.Log($"[UI_Character_HP_Bar] HP bar activated for {character.name}");
         }
     }
 
@@ -158,7 +145,7 @@ public class UI_Character_HP_Bar : UI_StatBar
 
     private void OnDisable()
     {
-        Debug.Log($"[UI_Character_HP_Bar] OnDisable called for {(character != null ? character.name : "unknown")}");
+        //Debug.Log($"[UI_Character_HP_Bar] OnDisable called for {(character != null ? character.name : "unknown")}");
         currentDamageTaken = 0;
     }
 }
