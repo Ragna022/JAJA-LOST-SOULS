@@ -124,21 +124,25 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         if (!newValue) return;
 
-        Debug.Log($"[CharacterNetworkManager] *** DEATH STATE CHANGED *** isDead=true for {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
+        Debug.Log($"[CharacterNetworkManager] *** DEATH DETECTED *** for {gameObject.name}");
 
-        // IMMEDIATELY stop all actions and play death animation
         PlayDeathAnimation();
 
-        // AUTO DESTROY AI AFTER DEATH
         if (character is AICharacterManager && IsServer)
         {
             StartCoroutine(AutoDestroyAIAfterDelay());
         }
 
-
-        // Check if this is a player to show defeat UI
+        // --- UPDATED SECTION START ---
         if (IsOwner)
         {
+            // 1. Disable Mobile Controls IMMEDIATELY
+            if (MobileInputManager.instance != null)
+            {
+                MobileInputManager.instance.SetMobileControls(false);
+            }
+
+            // 2. Then show Defeat UI
             PlayerManager player = character as PlayerManager;
             if (player != null)
             {
@@ -149,8 +153,8 @@ public class CharacterNetworkManager : NetworkBehaviour
                 }
             }
         }
+        // --- UPDATED SECTION END ---
 
-        // Check victory condition on server
         if (IsServer)
         {
             StartCoroutine(CheckVictoryNextFrame());
@@ -172,10 +176,18 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         if (!newValue) return;
 
-        Debug.Log($"[CharacterNetworkManager] hasWon=true! Showing VICTORY panel for {gameObject.name} (LocalClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner})");
+        Debug.Log($"[CharacterNetworkManager] VICTORY DETECTED for {gameObject.name}");
 
+        // --- UPDATED SECTION START ---
         if (IsOwner)
         {
+            // 1. Disable Mobile Controls IMMEDIATELY
+            if (MobileInputManager.instance != null)
+            {
+                MobileInputManager.instance.SetMobileControls(false);
+            }
+
+            // 2. Then show Victory UI
             PlayerManager player = character as PlayerManager;
             if (player != null)
             {
@@ -186,6 +198,7 @@ public class CharacterNetworkManager : NetworkBehaviour
                 }
             }
         }
+        // --- UPDATED SECTION END ---
     }
 
     private void CheckForVictoryCondition()
@@ -216,8 +229,6 @@ public class CharacterNetworkManager : NetworkBehaviour
             {
                 ulong ownerClientId = spawnedObj.OwnerClientId;
                 bool isAlive = !charManager.characterNetworkManager.isDead.Value;
-                
-                Debug.Log($"[CheckVictory] Found PLAYER: {charManager.gameObject.name} (NetworkID: {spawnedObj.NetworkObjectId}, OwnerID: {ownerClientId}), IsAlive: {isAlive}");
                 
                 // If this owner is dead in ANY of their instances, mark them as dead
                 if (!ownerAliveStatus.ContainsKey(ownerClientId))
@@ -250,8 +261,6 @@ public class CharacterNetworkManager : NetworkBehaviour
                 {
                     aliveAICharacters++;
                 }
-                
-                Debug.Log($"[CheckVictory] Found AI: {charManager.gameObject.name} (NetworkID: {spawnedObj.NetworkObjectId}), IsAlive: {isAlive}");
             }
         }
 
@@ -259,48 +268,69 @@ public class CharacterNetworkManager : NetworkBehaviour
         List<ulong> alivePlayerOwners = new List<ulong>();
         foreach (var kvp in ownerAliveStatus)
         {
-            Debug.Log($"[CheckVictory] Player OwnerID {kvp.Key}: IsAlive={kvp.Value}");
             if (kvp.Value)
             {
                 alivePlayerOwners.Add(kvp.Key);
             }
         }
 
-        Debug.Log($"[CheckVictory] ===== SUMMARY =====");
-        Debug.Log($"[CheckVictory] Total unique player owners: {ownerAliveStatus.Count}, Alive player owners: {alivePlayerOwners.Count}");
-        Debug.Log($"[CheckVictory] Total AI characters: {totalAICharacters}, Alive AI characters: {aliveAICharacters}");
-        Debug.Log($"[CheckVictory] ====================");
+        int totalPlayerOwners = ownerAliveStatus.Count;
 
-        // VICTORY CONDITIONS:
-        // 1. Only ONE player alive AND all AI are dead
-        // 2. Multiple players can be alive as long as all AI are dead
-        
-        bool allAIDead = (aliveAICharacters == 0 && totalAICharacters > 0);
-        bool anyPlayerAlive = alivePlayerOwners.Count > 0;
-        
-        if (allAIDead && anyPlayerAlive)
+        Debug.Log($"[CheckVictory] ===== SUMMARY =====");
+        Debug.Log($"[CheckVictory] Total unique player owners: {totalPlayerOwners}, Alive player owners: {alivePlayerOwners.Count}");
+        Debug.Log($"[CheckVictory] Total AI characters: {totalAICharacters}, Alive AI characters: {aliveAICharacters}");
+
+        // --- VICTORY LOGIC START ---
+
+        bool victoryMet = false;
+
+        // SCENARIO 1: PvE (Players vs AI)
+        // Victory if: AI existed, but now all are dead, and at least one player is alive.
+        if (totalAICharacters > 0)
         {
-            Debug.Log($"[CheckVictory] *** VICTORY CONDITION MET! *** All AI defeated, {alivePlayerOwners.Count} player(s) alive!");
+            if (aliveAICharacters == 0 && alivePlayerOwners.Count > 0)
+            {
+                Debug.Log($"[CheckVictory] PvE Victory! All AI dead.");
+                victoryMet = true;
+            }
+        }
+        // SCENARIO 2: PvP (Last Man Standing)
+        // Victory if: No AI exist, we started with multiple players, and only 1 remains.
+        else 
+        {
+            if (totalPlayerOwners > 1 && alivePlayerOwners.Count == 1)
+            {
+                Debug.Log($"[CheckVictory] PvP Victory! Last Man Standing.");
+                victoryMet = true;
+            }
+            // Edge Case: If testing alone (1 player total), you might want instant win or just wait.
+            // Currently, this logic requires at least 2 players to start a PvP match for a win to occur.
+        }
+
+        // --- EXECUTE VICTORY ---
+        
+        if (victoryMet)
+        {
+            Debug.Log($"[CheckVictory] *** VICTORY CONDITION MET! ***");
             
             // Award victory to ALL alive players
             foreach (ulong winnerOwnerId in alivePlayerOwners)
             {
-                CharacterManager winner = ownerToCharacter[winnerOwnerId];
-                Debug.Log($"[CheckVictory] Awarding VICTORY to OwnerID: {winnerOwnerId}, Character: {winner.gameObject.name} (NetworkID: {winner.NetworkObjectId})");
-                winner.characterNetworkManager.hasWon.Value = true;
+                if(ownerToCharacter.ContainsKey(winnerOwnerId))
+                {
+                    CharacterManager winner = ownerToCharacter[winnerOwnerId];
+                    Debug.Log($"[CheckVictory] Awarding VICTORY to OwnerID: {winnerOwnerId}");
+                    winner.characterNetworkManager.hasWon.Value = true;
+                }
             }
         }
         else if (alivePlayerOwners.Count == 0)
         {
-            Debug.LogWarning("[CheckVictory] All players are dead - DEFEAT!");
+            Debug.Log("[CheckVictory] All players are dead - DEFEAT / DRAW!");
         }
-        else if (aliveAICharacters > 0)
+        else
         {
-            Debug.Log($"[CheckVictory] Victory not yet achieved - {aliveAICharacters} AI character(s) still alive");
-        }
-        else if (totalAICharacters == 0)
-        {
-            Debug.LogWarning("[CheckVictory] No AI characters found in the scene - cannot determine victory condition");
+            Debug.Log($"[CheckVictory] Match continues... (Players Alive: {alivePlayerOwners.Count}, AI Alive: {aliveAICharacters})");
         }
     }
 

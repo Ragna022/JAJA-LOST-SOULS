@@ -1,7 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using Unity.Netcode;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -35,14 +33,14 @@ public class LobbyManager : NetworkBehaviour
     public GameObject playerSlotPrefab;
 
     [Header("Spawning")]
-    [SerializeField] private SpawnPattern currentSpawnPattern = SpawnPattern.Line; // Changed default for testing
+    [SerializeField] private SpawnPattern currentSpawnPattern = SpawnPattern.Line; 
     [SerializeField] private Vector3 spawnAreaCenter = Vector3.zero;
     [SerializeField] private float circleRadius = 5f;
     [SerializeField] private float gridSpacing = 3f;
     [SerializeField] private float gridRandomOffset = 0.5f;
-    [SerializeField] private Vector3 spawnAreaSize = new Vector3(10f, 0f, 10f); // Used for CompletelyRandom
+    [SerializeField] private Vector3 spawnAreaSize = new Vector3(10f, 0f, 10f); 
     [SerializeField] private Vector3 lineStartPosition = Vector3.zero;
-    [SerializeField] private Vector3 lineDirection = Vector3.right; // Spawn along the X-axis
+    [SerializeField] private Vector3 lineDirection = Vector3.right; 
     [SerializeField] private float lineSpacing = 3f;
 
     private NetworkList<LobbyPlayerData> lobbyPlayers;
@@ -94,6 +92,13 @@ public class LobbyManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         Debug.Log($"🎯 LobbyManager.OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}, NetworkObjectId: {NetworkObjectId}");
+
+        // --- ADDED: Ensure loading screen is hidden when entering the lobby ---
+        if (LoadingScreenManager.Instance != null)
+        {
+            LoadingScreenManager.Instance.Complete();
+        }
+        // ---------------------------------------------------------------------
 
         if (IsServer)
         {
@@ -397,6 +402,13 @@ public class LobbyManager : NetworkBehaviour
     [ClientRpc]
     private void HideLobbyUIClientRpc()
     {
+        // --- ADDED: Show Loading Screen when game starts ---
+        if (LoadingScreenManager.Instance != null)
+        {
+            LoadingScreenManager.Instance.ShowWithFakeProgress("Loading World...");
+        }
+        // --------------------------------------------------
+
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(false);
@@ -407,6 +419,14 @@ public class LobbyManager : NetworkBehaviour
     private void OnLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         Debug.Log($"🎯 Scene '{sceneName}' loaded - Clients: {clientsCompleted.Count}, TimedOut: {clientsTimedOut.Count}");
+
+        // --- ADDED: Remove loading screen when the world loads ---
+        if (sceneName == "World_01" && LoadingScreenManager.Instance != null)
+        {
+            // We use Complete() so it fills the bar to 100% then hides
+            LoadingScreenManager.Instance.Complete();
+        }
+        // ---------------------------------------------------------
 
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnLoadEventCompleted;
 
@@ -468,19 +488,14 @@ public class LobbyManager : NetworkBehaviour
         if (playerObject != null)
         {
             Vector3 spawnPos = CalculateSpawnPosition(clientId);
-            // --- ADDED LOGGING ---
+            
             Debug.Log($"---> [LobbyManager] PRE-SPAWN position for client {clientId} calculated as: {spawnPos}");
 
             playerObject.transform.position = spawnPos;
             Debug.Log($"---> [LobbyManager] Position for client {clientId} SET TO: {playerObject.transform.position}");
 
-            // Optional: Try disabling CharacterController here if you suspect it
-            // CharacterController cc = playerObject.GetComponent<CharacterController>();
-            // if (cc != null) cc.enabled = false;
-
             playerObject.SpawnAsPlayerObject(clientId, true);
             Debug.Log($"---> [LobbyManager] Player for client {clientId} SPAWNED.");
-            // --- END LOGGING ---
 
             Debug.Log($"🎮 SERVER: Spawned '{playerPrefab.name}' for client {clientId} at {spawnPos}");
         }

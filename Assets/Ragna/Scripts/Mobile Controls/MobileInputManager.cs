@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MobileInputManager : MonoBehaviour
 {
@@ -256,5 +257,10 @@ public class MobileInputManager : MonoBehaviour
         }
         
         Debug.Log($"MobileInputManager: Mobile controls {(enable ? "ENABLED" : "DISABLED")}");
+    }
+
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu"); // Uncomment and modify as needed
     }
 }

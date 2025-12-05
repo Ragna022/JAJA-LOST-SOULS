@@ -27331,7 +27331,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!81 &923383481
 AudioListener:
   m_ObjectHideFlags: 0
@@ -64578,6 +64578,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MobileControls
       objectReference: {fileID: 0}
+    - target: {fileID: 8051996248872266382, guid: b73daf880b88e144492a41d904c91bd2, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7453935006226865499}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -64838,6 +64842,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9935214e8ce034f47a2abd2cecb3d189, type: 3}
+--- !u!114 &7453935006226865499 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1865882766924709902, guid: 9935214e8ce034f47a2abd2cecb3d189, type: 3}
+  m_PrefabInstance: {fileID: 7453935006226865498}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cef2e8c6972524a429d7d5fb9936f500, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

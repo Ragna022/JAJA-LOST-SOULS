@@ -818,14 +818,14 @@ MonoBehaviour:
   horizontalMovement: 0
   moveAmount: 0
   walkingSpeed: 2
-  runningSpeed: 4
-  sprintingSpeed: 7
+  runningSpeed: 9
+  sprintingSpeed: 10
   rotationSpeed: 15
   sprintingStaminaCost: 0.5
   jumpStaminaCost: 2
-  jumpHeight: 4
-  jumpForwardSpeed: 5
-  freeFallSpeed: 2
+  jumpHeight: 1.5
+  jumpForwardSpeed: 3
+  freeFallSpeed: 3
   dodgeStaminaCost: 2
 --- !u!114 &2267222955767035875
 MonoBehaviour:
@@ -1186,10 +1186,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 558649551312652575}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}

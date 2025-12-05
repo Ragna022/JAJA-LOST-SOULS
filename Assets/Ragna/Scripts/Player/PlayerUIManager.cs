@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerUIManager : MonoBehaviour
 {
@@ -41,5 +42,10 @@ public class PlayerUIManager : MonoBehaviour
             // WE THEN RESTART AS A CLIENT
             NetworkManager.Singleton.StartClient();
         }
+    }
+
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu"); // Uncomment and modify as needed
     }
 }
