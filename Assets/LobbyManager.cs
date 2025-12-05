@@ -27,6 +27,9 @@ public class LobbyManager : NetworkBehaviour
     public Button readyButton;
     public Button leaveButton;
     public TMP_Text readyButtonText;
+    
+    // ADDED: UI Reference to show the Join Code
+    public TMP_Text joinCodeText; 
 
     [Header("Player List")]
     public Transform playerListContainer;
@@ -163,6 +166,20 @@ public class LobbyManager : NetworkBehaviour
         {
             readyButtonText.text = isReady ? "UNREADY" : "READY";
         }
+
+        // --- ADDED: DISPLAY JOIN CODE FROM TITLE SCREEN MANAGER ---
+        if (joinCodeText != null)
+        {
+            if (TitleScreenManager.Instance != null)
+            {
+                joinCodeText.text = "" + TitleScreenManager.Instance.currentJoinCode;
+            }
+            else
+            {
+                joinCodeText.text = "Join Code: ???";
+            }
+        }
+        // -----------------------------------------------------------
 
         Debug.Log("✅ Lobby UI setup complete");
     }

@@ -7,17 +7,21 @@ using UnityEngine.UI;
 using TMPro;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEditor;
 using System;
+using Unity.Services.Core;
+using Unity.Services.Authentication;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
+using Unity.Networking.Transport.Relay;
 
 public class TitleScreenManager : MonoBehaviour
 {
     public static TitleScreenManager Instance;
     public static GameObject selectedPlayerPrefab;
-    public static int selectedCharacterIndex = 0; 
+    public static int selectedCharacterIndex = 0;
 
     [Header("Loading Screen Settings")]
-    [SerializeField] private GameObject loadingScreenPrefab; 
+    [SerializeField] private GameObject loadingScreenPrefab;
 
     // CHARACTER PREFAB SELECTION
     [Header("Character Prefabs")]
@@ -73,24 +77,31 @@ public class TitleScreenManager : MonoBehaviour
     [Header("Multiplayer UI")]
     [SerializeField] Button hostButton;
     [SerializeField] Button joinButton;
-    [SerializeField] TMP_InputField ipInputField;
+    [SerializeField] TMP_InputField joinCodeInputField; 
     [SerializeField] GameObject connectionStatusPanel;
     [SerializeField] TMP_Text connectionStatusText;
+    [SerializeField] TMP_Text joinCodeDisplayText; 
 
     // NETWORK PREFABS
     [Header("Network Prefabs")]
     public GameObject lobbyManagerPrefab;
 
+    [Header("Relay Settings")]
+    [SerializeField] private int maxConnections = 4; // Maximum players including host
+
     private bool isAttemptingConnection = false;
+    
+    // CHANGED TO PUBLIC SO LOBBY MANAGER CAN ACCESS IT
+    public string currentJoinCode = ""; 
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); 
+            DontDestroyOnLoad(gameObject);
 
-            // --- SPAWN LOADING SCREEN PREFAB IF MISSING ---
+            // Spawn Loading Screen Prefab if missing
             if (LoadingScreenManager.Instance == null)
             {
                 if (loadingScreenPrefab != null)
@@ -107,7 +118,7 @@ public class TitleScreenManager : MonoBehaviour
             // Set default character prefab
             if (availableCharacterPrefabs.Length > 0)
             {
-                selectedCharacterIndex = defaultCharacterIndex; 
+                selectedCharacterIndex = defaultCharacterIndex;
                 selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
             }
 
@@ -119,8 +130,11 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private async void Start()
     {
+        // Initialize Unity Services (REQUIRED for Relay)
+        await InitializeUnityServices();
+
         LoadSelectedCharacterFromPrefs();
 
         if (availableCharacterPrefabs.Length > 0 && characterPreviewSpawnPoint != null)
@@ -129,9 +143,39 @@ public class TitleScreenManager : MonoBehaviour
         }
 
         if (hostButton != null) hostButton.onClick.AddListener(HostGame);
-        if (joinButton != null) joinButton.onClick.AddListener(() => JoinGame(ipInputField?.text ?? "127.0.0.1"));
-        if (ipInputField != null) ipInputField.text = "127.0.0.1";
+        if (joinButton != null) joinButton.onClick.AddListener(() => JoinGame(joinCodeInputField?.text ?? ""));
+        if (joinCodeInputField != null) joinCodeInputField.text = "";
         if (connectionStatusPanel != null) connectionStatusPanel.SetActive(false);
+        if (joinCodeDisplayText != null) joinCodeDisplayText.gameObject.SetActive(false);
+    }
+
+    // ==========================================================
+    // UNITY SERVICES INITIALIZATION
+    // ==========================================================
+
+    private async System.Threading.Tasks.Task InitializeUnityServices()
+    {
+        try
+        {
+            ShowConnectionStatus("Initializing Unity Services...", Color.yellow);
+            
+            await UnityServices.InitializeAsync();
+            
+            // Sign in anonymously
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log($"✅ Signed in as: {AuthenticationService.Instance.PlayerId}");
+            }
+            
+            HideConnectionStatus();
+            Debug.Log("✅ Unity Services initialized successfully");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"❌ Failed to initialize Unity Services: {e.Message}");
+            ShowConnectionStatus("Failed to connect to Unity Services", Color.red);
+        }
     }
 
     private void SetupNetworkManager()
@@ -202,13 +246,13 @@ public class TitleScreenManager : MonoBehaviour
         string savedCharacterName = PlayerPrefs.GetString("SelectedCharacter", "");
         if (!string.IsNullOrEmpty(savedCharacterName))
         {
-            for (int i = 0; i < availableCharacterPrefabs.Length; i++) 
+            for (int i = 0; i < availableCharacterPrefabs.Length; i++)
             {
                 GameObject prefab = availableCharacterPrefabs[i];
-                if (prefab != null && prefab.name == savedCharacterName) 
+                if (prefab != null && prefab.name == savedCharacterName)
                 {
                     selectedPlayerPrefab = prefab;
-                    selectedCharacterIndex = i; 
+                    selectedCharacterIndex = i;
                     break;
                 }
             }
@@ -233,16 +277,20 @@ public class TitleScreenManager : MonoBehaviour
         if (currentPreviewCharacter != null)
         {
             Destroy(currentPreviewCharacter);
-            currentPreviewCharacter = null; 
+            currentPreviewCharacter = null;
         }
 
         if (selectedPlayerPrefab == null && availableCharacterPrefabs.Length > 0)
         {
             selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
-            selectedCharacterIndex = defaultCharacterIndex; 
+            selectedCharacterIndex = defaultCharacterIndex;
         }
         SaveSelectedCharacterToPrefs();
     }
+
+    // ==========================================================
+    // CHARACTER SELECTION & CREATION
+    // ==========================================================
 
     public void AttemptToCreateNewCharacter()
     {
@@ -310,7 +358,7 @@ public class TitleScreenManager : MonoBehaviour
         if (characterIndex >= 0 && characterIndex < availableCharacterPrefabs.Length)
         {
             selectedPlayerPrefab = availableCharacterPrefabs[characterIndex];
-            selectedCharacterIndex = characterIndex; 
+            selectedCharacterIndex = characterIndex;
             if (characterPreviewSpawnPoint != null) CreateCharacterPreview(characterIndex);
         }
     }
@@ -369,7 +417,7 @@ public class TitleScreenManager : MonoBehaviour
             if (availableCharacterPrefabs.Length > 0)
             {
                 selectedPlayerPrefab = availableCharacterPrefabs[defaultCharacterIndex];
-                selectedCharacterIndex = defaultCharacterIndex; 
+                selectedCharacterIndex = defaultCharacterIndex;
                 SaveSelectedCharacterToPrefs();
                 OpenCharacterCreationMenu();
             }
@@ -473,7 +521,7 @@ public class TitleScreenManager : MonoBehaviour
 
     public void SelectClass(int classID)
     {
-        PlayerManager player = FindObjectOfType<PlayerManager>();
+        PlayerManager player = FindFirstObjectByType<PlayerManager>();
         if (player != null && startingClasses.Length > classID)
         {
             startingClasses[classID].SetClass(player);
@@ -516,7 +564,7 @@ public class TitleScreenManager : MonoBehaviour
     }
 
     // ==========================================================
-    // MULTIPLAYER & LOADING SCREEN LOGIC
+    // MULTIPLAYER WITH RELAY & JOIN CODES
     // ==========================================================
 
     public void HostGame()
@@ -524,92 +572,120 @@ public class TitleScreenManager : MonoBehaviour
         if (isAttemptingConnection) return;
         PrepareForNewGame();
 
-        // Specific Message
         if (LoadingScreenManager.Instance != null)
-            LoadingScreenManager.Instance.ShowWithFakeProgress("Initializing Host System...");
+            LoadingScreenManager.Instance.ShowWithFakeProgress("Creating Game Session...");
 
-        Debug.Log("🎯 HOST: Starting host and loading lobby scene...");
-        StartCoroutine(StartHostThenLoadLobby());
+        Debug.Log("🎯 HOST: Creating Relay allocation and starting host...");
+        StartCoroutine(StartHostWithRelay());
     }
 
-    private IEnumerator StartHostThenLoadLobby()
+    private IEnumerator StartHostWithRelay()
     {
         isAttemptingConnection = true;
-        ShowConnectionStatus("Starting Host...", Color.yellow);
-        
-        // Transparent Update
-        if(LoadingScreenManager.Instance != null) 
-            LoadingScreenManager.Instance.UpdateLoadingText("Verifying Network Transport...");
+        ShowConnectionStatus("Creating game session...", Color.yellow);
 
-        if (NetworkManager.Singleton == null)
+        // Create Relay allocation
+        var allocationTask = RelayService.Instance.CreateAllocationAsync(maxConnections - 1); // -1 because host counts as one
+        yield return new WaitUntil(() => allocationTask.IsCompleted);
+
+        if (allocationTask.IsFaulted)
         {
-            Debug.LogError("❌ NetworkManager not found!");
-            ShowConnectionStatus("Network Manager not found!", Color.red);
-            if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+            Debug.LogError($"❌ Failed to create Relay allocation: {allocationTask.Exception}");
+            ShowConnectionStatus("Failed to create game session", Color.red);
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             isAttemptingConnection = false;
             yield break;
         }
 
-        DebugNetworkSetup();
+        Allocation allocation = allocationTask.Result;
+        Debug.Log($"✅ Relay allocation created with ID: {allocation.AllocationId}");
+
+        // Get join code
+        var joinCodeTask = RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        yield return new WaitUntil(() => joinCodeTask.IsCompleted);
+
+        if (joinCodeTask.IsFaulted)
+        {
+            Debug.LogError($"❌ Failed to get join code: {joinCodeTask.Exception}");
+            ShowConnectionStatus("Failed to generate join code", Color.red);
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+            isAttemptingConnection = false;
+            yield break;
+        }
+
+        currentJoinCode = joinCodeTask.Result;
+        Debug.Log($"🎫 Join Code: {currentJoinCode}");
+
+        // Display join code to host
+        if (joinCodeDisplayText != null)
+        {
+            joinCodeDisplayText.text = $"JOIN CODE: {currentJoinCode}";
+            joinCodeDisplayText.gameObject.SetActive(true);
+        }
+
+        // Configure Unity Transport with Relay
+        // We cast the Transport linked in the Inspector to UnityTransport
+        var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+
+        if (transport == null)
+        {
+            Debug.LogError($"❌ Still Null! The NetworkManager object named '{NetworkManager.Singleton.name}' does not have a UnityTransport component linked!");
+            yield break;
+        }
+
+        // --- FIXED RELAY SERVER DATA CONSTRUCTION ---
+        var relayServerData = new RelayServerData(
+            allocation.RelayServer.IpV4,
+            (ushort)allocation.RelayServer.Port,
+            allocation.AllocationIdBytes,
+            allocation.ConnectionData,
+            allocation.ConnectionData, 
+            allocation.Key,
+            false // false means UDP (not secure DTLS)
+        );
+
+        transport.SetRelayServerData(relayServerData);
+
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.UpdateLoadingText("Starting Network Host...");
 
         if (!ValidateSelectedCharacterPrefab())
         {
             ShowConnectionStatus("Invalid character configuration!", Color.red);
-            if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             isAttemptingConnection = false;
             yield break;
         }
 
         RegisterPlayerPrefabs();
 
-        if (!NetworkManager.Singleton.IsListening)
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+
+        bool success = NetworkManager.Singleton.StartHost();
+
+        if (success)
         {
-            ShowConnectionStatus("Starting Host...", Color.yellow);
-            
-            // Transparent Update
-            if(LoadingScreenManager.Instance != null) 
-                LoadingScreenManager.Instance.UpdateLoadingText("Starting Network Host...");
+            ShowConnectionStatus($"Hosting - Code: {currentJoinCode}", Color.green);
 
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+            if (LoadingScreenManager.Instance != null)
+                LoadingScreenManager.Instance.UpdateLoadingText("Loading Lobby Scene...");
 
-            bool success = NetworkManager.Singleton.StartHost();
+            yield return new WaitForSeconds(1f);
 
-            if (success)
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnHostSceneLoadCompleted;
+            var status = NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+
+            if (status != SceneEventProgressStatus.Started)
             {
-                ShowConnectionStatus("Host Started - Loading Lobby...", Color.green);
-                
-                // Transparent Update
-                if(LoadingScreenManager.Instance != null) 
-                    LoadingScreenManager.Instance.UpdateLoadingText("Server Started. Loading Lobby Scene...");
-                
-                yield return new WaitForSeconds(1f);
-
-                NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnHostSceneLoadCompleted;
-                var status = NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
-                
-                if (status != SceneEventProgressStatus.Started)
-                {
-                    ShowConnectionStatus($"Failed to load Lobby: {status}", Color.red);
-                    if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
-                    isAttemptingConnection = false;
-                    yield break;
-                }
-            }
-            else
-            {
-                ShowConnectionStatus("Failed to start host!", Color.red);
-                if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+                ShowConnectionStatus($"Failed to load Lobby: {status}", Color.red);
+                if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             }
         }
         else
         {
-            // Already listening
-            if(LoadingScreenManager.Instance != null) 
-                LoadingScreenManager.Instance.UpdateLoadingText("Server Active. Switching to Lobby...");
-
-            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnHostSceneLoadCompleted;
-            NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+            ShowConnectionStatus("Failed to start host!", Color.red);
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
         }
 
         isAttemptingConnection = false;
@@ -620,7 +696,6 @@ public class TitleScreenManager : MonoBehaviour
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnHostSceneLoadCompleted;
         if (sceneName == "LobbyScene" || sceneName == "Lobby")
         {
-            // --- HOST SCENE LOADED: COMPLETE LOADING SCREEN ---
             if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Complete();
             SpawnLobbyManagerAsHost();
         }
@@ -629,8 +704,8 @@ public class TitleScreenManager : MonoBehaviour
     private void SpawnLobbyManagerAsHost()
     {
         if (!NetworkManager.Singleton.IsServer) return;
-        
-        LobbyManager lobbyManager = FindObjectOfType<LobbyManager>();
+
+        LobbyManager lobbyManager = FindFirstObjectByType<LobbyManager>();
         if (lobbyManager != null)
         {
             NetworkObject lobbyNetObj = lobbyManager.GetComponent<NetworkObject>();
@@ -647,131 +722,158 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
-    // =========================================================
-    // CLIENT JOIN LOGIC (UPDATED WITH TRANSPARENT MESSAGES)
-    // =========================================================
+    // ==========================================================
+    // CLIENT JOIN WITH JOIN CODE
+    // ==========================================================
 
-    public void JoinGame(string ipAddress = "127.0.0.1")
+    public void JoinGame(string joinCode)
     {
         if (isAttemptingConnection) return;
+
+        if (string.IsNullOrEmpty(joinCode))
+        {
+            ShowConnectionStatus("Please enter a join code", Color.red);
+            return;
+        }
+
+        // SAVE CODE SO CLIENT CAN SEE IT IN LOBBY TOO
+        currentJoinCode = joinCode;
+
         PrepareForNewGame();
 
-        // Specific Message
         if (LoadingScreenManager.Instance != null)
-            LoadingScreenManager.Instance.ShowWithFakeProgress($"Preparing to join {ipAddress}...");
+            LoadingScreenManager.Instance.ShowWithFakeProgress($"Joining game with code: {joinCode}...");
 
-        StartCoroutine(StartClientThenLoadLobby(ipAddress));
+        StartCoroutine(StartClientWithRelay(joinCode));
     }
 
-    private IEnumerator StartClientThenLoadLobby(string ipAddress)
+    private IEnumerator StartClientWithRelay(string joinCode)
     {
         isAttemptingConnection = true;
-        ShowConnectionStatus($"Connecting to {ipAddress}...", Color.yellow);
+        ShowConnectionStatus($"Joining with code: {joinCode}...", Color.yellow);
 
-        if (NetworkManager.Singleton == null)
+        // Join Relay allocation using join code
+        var joinTask = RelayService.Instance.JoinAllocationAsync(joinCode);
+        yield return new WaitUntil(() => joinTask.IsCompleted);
+
+        if (joinTask.IsFaulted)
         {
-            ShowConnectionStatus("Network Manager not found!", Color.red);
-            if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+            Debug.LogError($"❌ Failed to join Relay: {joinTask.Exception}");
+            ShowConnectionStatus("Invalid join code or connection failed", Color.red);
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             isAttemptingConnection = false;
             yield break;
         }
 
-        DebugNetworkSetup();
+        JoinAllocation joinAllocation = joinTask.Result;
+        Debug.Log($"✅ Joined Relay allocation");
+
+        // We cast the Transport linked in the Inspector to UnityTransport
+        var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+
+        if (transport == null)
+        {
+            Debug.LogError($"❌ Still Null! The NetworkManager object named '{NetworkManager.Singleton.name}' does not have a UnityTransport component linked!");
+            yield break;
+        }
+        
+        // --- FIXED RELAY SERVER DATA CONSTRUCTION ---
+        var relayServerData = new RelayServerData(
+            joinAllocation.RelayServer.IpV4,
+            (ushort)joinAllocation.RelayServer.Port,
+            joinAllocation.AllocationIdBytes,
+            joinAllocation.ConnectionData,
+            joinAllocation.HostConnectionData, 
+            joinAllocation.Key,
+            false // false means UDP (not secure DTLS)
+        );
+
+        transport.SetRelayServerData(relayServerData);
+
         if (!ValidateSelectedCharacterPrefab())
         {
             ShowConnectionStatus("Invalid character configuration!", Color.red);
-            if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             isAttemptingConnection = false;
             yield break;
         }
 
         RegisterPlayerPrefabs();
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        if (transport != null) transport.SetConnectionData(ipAddress, 7777);
 
-        if (!NetworkManager.Singleton.IsListening)
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        
+        // -----------------------------------------------------------------------
+        // CRITICAL FIX: DO NOT SUBSCRIBE TO SCENEMANAGER BEFORE STARTING CLIENT
+        // -----------------------------------------------------------------------
+
+        bool startSuccess = NetworkManager.Singleton.StartClient();
+
+        if (startSuccess)
         {
-            ShowConnectionStatus("Connecting...", Color.yellow);
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+            // ✅ SUBSCRIBE HERE, NOW THAT THE CLIENT IS RUNNING AND SCENEMANAGER EXISTS
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnClientSceneLoadCompleted;
 
-            bool startSuccess = NetworkManager.Singleton.StartClient();
+            float timeout = 15f;
+            float timer = 0f;
+            int connectionAttempts = 0;
 
-            if (startSuccess)
+            while (!NetworkManager.Singleton.IsConnectedClient && timer < timeout)
             {
-                // CRITICAL FIX: Subscribe to scene load completed BEFORE checking connection loop
-                NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnClientSceneLoadCompleted;
+                timer += Time.deltaTime;
+                connectionAttempts++;
 
-                float timeout = 15f; 
-                float timer = 0f;
-                int connectionAttempts = 0;
+                if (connectionAttempts % 30 == 0)
+                {
+                    ShowConnectionStatus($"Connecting... ({timer:F1}s)", Color.yellow);
 
-                while (!NetworkManager.Singleton.IsConnectedClient && timer < timeout)
-                {
-                    timer += Time.deltaTime;
-                    connectionAttempts++;
-                    
-                    // Update user every 0.5s about connection status
-                    if (connectionAttempts % 30 == 0)
-                    {
-                        ShowConnectionStatus($"Connecting... ({timer:F1}s)", Color.yellow);
-                        
-                        // --- SPECIFIC LOADING TEXT ---
-                        if(LoadingScreenManager.Instance != null) 
-                            LoadingScreenManager.Instance.UpdateLoadingText($"Negotiating Connection to Host... ({timer:F1}s)");
-                    }
-                    yield return null;
+                    if (LoadingScreenManager.Instance != null)
+                        LoadingScreenManager.Instance.UpdateLoadingText($"Establishing Connection... ({timer:F1}s)");
                 }
+                yield return null;
+            }
 
-                if (NetworkManager.Singleton.IsConnectedClient)
-                {
-                    ShowConnectionStatus("Connected! Syncing Scene...", Color.green);
-                    
-                    // --- SPECIFIC LOADING TEXT ---
-                    if(LoadingScreenManager.Instance != null) 
-                        LoadingScreenManager.Instance.UpdateLoadingText("Connection Established. Synchronizing World State...");
-                    
-                    // We DO NOT wait here artificially. We let OnClientSceneLoadCompleted handle the finish.
-                }
-                else
-                {
-                    // Timed out
-                    ShowConnectionStatus($"Connection timed out", Color.red);
-                    NetworkManager.Singleton.Shutdown();
-                    NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnClientSceneLoadCompleted; // Cleanup
-                    if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
-                }
+            if (NetworkManager.Singleton.IsConnectedClient)
+            {
+                ShowConnectionStatus("Connected! Syncing Scene...", Color.green);
+
+                if (LoadingScreenManager.Instance != null)
+                    LoadingScreenManager.Instance.UpdateLoadingText("Connection Established. Synchronizing World State...");
             }
             else
             {
-                ShowConnectionStatus("Failed to start client!", Color.red);
-                if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+                // Timed out
+                ShowConnectionStatus($"Connection timed out", Color.red);
+                NetworkManager.Singleton.Shutdown();
+                NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnClientSceneLoadCompleted;
+                if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
             }
         }
+        else
+        {
+            ShowConnectionStatus("Failed to start client!", Color.red);
+            if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+        }
+
         isAttemptingConnection = false;
     }
 
-    // --- NEW METHOD: Handles Client Scene Loading Completion ---
     private void OnClientSceneLoadCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        // Check if WE are in the list of clients who finished loading
         if (clientsCompleted.Contains(NetworkManager.Singleton.LocalClientId))
         {
             Debug.Log($"✅ CLIENT: Scene '{sceneName}' sync complete!");
-            
-            // Unsubscribe to stop listening
+
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnClientSceneLoadCompleted;
 
             ShowConnectionStatus("Connected! Lobby loading...", Color.green);
-            
-            // --- SPECIFIC LOADING TEXT FOR FINISH ---
+
             if (LoadingScreenManager.Instance != null)
             {
                 LoadingScreenManager.Instance.UpdateLoadingText("Scene Synced. Entering Game...");
                 LoadingScreenManager.Instance.Complete();
             }
-            
-            // Hide connection status UI after a brief moment
+
             StartCoroutine(HideConnectionStatusDelay());
         }
     }
@@ -782,13 +884,16 @@ public class TitleScreenManager : MonoBehaviour
         HideConnectionStatus();
     }
 
-    private void OnClientConnected(ulong clientId) { Debug.Log($"🎉 Client connected: {clientId}"); }
+    private void OnClientConnected(ulong clientId) 
+    { 
+        Debug.Log($"🎉 Client connected: {clientId}"); 
+    }
 
     private void OnClientDisconnected(ulong clientId)
     {
         isAttemptingConnection = false;
         ShowConnectionStatus("Disconnected from server", Color.red);
-        if(LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
+        if (LoadingScreenManager.Instance != null) LoadingScreenManager.Instance.Hide();
     }
 
     private void ShowConnectionStatus(string message, Color color)
