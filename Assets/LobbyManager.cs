@@ -12,14 +12,6 @@ public class LobbyManager : NetworkBehaviour
 {
     public static LobbyManager Instance;
 
-    public enum SpawnPattern
-    {
-        Circle,
-        GridWithRandomness,
-        CompletelyRandom,
-        Line
-    }
-
     [Header("UI References")]
     public GameObject lobbyPanel;
     public Button startGameButton;
@@ -27,30 +19,22 @@ public class LobbyManager : NetworkBehaviour
     public Button readyButton;
     public Button leaveButton;
     public TMP_Text readyButtonText;
-    
-    // ADDED: UI Reference to show the Join Code
-    public TMP_Text joinCodeText; 
+    public TMP_Text joinCodeText;
 
     [Header("Player List")]
     public Transform playerListContainer;
     public GameObject playerSlotPrefab;
 
     [Header("Spawning")]
-    [SerializeField] private SpawnPattern currentSpawnPattern = SpawnPattern.Line; 
-    [SerializeField] private Vector3 spawnAreaCenter = Vector3.zero;
-    [SerializeField] private float circleRadius = 5f;
-    [SerializeField] private float gridSpacing = 3f;
-    [SerializeField] private float gridRandomOffset = 0.5f;
-    [SerializeField] private Vector3 spawnAreaSize = new Vector3(10f, 0f, 10f); 
-    [SerializeField] private Vector3 lineStartPosition = Vector3.zero;
-    [SerializeField] private Vector3 lineDirection = Vector3.right; 
-    [SerializeField] private float lineSpacing = 3f;
+    [SerializeField] private string spawnPointTag = "SpawnPoint";
+    [SerializeField] private bool randomizeSpawnOrder = true;
 
     private NetworkList<LobbyPlayerData> lobbyPlayers;
     private Dictionary<ulong, GameObject> playerSlots = new Dictionary<ulong, GameObject>();
     private bool isReady = false;
     private List<LobbyPlayerData> persistentLobbyData;
     public static List<LobbyPlayerData> PublicPersistentLobbyData;
+    private List<Transform> availableSpawnPoints = new List<Transform>();
 
     private void Awake()
     {
@@ -63,7 +47,6 @@ public class LobbyManager : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
-
         lobbyPlayers = new NetworkList<LobbyPlayerData>();
     }
 
@@ -76,7 +59,6 @@ public class LobbyManager : NetworkBehaviour
     private void ValidateUIPrefabs()
     {
         Debug.Log("🔍 Validating UI prefabs...");
-
         if (playerSlotPrefab != null)
         {
             NetworkObject netObj = playerSlotPrefab.GetComponent<NetworkObject>();
@@ -96,18 +78,15 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"🎯 LobbyManager.OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}, NetworkObjectId: {NetworkObjectId}");
 
-        // --- ADDED: Ensure loading screen is hidden when entering the lobby ---
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.Complete();
         }
-        // ---------------------------------------------------------------------
 
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-
             int hostCharacterIndex = 0;
             if (TitleScreenManager.Instance != null)
             {
@@ -118,7 +97,6 @@ public class LobbyManager : NetworkBehaviour
         }
 
         lobbyPlayers.OnListChanged += OnLobbyPlayersChanged;
-
         SetupUI();
         UpdatePlayerListUI();
 
@@ -139,35 +117,28 @@ public class LobbyManager : NetworkBehaviour
     private void SetupUI()
     {
         Debug.Log("🔄 Setting up Lobby UI...");
-
         if (startGameButton != null)
         {
             startGameButton.gameObject.SetActive(IsServer);
             startGameButton.onClick.AddListener(StartGame);
             startGameButton.interactable = false;
         }
-
         if (readyButton != null)
         {
             readyButton.onClick.AddListener(ToggleReadyStatus);
         }
-
         if (leaveButton != null)
         {
             leaveButton.onClick.AddListener(LeaveLobby);
         }
-
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(true);
         }
-
         if (readyButtonText != null)
         {
             readyButtonText.text = isReady ? "UNREADY" : "READY";
         }
-
-        // --- ADDED: DISPLAY JOIN CODE FROM TITLE SCREEN MANAGER ---
         if (joinCodeText != null)
         {
             if (TitleScreenManager.Instance != null)
@@ -179,8 +150,6 @@ public class LobbyManager : NetworkBehaviour
                 joinCodeText.text = "Join Code: ???";
             }
         }
-        // -----------------------------------------------------------
-
         Debug.Log("✅ Lobby UI setup complete");
     }
 
@@ -188,12 +157,10 @@ public class LobbyManager : NetworkBehaviour
     {
         isReady = !isReady;
         ToggleReadyStatusServerRpc(NetworkManager.Singleton.LocalClientId, isReady);
-
         if (readyButtonText != null)
         {
             readyButtonText.text = isReady ? "UNREADY" : "READY";
         }
-
         Debug.Log($"🔄 Ready status toggled to: {isReady}");
     }
 
@@ -201,7 +168,6 @@ public class LobbyManager : NetworkBehaviour
     {
         string playerName = "Player_" + NetworkManager.Singleton.LocalClientId;
         int characterIndex = 0;
-
         if (TitleScreenManager.Instance != null)
         {
             if (TitleScreenManager.selectedPlayerPrefab != null)
@@ -214,7 +180,6 @@ public class LobbyManager : NetworkBehaviour
         {
             Debug.LogWarning("TitleScreenManager.Instance is null! Defaulting to index 0.");
         }
-
         SubmitPlayerDataServerRpc(NetworkManager.Singleton.LocalClientId, playerName, false, characterIndex);
         Debug.Log($"📤 CLIENT: Submitting player data: {playerName} (Index: {characterIndex})");
     }
@@ -258,7 +223,6 @@ public class LobbyManager : NetworkBehaviour
                 return;
             }
         }
-
         lobbyPlayers.Add(new LobbyPlayerData
         {
             clientId = clientId,
@@ -266,7 +230,6 @@ public class LobbyManager : NetworkBehaviour
             isReady = isReady,
             characterPrefabIndex = characterIndex
         });
-
         Debug.Log($"✅ SERVER: Added player: {playerName} (Ready: {isReady}, Index: {characterIndex}) - Total: {lobbyPlayers.Count}");
     }
 
@@ -282,7 +245,6 @@ public class LobbyManager : NetworkBehaviour
                 break;
             }
         }
-
         if (playerSlots.ContainsKey(clientId))
         {
             Destroy(playerSlots[clientId]);
@@ -294,7 +256,6 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"📋 Lobby players changed (Event: {changeEvent.Type}) - Total: {lobbyPlayers.Count}");
         UpdatePlayerListUI();
-
         if (IsServer)
         {
             CheckAllPlayersReady();
@@ -311,26 +272,22 @@ public class LobbyManager : NetworkBehaviour
             }
         }
         playerSlots.Clear();
-
         foreach (var player in lobbyPlayers)
         {
             if (playerListContainer != null && playerSlotPrefab != null)
             {
                 GameObject playerSlot = Instantiate(playerSlotPrefab, playerListContainer);
                 playerSlot.name = $"PlayerSlot_{player.clientId}";
-
                 SetupPlayerSlotUI(playerSlot, player);
                 playerSlots[player.clientId] = playerSlot;
             }
         }
-
         UpdateStatusText();
     }
 
     private void SetupPlayerSlotUI(GameObject playerSlot, LobbyPlayerData playerData)
     {
         LobbyPlayerUI playerUI = playerSlot.GetComponent<LobbyPlayerUI>();
-
         if (playerUI != null)
         {
             bool isHost = playerData.clientId == NetworkManager.ServerClientId;
@@ -348,7 +305,6 @@ public class LobbyManager : NetworkBehaviour
         {
             string status = $"";
             status += $"Players: {lobbyPlayers.Count}/4";
-
             statusText.text = status;
         }
     }
@@ -361,7 +317,6 @@ public class LobbyManager : NetworkBehaviour
                 startGameButton.interactable = false;
             return;
         }
-
         bool allReady = true;
         foreach (var player in lobbyPlayers)
         {
@@ -371,7 +326,6 @@ public class LobbyManager : NetworkBehaviour
                 break;
             }
         }
-
         if (startGameButton != null)
         {
             startGameButton.interactable = allReady;
@@ -398,20 +352,15 @@ public class LobbyManager : NetworkBehaviour
     public void StartGame()
     {
         if (!IsServer) return;
-
         Debug.Log("🎯 SERVER: Starting game!");
-
         persistentLobbyData = new List<LobbyPlayerData>();
         foreach (var player in lobbyPlayers)
         {
             persistentLobbyData.Add(player);
         }
         Debug.Log($"📝 Copied {persistentLobbyData.Count} players to persistent list.");
-
         PublicPersistentLobbyData = persistentLobbyData;
-
         HideLobbyUIClientRpc();
-
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
         NetworkManager.Singleton.SceneManager.LoadScene("World_01", LoadSceneMode.Single);
     }
@@ -419,13 +368,10 @@ public class LobbyManager : NetworkBehaviour
     [ClientRpc]
     private void HideLobbyUIClientRpc()
     {
-        // --- ADDED: Show Loading Screen when game starts ---
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.ShowWithFakeProgress("Loading World...");
         }
-        // --------------------------------------------------
-
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(false);
@@ -437,26 +383,41 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"🎯 Scene '{sceneName}' loaded - Clients: {clientsCompleted.Count}, TimedOut: {clientsTimedOut.Count}");
 
-        // --- ADDED: Remove loading screen when the world loads ---
         if (sceneName == "World_01" && LoadingScreenManager.Instance != null)
         {
-            // We use Complete() so it fills the bar to 100% then hides
             LoadingScreenManager.Instance.Complete();
         }
-        // ---------------------------------------------------------
 
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnLoadEventCompleted;
 
         if (IsServer && clientsCompleted.Count > 0)
         {
+            FindSpawnPoints();
             SpawnAllPlayers();
+        }
+    }
+
+    private void FindSpawnPoints()
+    {
+        availableSpawnPoints.Clear();
+        GameObject[] spawnPointObjects = GameObject.FindGameObjectsWithTag(spawnPointTag);
+        
+        foreach (GameObject spawnObj in spawnPointObjects)
+        {
+            availableSpawnPoints.Add(spawnObj.transform);
+        }
+
+        Debug.Log($"🎯 Found {availableSpawnPoints.Count} spawn points with tag '{spawnPointTag}'");
+
+        if (availableSpawnPoints.Count == 0)
+        {
+            Debug.LogError($"❌ No spawn points found with tag '{spawnPointTag}'! Players will spawn at origin (0,0,0).");
         }
     }
 
     private void SpawnAllPlayers()
     {
         Debug.Log($"🎮 SERVER: Spawning {persistentLobbyData.Count} players...");
-
         foreach (var playerData in persistentLobbyData)
         {
             SpawnPlayerForClient(playerData.clientId);
@@ -466,7 +427,6 @@ public class LobbyManager : NetworkBehaviour
     private void SpawnPlayerForClient(ulong clientId)
     {
         LobbyPlayerData playerData = persistentLobbyData.FirstOrDefault(p => p.clientId == clientId);
-
         if (playerData.clientId != clientId && persistentLobbyData.Count > 0)
         {
             Debug.LogWarning($"Could not find persistent data for client {clientId}. Using first player's data as fallback.");
@@ -474,7 +434,6 @@ public class LobbyManager : NetworkBehaviour
         }
 
         int characterIndex = playerData.characterPrefabIndex;
-
         if (TitleScreenManager.Instance == null)
         {
             Debug.LogError("❌ TitleScreenManager.Instance is NULL! Cannot access prefab list.");
@@ -488,7 +447,6 @@ public class LobbyManager : NetworkBehaviour
         }
 
         GameObject playerPrefab = TitleScreenManager.Instance.availableCharacterPrefabs[characterIndex];
-
         if (playerPrefab == null)
         {
             Debug.LogError($"❌ Player prefab at index {characterIndex} is null! Defaulting to prefab 0.");
@@ -501,19 +459,15 @@ public class LobbyManager : NetworkBehaviour
         }
 
         NetworkObject playerObject = Instantiate(playerPrefab).GetComponent<NetworkObject>();
-
         if (playerObject != null)
         {
-            Vector3 spawnPos = CalculateSpawnPosition(clientId);
+            Vector3 spawnPos = GetSpawnPosition();
             
             Debug.Log($"---> [LobbyManager] PRE-SPAWN position for client {clientId} calculated as: {spawnPos}");
-
             playerObject.transform.position = spawnPos;
             Debug.Log($"---> [LobbyManager] Position for client {clientId} SET TO: {playerObject.transform.position}");
-
             playerObject.SpawnAsPlayerObject(clientId, true);
             Debug.Log($"---> [LobbyManager] Player for client {clientId} SPAWNED.");
-
             Debug.Log($"🎮 SERVER: Spawned '{playerPrefab.name}' for client {clientId} at {spawnPos}");
         }
         else
@@ -522,108 +476,60 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
-    private Vector3 CalculateSpawnPosition(ulong clientId)
+    private Vector3 GetSpawnPosition()
     {
-        int playerIndex = 0;
-        for (int i = 0; i < persistentLobbyData.Count; i++)
+        if (availableSpawnPoints.Count == 0)
         {
-            if (persistentLobbyData[i].clientId == clientId)
-            {
-                playerIndex = i;
-                break;
-            }
+            Debug.LogWarning("⚠️ No spawn points available! Spawning at origin (0,0,0).");
+            return Vector3.zero;
         }
 
-        int playerCount = persistentLobbyData.Count;
-        Vector3 spawnPosition = spawnAreaCenter;
-
-        switch (currentSpawnPattern)
+        if (randomizeSpawnOrder)
         {
-            case SpawnPattern.Circle:
-                if (playerCount > 0)
-                {
-                    float angleIncrement = 360f / playerCount;
-                    float angle = playerIndex * angleIncrement;
-                    float radianAngle = angle * Mathf.Deg2Rad;
-                    spawnPosition = spawnAreaCenter + new Vector3(Mathf.Cos(radianAngle), 0, Mathf.Sin(radianAngle)) * circleRadius;
-                    spawnPosition.y = spawnAreaCenter.y;
-                }
-                break;
-
-            case SpawnPattern.GridWithRandomness:
-                int gridSize = Mathf.CeilToInt(Mathf.Sqrt(playerCount));
-                int row = playerIndex / gridSize;
-                int col = playerIndex % gridSize;
-
-                Vector3 baseGridPos = spawnAreaCenter + new Vector3(
-                    (col - (gridSize - 1) / 2f) * gridSpacing,
-                    0,
-                    (row - (gridSize - 1) / 2f) * gridSpacing
-                );
-
-                baseGridPos.x += UnityEngine.Random.Range(-gridRandomOffset, gridRandomOffset);
-                baseGridPos.z += UnityEngine.Random.Range(-gridRandomOffset, gridRandomOffset);
-                baseGridPos.y = spawnAreaCenter.y;
-                spawnPosition = baseGridPos;
-                break;
-
-            case SpawnPattern.CompletelyRandom:
-                float randomX = UnityEngine.Random.Range(
-                    spawnAreaCenter.x - spawnAreaSize.x / 2f,
-                    spawnAreaCenter.x + spawnAreaSize.x / 2f
-                );
-                float randomZ = UnityEngine.Random.Range(
-                    spawnAreaCenter.z - spawnAreaSize.z / 2f,
-                    spawnAreaCenter.z + spawnAreaSize.z / 2f
-                );
-                spawnPosition = new Vector3(randomX, spawnAreaCenter.y, randomZ);
-                break;
-
-            case SpawnPattern.Line:
-                Vector3 normalizedDirection = lineDirection.normalized;
-                spawnPosition = lineStartPosition + normalizedDirection * (playerIndex * lineSpacing);
-                spawnPosition.y = lineStartPosition.y;
-                break;
-
-            default:
-                 Debug.LogWarning($"Unknown Spawn Pattern: {currentSpawnPattern}. Using default center.");
-                 spawnPosition = spawnAreaCenter;
-                 break;
+            // Pick a random spawn point
+            int randomIndex = UnityEngine.Random.Range(0, availableSpawnPoints.Count);
+            Vector3 position = availableSpawnPoints[randomIndex].position;
+            
+            // Remove the spawn point so it's not reused
+            availableSpawnPoints.RemoveAt(randomIndex);
+            
+            Debug.Log($"🎲 Assigned random spawn point at {position} ({availableSpawnPoints.Count} remaining)");
+            return position;
         }
-
-        Debug.Log($"🎲 Calculated spawn position for client {clientId} (Index: {playerIndex}, Pattern: {currentSpawnPattern}): {spawnPosition}");
-        return spawnPosition;
+        else
+        {
+            // Use spawn points in order (first available)
+            Vector3 position = availableSpawnPoints[0].position;
+            availableSpawnPoints.RemoveAt(0);
+            
+            Debug.Log($"🎯 Assigned sequential spawn point at {position} ({availableSpawnPoints.Count} remaining)");
+            return position;
+        }
     }
 
     public void LeaveLobby()
     {
         Debug.Log("👋 Leaving lobby...");
-
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
         }
-
         if (TitleScreenManager.Instance != null)
         {
             Destroy(TitleScreenManager.Instance.gameObject);
         }
-
         PublicPersistentLobbyData = null;
-
         SceneManager.LoadScene("MainMenu");
     }
 
     public override void OnNetworkDespawn()
     {
         Debug.Log("👋 LobbyManager.OnNetworkDespawn");
-
         if (IsServer && NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
-
         if (lobbyPlayers != null)
         {
             lobbyPlayers.OnListChanged -= OnLobbyPlayersChanged;

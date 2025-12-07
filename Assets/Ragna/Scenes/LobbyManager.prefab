@@ -78,17 +78,11 @@ MonoBehaviour:
   readyButton: {fileID: 0}
   leaveButton: {fileID: 0}
   readyButtonText: {fileID: 0}
+  joinCodeText: {fileID: 0}
   playerListContainer: {fileID: 0}
   playerSlotPrefab: {fileID: 54844845814494658, guid: d0c8f1c95a5980c4bb939ca37ae29248, type: 3}
-  currentSpawnPattern: 3
-  spawnAreaCenter: {x: 3.84, y: -3.03, z: -1.650868}
-  circleRadius: 5
-  gridSpacing: 3
-  gridRandomOffset: 0.5
-  spawnAreaSize: {x: 10, y: 0, z: 10}
-  lineStartPosition: {x: 0, y: 0, z: 0}
-  lineDirection: {x: 1, y: 0, z: 0}
-  lineSpacing: 3
+  spawnPointTag: SpawnPoint
+  randomizeSpawnOrder: 1
 --- !u!114 &180870922808314131
 MonoBehaviour:
   m_ObjectHideFlags: 0

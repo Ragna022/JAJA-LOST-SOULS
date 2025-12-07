@@ -9,6 +9,7 @@ TagManager:
   - Fire
   - Player2
   - Look
+  - SpawnPoint
   layers:
   - Default
   - TransparentFX
