@@ -119,7 +119,7 @@ public class WorldSaveGameManager : MonoBehaviour
         currentCharacterSlotBeingUsed = FindFirstAvailableSlot();
         if (currentCharacterSlotBeingUsed == CharacterSlot.NO_SLOT)
         {
-            TitleScreenManager.Instance.DisplayNoFreeCharacterSlotsPopUp();
+            //TitleScreenManager.Instance.DisplayNoFreeCharacterSlotsPopUp();
             return;
         }
 
