@@ -10,8 +10,6 @@ public class LoadingScreenManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject loadingPanel;
     [SerializeField] private Slider loadingSlider; 
-    
-    // MERGED: This single text field handles "Loading...", "Connecting...", etc.
     [SerializeField] private TMP_Text loadingText; 
     [SerializeField] private TMP_Text percentageText; 
     

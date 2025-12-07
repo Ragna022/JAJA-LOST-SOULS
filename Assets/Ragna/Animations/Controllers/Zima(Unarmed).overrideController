@@ -9,5 +9,15 @@ AnimatorOverrideController:
   m_Name: Zima(Unarmed)
   m_Controller: {fileID: 9100000, guid: 0f4998d2b14343c4e9ba2e2f046ca88d, type: 2}
   m_Clips:
-  - m_OriginalClip: {fileID: 2144818588510171651, guid: c1cfaad6b03cce84babdcac8523ea492, type: 3}
-    m_OverrideClip: {fileID: 7400000, guid: 94f06780a0069304b9198a6760312fba, type: 2}
+  - m_OriginalClip: {fileID: 3618418563803250505, guid: 1ab9ed77a56750a40afe0cb04ef51fe2, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 47bcebf5b84e0d6419e5849500327ecb, type: 3}
+  - m_OriginalClip: {fileID: -3557598459210001959, guid: 942c664cdf31b084bb22422401f6b721, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 667097b6f82a7f8469536c42e06847da, type: 3}
+  - m_OriginalClip: {fileID: -2576967968662016515, guid: 56fd86b76fc74d24d83522069f5deb9b, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 1b503399b455a8b43a75b0c331b8e88e, type: 3}
+  - m_OriginalClip: {fileID: -3644312441060961049, guid: 2cdfb84a2111b4d4abe62b92d9f7393e, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 249f5b77f3c9f3943a6f81a140b9980d, type: 3}
+  - m_OriginalClip: {fileID: 5848264558272783907, guid: 87d4838dbc2c37f4c95feab5428ccd11, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: b3c650e3c5c689043bcf2fe4dd125102, type: 3}
+  - m_OriginalClip: {fileID: 7400000, guid: 94f06780a0069304b9198a6760312fba, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 49399de50b2d88a4aa32fbea411ce40c, type: 3}

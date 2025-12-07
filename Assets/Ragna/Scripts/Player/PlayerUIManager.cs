@@ -10,6 +10,10 @@ public class PlayerUIManager : MonoBehaviour
     [Header("NETWORK JOIN")]
     [SerializeField] bool startGameAsClient;
 
+    [Header("UI Fade")]
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private float fadeInDuration = 1f;
+
     [HideInInspector] public PlayerUIHudManager playerUIHudManager;
     [HideInInspector] public PlayerUIPopUpManager playerUIPopUpManager;
 
@@ -26,11 +30,79 @@ public class PlayerUIManager : MonoBehaviour
 
         playerUIHudManager = GetComponentInChildren<PlayerUIHudManager>();
         playerUIPopUpManager = GetComponentInChildren<PlayerUIPopUpManager>();
+
+        // Get CanvasGroup if not assigned
+        if (canvasGroup == null)
+        {
+            canvasGroup = GetComponent<CanvasGroup>();
+        }
+
+        // Ensure it starts at 0
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+        }
     }
 
     private void Start()
     {
         DontDestroyOnLoad(gameObject);
+        
+        // Subscribe to scene loaded event to fade in UI when entering game world
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Fade in UI when entering the game world (not MainMenu or Lobby)
+        if (scene.name == "World_01" || scene.name.Contains("World"))
+        {
+            StartCoroutine(FadeInUI());
+        }
+        // Keep UI hidden in menus and lobby
+        else if (scene.name == "MainMenu" || scene.name == "Lobby")
+        {
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+            }
+        }
+    }
+
+    private IEnumerator FadeInUI()
+    {
+        if (canvasGroup == null) yield break;
+
+        float elapsed = 0f;
+        float startAlpha = canvasGroup.alpha;
+
+        while (elapsed < fadeInDuration)
+        {
+            elapsed += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, 1f, elapsed / fadeInDuration);
+            yield return null;
+        }
+
+        canvasGroup.alpha = 1f;
+        Debug.Log("✅ PlayerUI faded in");
+    }
+
+    public void ShowUI()
+    {
+        StartCoroutine(FadeInUI());
+    }
+
+    public void HideUI()
+    {
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+        }
     }
 
     private void Update()

@@ -2267,7 +2267,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 243.12955, y: -430.60114}
+  m_AnchoredPosition: {x: 243.12955, y: -383.34613}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &457654413
@@ -3680,7 +3680,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 243.12955, y: -336.09113}
+  m_AnchoredPosition: {x: 243.12955, y: -288.83612}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &675514736
@@ -4598,7 +4598,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 243.12955, y: -241.58113}
+  m_AnchoredPosition: {x: 243.12955, y: -194.32613}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &752544017
@@ -5572,7 +5572,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.003921569}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5708,7 +5708,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.003921569}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -7761,6 +7761,7 @@ MonoBehaviour:
   - {fileID: 558649551312652575, guid: 2f6b044c8e374da4ebca5480cc5a6f97, type: 3}
   - {fileID: 4056380898052182095, guid: 43b4dee33efad46499e693e9de61760b, type: 3}
   - {fileID: 1761312529341688744, guid: 63a25b8267917e744a77de2574916eb6, type: 3}
+  - {fileID: 628220048327642844, guid: c8112d5a91ee61349a129996c22d2cda, type: 3}
   validPrefabs: []
   invalidPrefabs: []
 --- !u!4 &1211379749
@@ -9694,13 +9695,14 @@ GameObject:
   - component: {fileID: 1522701478}
   - component: {fileID: 1522701477}
   - component: {fileID: 1522701476}
+  - component: {fileID: 1522701479}
   m_Layer: 5
   m_Name: Class (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1522701475
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9815,6 +9817,35 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1522701474}
   m_CullTransparentMesh: 1
+--- !u!114 &1522701479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1522701474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1583315569}
+          m_TargetAssemblyTypeName: TitleScreenManager, Assembly-CSharp
+          m_MethodName: PreviewClass
+          m_Mode: 3
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 3
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1523357385
 GameObject:
   m_ObjectHideFlags: 0
@@ -10200,6 +10231,7 @@ MonoBehaviour:
   - {fileID: 558649551312652575, guid: 2f6b044c8e374da4ebca5480cc5a6f97, type: 3}
   - {fileID: 1761312529341688744, guid: 63a25b8267917e744a77de2574916eb6, type: 3}
   - {fileID: 4056380898052182095, guid: 43b4dee33efad46499e693e9de61760b, type: 3}
+  - {fileID: 628220048327642844, guid: c8112d5a91ee61349a129996c22d2cda, type: 3}
   defaultCharacterIndex: 0
   titleScreenMenu: {fileID: 858277751}
   titleScreenLoadMenu: {fileID: 626893470}
@@ -10214,6 +10246,7 @@ MonoBehaviour:
   - {fileID: 752544017}
   - {fileID: 675514736}
   - {fileID: 457654413}
+  - {fileID: 1522701476}
   noCharacterSlotsPopUp: {fileID: 399753717}
   noCharacterSlotsOkayButton: {fileID: 1162522040}
   deleteCharacterSlotPopUp: {fileID: 1315231588}
@@ -10224,6 +10257,7 @@ MonoBehaviour:
   - {fileID: 752544017}
   - {fileID: 675514736}
   - {fileID: 457654413}
+  - {fileID: 1522701476}
   characterClassMenu: {fileID: 2106890355}
   currentSelectedSlot: 10
   startingClasses:
@@ -10262,6 +10296,18 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1a4c4a92796a62e45830e89ff52d0960, type: 2}
     - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
     - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
+    offHandWeapons: []
+  - className: ZIMA
+    classPrefab: {fileID: 628220048327642844, guid: c8112d5a91ee61349a129996c22d2cda, type: 3}
+    vitality: 18
+    endurance: 13
+    strength: 18
+    dexterity: 17
+    intelligence: 12
+    mainHandWeapons:
+    - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
+    - {fileID: 11400000, guid: 1a4c4a92796a62e45830e89ff52d0960, type: 2}
+    - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
     offHandWeapons: []
   characterPreviewSpawnPoint: {fileID: 281817700}
   hostButton: {fileID: 979712702}
@@ -12696,7 +12742,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.003921569}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
