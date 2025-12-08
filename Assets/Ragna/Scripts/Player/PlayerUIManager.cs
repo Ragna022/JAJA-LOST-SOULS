@@ -189,7 +189,7 @@ public class PlayerUIManager : MonoBehaviour
         }
 
         // Start loading the scene
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("MainMenu");
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
         
         if (asyncLoad != null)
         {
@@ -208,7 +208,7 @@ public class PlayerUIManager : MonoBehaviour
         else
         {
             // Fallback if async load fails
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene(0);
         }
 
         // Complete loading screen - just hide it directly since we're in a new scene
