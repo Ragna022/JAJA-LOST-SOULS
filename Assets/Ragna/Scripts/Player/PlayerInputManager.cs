@@ -7,8 +7,12 @@ public class PlayerInputManager : MonoBehaviour
     public PlayerManager player;
     PlayerControls playerControls;
 
-    [Header("Mobile Input")]
-    [SerializeField] private bool useMobileInput = false; // Controlled by MobileInputManager
+    [Header("Mobile Input Settings")]
+    [SerializeField] private bool useMobileInput = false;
+
+    // DIRECT REFERENCE: Drag your CameraTouchArea object here in Inspector
+    [Header("Mobile Direct References")]
+    public MobileCameraTouch mobileCameraTouch; 
 
     [Header("Movement Input")]
     [SerializeField] Vector2 movementInput;
@@ -61,40 +65,39 @@ public class PlayerInputManager : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
         SceneManager.activeSceneChanged += OnSceneChange;
-        instance.enabled = false;
 
-        if (playerControls != null)
+        // --- FIX: FORCE ENABLED FOR TESTING ---
+        // Originally this was 'false', which disabled the script at start.
+        instance.enabled = true; 
+
+        if (playerControls != null && !useMobileInput)
         {
-            playerControls.Disable();
+            playerControls.Enable();
+        }
+        
+        // Try to find player immediately in case we are testing in the Game Scene
+        if (player == null)
+        {
+            FindPlayerInScene();
         }
     }
 
     private void OnSceneChange(UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
     {
-        if (newScene.buildIndex == WorldSaveGameManager.instance.GetWorldSceneIndex())
-        {
-            instance.enabled = true;
-            isReady = false;
-            
-            if (playerControls != null && !useMobileInput)
-            {
-                playerControls.Enable();
-            }
-            
-            if (player == null)
-            {
-                FindPlayerInScene();
-            }
-        }
-        else
-        {
-            instance.enabled = false;
-            isReady = false;
+        // --- FIX: ALWAYS STAY ENABLED ---
+        // We removed the strict check for WorldSaveGameManager. 
+        // This ensures the input works even in test scenes.
+        instance.enabled = true;
+        isReady = false;
 
-            if (playerControls != null)
-            {
-                playerControls.Disable();
-            }
+        if (playerControls != null && !useMobileInput)
+        {
+            playerControls.Enable();
+        }
+
+        if (player == null)
+        {
+            FindPlayerInScene();
         }
     }
 
@@ -111,11 +114,6 @@ public class PlayerInputManager : MonoBehaviour
                 break;
             }
         }
-        
-        if (player == null)
-        {
-            Debug.LogWarning("PlayerInputManager: No player found in scene, will retry");
-        }
     }
 
     public void SetPlayer(PlayerManager newPlayer)
@@ -127,28 +125,33 @@ public class PlayerInputManager : MonoBehaviour
 
     private void OnEnable()
     {
-        if (playerControls == null && !useMobileInput)
+        if (playerControls == null)
         {
             playerControls = new PlayerControls();
+
+            // Movement
             playerControls.PlayerMovement.Movement.performed += i => movementInput = i.ReadValue<Vector2>();
             playerControls.PlayerCamera.Movement.performed += i => cameraInput = i.ReadValue<Vector2>();
+
+            // Actions
             playerControls.PlayerActions.Dodge.performed += i => dodgeInput = true;
             playerControls.PlayerActions.Jump.performed += i => jumpInput = true;
             playerControls.PlayerActions.RB.performed += i => RB_Input = true;
+            playerControls.PlayerActions.Sprint.performed += i => sprintInput = true;
+            playerControls.PlayerActions.Sprint.canceled += i => sprintInput = false;
 
+            // Lock On
             playerControls.PlayerActions.LockOn.performed += i => lockOn_Input = true;
             playerControls.PlayerActions.SeekLeftLockOnTarget.performed += i => lockOn_Left_Input = true;
             playerControls.PlayerActions.SeekRightLockOnTarget.performed += i => lockOn_Right_Input = true;
 
+            // Triggers
             playerControls.PlayerActions.RT.performed += i => RT_Input = true;
             playerControls.PlayerActions.HoldRT.performed += i => Hold_RT_Input = true;
             playerControls.PlayerActions.HoldRT.canceled += i => Hold_RT_Input = false;
-
-            playerControls.PlayerActions.Sprint.performed += i => sprintInput = true;
-            playerControls.PlayerActions.Sprint.canceled += i => sprintInput = false;
         }
 
-        if (playerControls != null && !useMobileInput)
+        if (!useMobileInput)
         {
             playerControls.Enable();
         }
@@ -164,40 +167,33 @@ public class PlayerInputManager : MonoBehaviour
         if (useMobileInput)
             return;
 
-        if (enabled)
+        if (enabled && playerControls != null)
         {
-            if (playerControls != null)
-                playerControls.Enable();
-        }
-        else
-        {
-            if (playerControls != null)
-                playerControls.Disable();
+            if (focus) playerControls.Enable();
+            else playerControls.Disable();
         }
     }
 
     private void Update()
     {
-        if (!isReady && player == null)
+        if (!isReady || player == null)
         {
             FindPlayerInScene();
             return;
         }
-        
+
         HandleAllInput();
     }
 
     private void HandleAllInput()
     {
-        if (!isReady || player == null)
-            return;
-
-        // Get input from mobile or gamepad/keyboard
         if (useMobileInput)
         {
             HandleMobileInput();
         }
-        // If not using mobile input, the playerControls events will update movementInput/cameraInput automatically
+        
+        // Note: If NOT using mobile input, the playerControls events (OnEnable) 
+        // are already updating movementInput/cameraInput automatically.
 
         HandleLockOnInput();
         HandleLockOnSwitchTargetInput();
@@ -213,62 +209,52 @@ public class PlayerInputManager : MonoBehaviour
 
     private void HandleMobileInput()
     {
-        if (MobileInputManager.instance == null)
+        // 1. Camera Input (PRIORITY: Direct Connection)
+        // We use the direct reference you will assign in the Inspector
+        if (mobileCameraTouch != null)
         {
-            Debug.LogWarning("PlayerInputManager: MobileInputManager.instance is NULL!");
-            return;
+            cameraInput = mobileCameraTouch.GetCameraInput();
+        }
+        else if (MobileInputManager.instance != null)
+        {
+            // Fallback if you forgot to assign the slot
+            cameraInput = MobileInputManager.instance.cameraInput;
         }
 
-        // Movement - DIRECTLY read from joystick
-        movementInput = MobileInputManager.instance.movementInput;
-        debugMobileMovement = movementInput; // For inspector debugging
-        
-        // Camera
-        cameraInput = MobileInputManager.instance.cameraInput;
+        // 2. Movement Input
+        if (MobileInputManager.instance != null)
+        {
+            movementInput = MobileInputManager.instance.movementInput;
+        }
+
+        // Debug visualization
+        debugMobileMovement = movementInput;
         debugMobileCamera = cameraInput;
 
-        // Log for debugging (you can remove this later)
-        if (movementInput.magnitude > 0)
-        {
-            Debug.Log($"Mobile Movement Input: {movementInput}");
-        }
+        // 3. Button Inputs (Read from Manager)
+        if (MobileInputManager.instance == null) return;
 
-        // Actions
-        if (MobileInputManager.instance.GetDodgeInput())
-            dodgeInput = true;
-
-        if (MobileInputManager.instance.GetJumpInput())
-            jumpInput = true;
+        if (MobileInputManager.instance.GetDodgeInput()) dodgeInput = true;
+        if (MobileInputManager.instance.GetJumpInput()) jumpInput = true;
+        if (MobileInputManager.instance.GetRBInput()) RB_Input = true;
+        if (MobileInputManager.instance.GetRTInput()) RT_Input = true;
+        if (MobileInputManager.instance.GetLockOnInput()) lockOn_Input = true;
 
         sprintInput = MobileInputManager.instance.GetSprintInput();
-
-        if (MobileInputManager.instance.GetRBInput())
-            RB_Input = true;
-
-        if (MobileInputManager.instance.GetRTInput())
-            RT_Input = true;
-
         Hold_RT_Input = MobileInputManager.instance.GetRTHoldInput();
-
-        if (MobileInputManager.instance.GetLockOnInput())
-            lockOn_Input = true;
     }
 
     private void HandleLockOnInput()
     {
         if (player.playerNetworkManager.isLockedOn.Value)
         {
-            if (player.playerCombatManager.currentTarget == null)
-                return;
-
+            if (player.playerCombatManager.currentTarget == null) return;
             if (player.playerCombatManager.currentTarget.isDead)
             {
                 player.playerNetworkManager.isLockedOn.Value = false;
             }
 
-            if (lockOnCoroutine != null)
-                StopCoroutine(lockOnCoroutine);
-                
+            if (lockOnCoroutine != null) StopCoroutine(lockOnCoroutine);
             lockOnCoroutine = StartCoroutine(PlayerCamera.instance.WaitThenFindNewTarget());
         }
 
@@ -298,27 +284,23 @@ public class PlayerInputManager : MonoBehaviour
         if (lockOn_Left_Input)
         {
             lockOn_Left_Input = false;
-
             if (player.playerNetworkManager.isLockedOn.Value)
             {
                 PlayerCamera.instance.HandleLocatingLockedOnTarget();
-
                 if (PlayerCamera.instance.leftLockOnTarget != null)
                 {
                     player.playerCombatManager.SetTarget(PlayerCamera.instance.leftLockOnTarget);
                 }
             }
         }
-        
-        if(lockOn_Right_Input)
+
+        if (lockOn_Right_Input)
         {
             lockOn_Right_Input = false;
-
-            if(player.playerNetworkManager.isLockedOn.Value)
+            if (player.playerNetworkManager.isLockedOn.Value)
             {
                 PlayerCamera.instance.HandleLocatingLockedOnTarget();
-
-                if(PlayerCamera.instance.rightLockOnTarget != null)
+                if (PlayerCamera.instance.rightLockOnTarget != null)
                 {
                     player.playerCombatManager.SetTarget(PlayerCamera.instance.rightLockOnTarget);
                 }
@@ -333,42 +315,23 @@ public class PlayerInputManager : MonoBehaviour
 
         moveAmount = Mathf.Clamp01(Mathf.Abs(verticalInput) + Mathf.Abs(horizontalInput));
 
-        if (moveAmount <= 0.5f && moveAmount > 0)
-        {
-            moveAmount = 0.5f;
-        }
-        else if (moveAmount > 0.5f && moveAmount <= 1)
-        {
-            moveAmount = 1;
-        }
+        if (moveAmount <= 0.5f && moveAmount > 0) moveAmount = 0.5f;
+        else if (moveAmount > 0.5f && moveAmount <= 1) moveAmount = 1;
 
-        if (player == null)
-            return;
+        if (player == null) return;
 
-        if (moveAmount != 0)
-        {
-            player.playerNetworkManager.isMoving.Value = true;
-        }
-        else
-        {
-            player.playerNetworkManager.isMoving.Value = false;
-        }
-        
-        // When using mobile input and not locked on, use camera-relative movement
+        player.playerNetworkManager.isMoving.Value = moveAmount != 0;
+
         if (useMobileInput && !player.playerNetworkManager.isLockedOn.Value && !player.playerNetworkManager.isSprinting.Value)
         {
-            // For mobile, always use forward movement (0 horizontal, moveAmount vertical)
-            // The player rotation will be handled by your PlayerLocomotionManager
             player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
         }
         else if (!player.playerNetworkManager.isLockedOn.Value || player.playerNetworkManager.isSprinting.Value)
         {
-            // Standard non-locked movement
             player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
         }
         else
         {
-            // Locked on movement - use strafe
             player.playerAnimatorManager.UpdateAnimatorMovementParameters(horizontalInput, verticalInput, player.playerNetworkManager.isSprinting.Value);
         }
     }
@@ -428,23 +391,22 @@ public class PlayerInputManager : MonoBehaviour
             player.playerCombatManager.PerformingWeaponBasedAction(player.playerInventoryManager.currentRightHandWeapon.oh_RT_Actions, player.playerInventoryManager.currentRightHandWeapon);
         }
     }
-    
+
     private void HandleChargeRTInput()
     {
-        if(player.isPerformingAction)
+        if (player.isPerformingAction)
         {
-            if(player.playerNetworkManager.isUsingRightHand.Value)
+            if (player.playerNetworkManager.isUsingRightHand.Value)
             {
                 player.playerNetworkManager.isChargingAttack.Value = Hold_RT_Input;
             }
         }
     }
 
-    // Public method to toggle mobile input for testing in editor
     public void SetMobileInputMode(bool enable)
     {
         useMobileInput = enable;
-        
+
         if (enable && playerControls != null)
         {
             playerControls.Disable();
@@ -453,7 +415,7 @@ public class PlayerInputManager : MonoBehaviour
         {
             playerControls.Enable();
         }
-        
+
         Debug.Log($"PlayerInputManager: Mobile Input set to {(useMobileInput ? "ENABLED" : "DISABLED")}");
     }
 }

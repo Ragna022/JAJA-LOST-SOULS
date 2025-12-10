@@ -31,13 +31,11 @@ public class PlayerUIManager : MonoBehaviour
         playerUIHudManager = GetComponentInChildren<PlayerUIHudManager>();
         playerUIPopUpManager = GetComponentInChildren<PlayerUIPopUpManager>();
 
-        // Get CanvasGroup if not assigned
         if (canvasGroup == null)
         {
             canvasGroup = GetComponent<CanvasGroup>();
         }
 
-        // Ensure it starts at 0
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 0f;
@@ -47,8 +45,6 @@ public class PlayerUIManager : MonoBehaviour
     private void Start()
     {
         DontDestroyOnLoad(gameObject);
-        
-        // Subscribe to scene loaded event to fade in UI when entering game world
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -59,18 +55,14 @@ public class PlayerUIManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Fade in UI when entering the game world (not MainMenu or Lobby)
         if (scene.name == "World_01" || scene.name.Contains("World"))
         {
             StartCoroutine(FadeInUI());
         }
-        // Keep UI hidden in menus and lobby
         else if (scene.name == "MainMenu" || scene.name == "Lobby")
         {
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-            }
+            // Ensure UI stays hidden if we load into menu
+            HideUI();
         }
     }
 
@@ -116,31 +108,22 @@ public class PlayerUIManager : MonoBehaviour
 
     private IEnumerator RestartAsClient()
     {
-        // Show loading screen
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.ShowWithFakeProgress("Connecting to game...");
         }
 
-        // WE MUST FIRST SHUTDOWN, BECAUSE WE HAVE STARTED AS A HOST DURING THE TITLE SCREEN
         NetworkManager.Singleton.Shutdown();
-        
-        // Wait a frame for shutdown to complete
         yield return new WaitForSeconds(0.5f);
         
-        // Update loading text
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.UpdateLoadingText("Joining as client...");
         }
         
-        // WE THEN RESTART AS A CLIENT
         NetworkManager.Singleton.StartClient();
-        
-        // Wait for connection
         yield return new WaitForSeconds(1f);
         
-        // Hide loading screen
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.Complete();
@@ -154,6 +137,9 @@ public class PlayerUIManager : MonoBehaviour
 
     private IEnumerator LoadMainMenuWithLoadingScreen()
     {
+        // 1. INSTANTLY HIDE THE HUD UI
+        HideUI(); 
+
         // Show loading screen
         if (LoadingScreenManager.Instance != null)
         {
@@ -162,7 +148,19 @@ public class PlayerUIManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // Shutdown network if active
+        // --- PREVENT RACE CONDITION ---
+        // Destroy TitleScreenManager FIRST so it doesn't panic when we disconnect
+        if (TitleScreenManager.Instance != null)
+        {
+            Destroy(TitleScreenManager.Instance.gameObject);
+        }
+
+        // --- FIX: Access the static list through the Class Name "LobbyManager" ---
+        if (LobbyManager.PublicPersistentLobbyData != null)
+        {
+             LobbyManager.PublicPersistentLobbyData = null; 
+        }
+
         if (NetworkManager.Singleton != null)
         {
             if (LoadingScreenManager.Instance != null)
@@ -174,31 +172,19 @@ public class PlayerUIManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
 
-        // Destroy TitleScreenManager if it exists (clean slate)
-        if (TitleScreenManager.Instance != null)
-        {
-            Destroy(TitleScreenManager.Instance.gameObject);
-        }
-
-        // Clear lobby data
-        LobbyManager.PublicPersistentLobbyData = null;
-
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.UpdateLoadingText("Returning to Main Menu...");
         }
 
-        // Start loading the scene
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
         
         if (asyncLoad != null)
         {
-            // Update progress bar as scene loads
             while (!asyncLoad.isDone)
             {
                 if (LoadingScreenManager.Instance != null)
                 {
-                    // Map the 0-0.9 range to our loading bar (scene loading is 0-0.9, last 0.1 is activation)
                     float progress = Mathf.Clamp01(asyncLoad.progress / 0.9f);
                     LoadingScreenManager.Instance.SetProgress(progress);
                 }
@@ -207,11 +193,9 @@ public class PlayerUIManager : MonoBehaviour
         }
         else
         {
-            // Fallback if async load fails
             SceneManager.LoadScene(0);
         }
 
-        // Complete loading screen - just hide it directly since we're in a new scene
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.Hide();

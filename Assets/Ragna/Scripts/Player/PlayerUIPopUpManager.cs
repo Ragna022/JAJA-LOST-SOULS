@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class PlayerUIPopUpManager : MonoBehaviour
 {
-    public PlayerUIPopUpManager playerUIPopUpManager;
+    // Removing self-reference "playerUIPopUpManager" as it's redundant (this script is the manager)
 
     [Header("Defeat Panel (You Died)")]
     [SerializeField] GameObject defeatPanelGameObject;
@@ -22,13 +22,35 @@ public class PlayerUIPopUpManager : MonoBehaviour
     public void SendDefeatPanel()
     {
         defeatPanelGameObject.SetActive(true);
+        // Fade in over 5 seconds
         StartCoroutine(FadeInPopUpOverTime(defeatPanelCanvasGroup, 5));
+        // Wait 8 seconds (5 for fade + 3 to read) then go to menu
+        StartCoroutine(WaitThenLoadMenu(8f)); 
     }
 
     public void SendVictoryPanel()
     {
         victoryPanelGameObject.SetActive(true);
+        // Fade in over 5 seconds
         StartCoroutine(FadeInPopUpOverTime(victoryPanelCanvasGroup, 5));
+        // Wait 8 seconds (5 for fade + 3 to read) then go to menu
+        StartCoroutine(WaitThenLoadMenu(8f));
+    }
+
+    private IEnumerator WaitThenLoadMenu(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Call the manager to load the menu cleanly
+        if (PlayerUIManager.instance != null)
+        {
+            PlayerUIManager.instance.LoadMainMenu();
+        }
+        else
+        {
+            // Fallback if UI Manager is missing
+            LeaveLobby(); 
+        }
     }
 
     private IEnumerator StretchPopUpTextOverTime(TextMeshProUGUI text, float duration, float stretchAmount)

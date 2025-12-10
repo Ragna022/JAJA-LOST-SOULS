@@ -78,9 +78,9 @@ public class TitleScreenManager : MonoBehaviour
     [SerializeField] Button hostButton;
     [SerializeField] Button joinButton;
     [SerializeField] TMP_InputField joinCodeInputField; 
-    [SerializeField] GameObject connectionStatusPanel;
-    [SerializeField] TMP_Text connectionStatusText;
-    [SerializeField] TMP_Text joinCodeDisplayText;
+    //[SerializeField] GameObject connectionStatusPanel;
+    //[SerializeField] TMP_Text connectionStatusText;
+    //[SerializeField] TMP_Text joinCodeDisplayText;
 
     // ERROR POPUP UI
     [Header("Error Popup UI")]
@@ -164,8 +164,8 @@ public class TitleScreenManager : MonoBehaviour
             if (hostButton != null) hostButton.onClick.AddListener(HostGame);
             if (joinButton != null) joinButton.onClick.AddListener(() => JoinGame(joinCodeInputField?.text ?? ""));
             if (joinCodeInputField != null) joinCodeInputField.text = "";
-            if (connectionStatusPanel != null) connectionStatusPanel.SetActive(false);
-            if (joinCodeDisplayText != null) joinCodeDisplayText.gameObject.SetActive(false);
+            //if (connectionStatusPanel != null) connectionStatusPanel.SetActive(false);
+            //if (joinCodeDisplayText != null) joinCodeDisplayText.gameObject.SetActive(false);
             if (errorPopupPanel != null) errorPopupPanel.SetActive(false);
             if (errorPopupOkButton != null) errorPopupOkButton.onClick.AddListener(CloseErrorPopup);
         }
@@ -331,11 +331,11 @@ public class TitleScreenManager : MonoBehaviour
         currentJoinCode = joinCodeTask.Result;
         Debug.Log($"🎫 Join Code: {currentJoinCode}");
 
-        if (joinCodeDisplayText != null)
+        /*if (joinCodeDisplayText != null)
         {
             joinCodeDisplayText.text = $"CODE: {currentJoinCode}";
             joinCodeDisplayText.gameObject.SetActive(true);
-        }
+        }*/
 
         var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
         if (transport == null)
@@ -544,7 +544,7 @@ public class TitleScreenManager : MonoBehaviour
     private IEnumerator HideConnectionStatusDelay()
     {
         yield return new WaitForSeconds(2f);
-        if (connectionStatusPanel != null) connectionStatusPanel.SetActive(false);
+        //if (connectionStatusPanel != null) connectionStatusPanel.SetActive(false);
     }
 
     private void SpawnLobbyManagerAsHost()
@@ -568,12 +568,12 @@ public class TitleScreenManager : MonoBehaviour
 
     private void ShowConnectionStatus(string message, Color color)
     {
-        if (connectionStatusPanel != null) connectionStatusPanel.SetActive(true);
+        /*if (connectionStatusPanel != null) connectionStatusPanel.SetActive(true);
         if (connectionStatusText != null)
         {
             connectionStatusText.text = message;
             connectionStatusText.color = color;
-        }
+        }*/
     }
 
     private bool ValidateSelectedCharacterPrefab()

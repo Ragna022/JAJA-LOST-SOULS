@@ -22,7 +22,7 @@ MonoBehaviour:
   dexREQ: 0
   intREQ: 0
   faithREQ: 0
-  physicalDamage: 30
+  physicalDamage: 60
   magicDamage: 0
   fireDamage: 0
   holyDamage: 0
@@ -34,7 +34,9 @@ MonoBehaviour:
   heavy_Attack_Combo_Modifier: 1.7
   charged_Attack_Modifier: 2
   charged_Attack_Combo_Modifier: 2.4
-  baseStaminaCost: 20
-  lightAttackStaminaCostMultiplier: 0.9
+  baseStaminaCost: 5
+  lightAttackStaminaCostMultiplier: 0.3
   oh_RB_Actions: {fileID: 11400000, guid: b1f082e9db7b0fc4d8e6154c15b69e21, type: 2}
   oh_RT_Actions: {fileID: 11400000, guid: 8ea34347f92edeb4894c3be32ccf3341, type: 2}
+  whooshes: []
+  comboWhooshes: []

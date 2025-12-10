@@ -43,7 +43,7 @@ public class MobileInputManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // Persist across scenes like PlayerInputManager
+            DontDestroyOnLoad(gameObject);
             Debug.Log("MobileInputManager: Instance created successfully");
         }
         else
@@ -53,9 +53,8 @@ public class MobileInputManager : MonoBehaviour
             return;
         }
 
-        // Auto-detect mobile platform (but can be overridden in inspector)
         #if UNITY_ANDROID || UNITY_IOS
-            if (!Application.isEditor) // Only auto-enable on actual mobile devices
+            if (!Application.isEditor)
             {
                 useMobileControls = true;
             }
@@ -66,47 +65,20 @@ public class MobileInputManager : MonoBehaviour
 
     private void Start()
     {
-        // Validate joystick references
-        if (movementJoystick == null)
-        {
-            Debug.LogError("MobileInputManager: Movement Joystick is NOT assigned!");
-        }
-        else
-        {
-            Debug.Log($"MobileInputManager: Movement Joystick assigned: {movementJoystick.gameObject.name}");
-        }
+        if (movementJoystick == null) Debug.LogError("MobileInputManager: Movement Joystick is NOT assigned!");
+        if (cameraTouch == null) Debug.LogWarning("MobileInputManager: Camera Touch is not assigned");
 
-        if (cameraTouch == null)
-        {
-            Debug.LogWarning("MobileInputManager: Camera Touch is not assigned");
-        }
-        else
-        {
-            Debug.Log($"MobileInputManager: Camera Touch assigned: {cameraTouch.gameObject.name}");
-        }
-
-        // Subscribe to button events
-        if (dodgeButton != null)
-        {
-            dodgeButton.OnButtonPressed += () => dodgePressed = true;
-        }
-
-        if (jumpButton != null)
-        {
-            jumpButton.OnButtonPressed += () => jumpPressed = true;
-        }
-
+        if (dodgeButton != null) dodgeButton.OnButtonPressed += () => dodgePressed = true;
+        if (jumpButton != null) jumpButton.OnButtonPressed += () => jumpPressed = true;
+        
         if (sprintButton != null)
         {
             sprintButton.OnButtonPressed += () => sprintHeld = true;
             sprintButton.OnButtonReleased += () => sprintHeld = false;
         }
 
-        if (rbButton != null)
-        {
-            rbButton.OnButtonPressed += () => rbPressed = true;
-        }
-
+        if (rbButton != null) rbButton.OnButtonPressed += () => rbPressed = true;
+        
         if (rtButton != null)
         {
             rtButton.OnButtonPressed += () => rtPressed = true;
@@ -114,15 +86,10 @@ public class MobileInputManager : MonoBehaviour
             rtButton.OnButtonReleased += () => rtHeld = false;
         }
 
-        if (lockOnButton != null)
-        {
-            lockOnButton.OnButtonPressed += () => lockOnPressed = true;
-        }
+        if (lockOnButton != null) lockOnButton.OnButtonPressed += () => lockOnPressed = true;
 
-        // Apply initial visibility
         UpdateMobileControlsVisibility();
         
-        // Tell PlayerInputManager to use mobile input
         if (PlayerInputManager.instance != null)
         {
             PlayerInputManager.instance.SetMobileInputMode(useMobileControls);
@@ -131,13 +98,9 @@ public class MobileInputManager : MonoBehaviour
 
     private void OnValidate()
     {
-        // This is called when you change values in the Inspector
-        // Update visibility immediately when you toggle the checkbox
         if (Application.isPlaying)
         {
             UpdateMobileControlsVisibility();
-            
-            // Sync with PlayerInputManager
             if (PlayerInputManager.instance != null)
             {
                 PlayerInputManager.instance.SetMobileInputMode(useMobileControls);
@@ -147,118 +110,42 @@ public class MobileInputManager : MonoBehaviour
 
     private void Update()
     {
-        if (!useMobileControls)
-            return;
+        if (!useMobileControls) return;
 
-        // Update joystick inputs continuously
-        if (movementJoystick != null)
-        {
-            movementInput = movementJoystick.GetInputVector();
-        }
-
-        // Get camera input from touch
-        if (cameraTouch != null)
-        {
-            cameraInput = cameraTouch.GetCameraInput();
-        }
+        if (movementJoystick != null) movementInput = movementJoystick.GetInputVector();
+        if (cameraTouch != null) cameraInput = cameraTouch.GetCameraInput();
     }
 
     private void UpdateMobileControlsVisibility()
     {
         bool shouldShow = useMobileControls;
         
-        Debug.Log($"MobileInputManager: Setting controls visibility to {shouldShow}");
-
-        if (movementJoystick != null)
-        {
-            movementJoystick.gameObject.SetActive(shouldShow);
-            Debug.Log($"Movement Joystick set to: {(shouldShow ? "ACTIVE" : "INACTIVE")}");
-        }
-        
-        if (cameraTouch != null)
-        {
-            cameraTouch.gameObject.SetActive(shouldShow);
-            Debug.Log($"Camera Touch set to: {(shouldShow ? "ACTIVE" : "INACTIVE")}");
-        }
-
-        if (dodgeButton != null)
-            dodgeButton.gameObject.SetActive(shouldShow);
-        
-        if (jumpButton != null)
-            jumpButton.gameObject.SetActive(shouldShow);
-        
-        if (sprintButton != null)
-            sprintButton.gameObject.SetActive(shouldShow);
-        
-        if (rbButton != null)
-            rbButton.gameObject.SetActive(shouldShow);
-        
-        if (rtButton != null)
-            rtButton.gameObject.SetActive(shouldShow);
-        
-        if (lockOnButton != null)
-            lockOnButton.gameObject.SetActive(shouldShow);
+        if (movementJoystick != null) movementJoystick.gameObject.SetActive(shouldShow);
+        if (cameraTouch != null) cameraTouch.gameObject.SetActive(shouldShow);
+        if (dodgeButton != null) dodgeButton.gameObject.SetActive(shouldShow);
+        if (jumpButton != null) jumpButton.gameObject.SetActive(shouldShow);
+        if (sprintButton != null) sprintButton.gameObject.SetActive(shouldShow);
+        if (rbButton != null) rbButton.gameObject.SetActive(shouldShow);
+        if (rtButton != null) rtButton.gameObject.SetActive(shouldShow);
+        if (lockOnButton != null) lockOnButton.gameObject.SetActive(shouldShow);
     }
 
-    // Getters for button states
-    public bool GetDodgeInput()
-    {
-        bool result = dodgePressed;
-        dodgePressed = false;
-        return result;
-    }
+    public bool GetDodgeInput() { bool r = dodgePressed; dodgePressed = false; return r; }
+    public bool GetJumpInput() { bool r = jumpPressed; jumpPressed = false; return r; }
+    public bool GetSprintInput() => sprintHeld;
+    public bool GetRBInput() { bool r = rbPressed; rbPressed = false; return r; }
+    public bool GetRTInput() { bool r = rtPressed; rtPressed = false; return r; }
+    public bool GetRTHoldInput() => rtHeld;
+    public bool GetLockOnInput() { bool r = lockOnPressed; lockOnPressed = false; return r; }
 
-    public bool GetJumpInput()
-    {
-        bool result = jumpPressed;
-        jumpPressed = false;
-        return result;
-    }
-
-    public bool GetSprintInput()
-    {
-        return sprintHeld;
-    }
-
-    public bool GetRBInput()
-    {
-        bool result = rbPressed;
-        rbPressed = false;
-        return result;
-    }
-
-    public bool GetRTInput()
-    {
-        bool result = rtPressed;
-        rtPressed = false;
-        return result;
-    }
-
-    public bool GetRTHoldInput()
-    {
-        return rtHeld;
-    }
-
-    public bool GetLockOnInput()
-    {
-        bool result = lockOnPressed;
-        lockOnPressed = false;
-        return result;
-    }
-
-    // Public method to toggle mobile controls at runtime
     public void SetMobileControls(bool enable)
     {
         useMobileControls = enable;
         UpdateMobileControlsVisibility();
-        
-        // Sync with PlayerInputManager
         if (PlayerInputManager.instance != null)
         {
             PlayerInputManager.instance.SetMobileInputMode(enable);
         }
-        
-        Debug.Log($"MobileInputManager: Mobile controls {(enable ? "ENABLED" : "DISABLED")}");
     }
 
     public void LoadMainMenu()
@@ -268,7 +155,14 @@ public class MobileInputManager : MonoBehaviour
 
     private IEnumerator LoadMainMenuWithLoadingScreen()
     {
-        // Show loading screen
+        // --- FIX: HIDE PLAYER UI INSTANTLY ---
+        // This sets the CanvasGroup alpha to 0 so the HUD disappears immediately
+        if (PlayerUIManager.instance != null)
+        {
+            PlayerUIManager.instance.HideUI();
+        }
+        // -------------------------------------
+
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.ShowWithFakeProgress("Quitting Game...");
@@ -276,7 +170,17 @@ public class MobileInputManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // Shutdown network if active
+        // Destroy managers to prevent errors
+        if (TitleScreenManager.Instance != null)
+        {
+            Destroy(TitleScreenManager.Instance.gameObject);
+        }
+
+        if (LobbyManager.PublicPersistentLobbyData != null)
+        {
+            LobbyManager.PublicPersistentLobbyData = null;
+        }
+
         if (NetworkManager.Singleton != null)
         {
             if (LoadingScreenManager.Instance != null)
@@ -288,31 +192,19 @@ public class MobileInputManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
 
-        // Destroy TitleScreenManager if it exists (clean slate)
-        if (TitleScreenManager.Instance != null)
-        {
-            Destroy(TitleScreenManager.Instance.gameObject);
-        }
-
-        // Clear lobby data
-        LobbyManager.PublicPersistentLobbyData = null;
-
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.UpdateLoadingText("Returning to Main Menu...");
         }
 
-        // Start loading the scene
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
         
         if (asyncLoad != null)
         {
-            // Update progress bar as scene loads
             while (!asyncLoad.isDone)
             {
                 if (LoadingScreenManager.Instance != null)
                 {
-                    // Map the 0-0.9 range to our loading bar
                     float progress = Mathf.Clamp01(asyncLoad.progress / 0.9f);
                     LoadingScreenManager.Instance.SetProgress(progress);
                 }
@@ -321,11 +213,9 @@ public class MobileInputManager : MonoBehaviour
         }
         else
         {
-            // Fallback if async load fails
             SceneManager.LoadScene(0);
         }
 
-        // Complete loading screen - just hide it directly since we're in a new scene
         if (LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.Hide();

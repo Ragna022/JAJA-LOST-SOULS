@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+// Define aliases to avoid conflicts with the old system
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 
 public class MobileCameraTouch : MonoBehaviour
 {
@@ -25,12 +30,23 @@ public class MobileCameraTouch : MonoBehaviour
     private bool validCameraTouch = false;
     private int activeTouchId = -1;
 
+    // ESSENTIAL: The New Input System's "Enhanced Touch" must be enabled to work like the old array
+    private void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+    }
+
+    private void OnDisable()
+    {
+        EnhancedTouchSupport.Disable();
+    }
+
     private void Update()
     {
         touchDelta = Vector2.zero;
 
-        // 1. If we have touches, process them
-        if (Input.touchCount > 0)
+        // 1. If we have touches, process them using EnhancedTouch
+        if (Touch.activeTouches.Count > 0)
         {
             HandleTouchInput();
         }
@@ -51,10 +67,10 @@ public class MobileCameraTouch : MonoBehaviour
         if (activeTouchId != -1)
         {
             bool foundActive = false;
-            for (int i = 0; i < Input.touchCount; i++)
+            // Iterate through the New Input System's touch list
+            foreach (var t in Touch.activeTouches)
             {
-                Touch t = Input.GetTouch(i);
-                if (t.fingerId == activeTouchId)
+                if (t.finger.index == activeTouchId)
                 {
                     ProcessCameraTouch(t);
                     foundActive = true;
@@ -69,34 +85,30 @@ public class MobileCameraTouch : MonoBehaviour
             }
         }
         
-        // B. IF WE DON'T HAVE A CAMERA FINGER (This fixes the "2 Finger" bug)
-        // We look for ANY finger on the right side, even if it's already "Moved" or "Stationary"
+        // B. IF WE DON'T HAVE A CAMERA FINGER
         if (activeTouchId == -1)
         {
-            for (int i = 0; i < Input.touchCount; i++)
+            foreach (var t in Touch.activeTouches)
             {
-                Touch t = Input.GetTouch(i);
-
                 // Check 1: Is it on the right side?
-                if (!IsTouchOnRightSide(t.position)) 
+                if (!IsTouchOnRightSide(t.screenPosition)) 
                     continue;
 
-                // Check 2: Is it hitting a BUTTON? (We ignore Joysticks here)
-                if (ignoreUITouches && IsTouchBlockedByUI(t.position))
+                // Check 2: Is it hitting a BUTTON?
+                if (ignoreUITouches && IsTouchBlockedByUI(t.screenPosition))
                     continue;
 
                 // ✅ FOUND A VALID FINGER! Grab it.
-                activeTouchId = t.fingerId;
-                touchStartPosition = t.position;
-                lastTouchPosition = t.position;
+                activeTouchId = t.finger.index;
+                touchStartPosition = t.screenPosition;
+                lastTouchPosition = t.screenPosition;
                 isDragging = true;
                 
-                // If it's a fresh touch, reset deadzone logic. 
-                // If it's an existing touch (Stationary/Moved), we accept it immediately.
+                // If it's an existing touch (Moved), accept immediately
                 validCameraTouch = (t.phase == TouchPhase.Moved); 
 
-                if (showDebugLogs) Debug.Log($"Grabbed Finger {t.fingerId} at {t.position}");
-                break; // Stop looking, we found one
+                if (showDebugLogs) Debug.Log($"Grabbed Finger {t.finger.index} at {t.screenPosition}");
+                break; 
             }
         }
     }
@@ -108,7 +120,7 @@ public class MobileCameraTouch : MonoBehaviour
             // Deadzone Check
             if (!validCameraTouch)
             {
-                if (Vector2.Distance(touch.position, touchStartPosition) > deadZone)
+                if (Vector2.Distance(touch.screenPosition, touchStartPosition) > deadZone)
                 {
                     validCameraTouch = true;
                 }
@@ -117,13 +129,13 @@ public class MobileCameraTouch : MonoBehaviour
             // Apply Movement
             if (validCameraTouch)
             {
-                Vector2 delta = touch.position - lastTouchPosition;
+                Vector2 delta = touch.screenPosition - lastTouchPosition;
                 touchDelta = delta * cameraSensitivity * 0.15f;
                 
                 if (invertY) touchDelta.y = -touchDelta.y;
             }
 
-            lastTouchPosition = touch.position;
+            lastTouchPosition = touch.screenPosition;
         }
         else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
         {
@@ -133,20 +145,24 @@ public class MobileCameraTouch : MonoBehaviour
 
     private void HandleMouseInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        // Check if Mouse exists (prevent errors on devices without mice)
+        if (Mouse.current == null) return;
+
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (IsTouchOnRightSide(Input.mousePosition) && !IsTouchBlockedByUI(Input.mousePosition))
+            Vector2 mousePos = Mouse.current.position.ReadValue();
+            if (IsTouchOnRightSide(mousePos) && !IsTouchBlockedByUI(mousePos))
             {
                 activeTouchId = 999;
-                touchStartPosition = Input.mousePosition;
-                lastTouchPosition = Input.mousePosition;
+                touchStartPosition = mousePos;
+                lastTouchPosition = mousePos;
                 isDragging = true;
                 validCameraTouch = false;
             }
         }
-        else if (Input.GetMouseButton(0) && activeTouchId == 999)
+        else if (Mouse.current.leftButton.isPressed && activeTouchId == 999)
         {
-            Vector2 pos = Input.mousePosition;
+            Vector2 pos = Mouse.current.position.ReadValue();
             if (!validCameraTouch && Vector2.Distance(pos, touchStartPosition) > deadZone) validCameraTouch = true;
             
             if (validCameraTouch)
@@ -157,7 +173,7 @@ public class MobileCameraTouch : MonoBehaviour
             }
             lastTouchPosition = pos;
         }
-        else if (Input.GetMouseButtonUp(0) && activeTouchId == 999)
+        else if (Mouse.current.leftButton.wasReleasedThisFrame && activeTouchId == 999)
         {
             ResetTouch();
         }
@@ -175,7 +191,6 @@ public class MobileCameraTouch : MonoBehaviour
         return position.x > Screen.width * rightSideThreshold;
     }
 
-    // Renamed for clarity: This only returns true if we hit a BAD UI element (Buttons)
     private bool IsTouchBlockedByUI(Vector2 position)
     {
         if (EventSystem.current == null) return false;
@@ -187,9 +202,9 @@ public class MobileCameraTouch : MonoBehaviour
         foreach (RaycastResult r in results)
         {
             GameObject hit = r.gameObject;
-            if (hit == gameObject) continue; // Ignore self
+            if (hit == gameObject) continue; 
 
-            // Check for Buttons (ALWAYS BLOCK)
+            // Check for Buttons
             if (hit.GetComponentInParent<UnityEngine.UI.Button>() != null || 
                 hit.GetComponentInParent<MobileButton>() != null)
             {
@@ -200,19 +215,15 @@ public class MobileCameraTouch : MonoBehaviour
             // Check for Joystick
             if (hit.GetComponentInParent<MobileJoystick>() != null)
             {
-                // If we hit a joystick, but we are on the Right Side -> IGNORE IT (Don't block)
                 if (IsTouchOnRightSide(position))
                 {
                     continue; 
                 }
                 else
                 {
-                    return true; // Joystick on left side -> Block
+                    return true; 
                 }
             }
-            
-            // Note: We deliberately ignore generic "Images" or "Panels" here.
-            // This ensures invisible containers don't break the camera.
         }
 
         return false;
