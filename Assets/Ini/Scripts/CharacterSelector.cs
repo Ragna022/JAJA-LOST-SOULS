@@ -33,7 +33,7 @@ public class CharacterSelector : MonoBehaviour
     public Transform spawnPoint;
 
     [Header("External References")]
-    public CameraAnimator cameraController;
+    //public CameraAnimator cameraController;
 
     private GameObject currentCharacter;
     private CharacterOption selectedCharacter;

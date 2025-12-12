@@ -1171,7 +1171,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4665553661346025238}
   - component: {fileID: 6832452959377465916}
-  m_Layer: 6
+  - component: {fileID: 1503592242385924914}
+  m_Layer: 7
   m_Name: ball_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1216,6 +1217,20 @@ CapsuleCollider:
   m_Height: 0.45
   m_Direction: 0
   m_Center: {x: -0.07, y: -0.05, z: 0}
+--- !u!114 &1503592242385924914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2394312157774111565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94bcc663f53ffde4984f4112d27ab978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponModelInstantiationSlot
+  weaponSlot: 0
+  currentWeaponModel: {fileID: 0}
 --- !u!1 &2762734732259327219
 GameObject:
   m_ObjectHideFlags: 0
@@ -1289,7 +1304,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7652454114808193969}
   - component: {fileID: 23064648215156645}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: thigh_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1662,7 +1677,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1767906245130254735}
   - component: {fileID: 4598155112043074165}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: calf_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2436,7 +2451,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5032674638246076466}
   - component: {fileID: 770647243453921213}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: thigh_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2768,7 +2783,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4875613794229966305}
   - component: {fileID: 6826076999346350672}
-  m_Layer: 6
+  - component: {fileID: 8900317388441447150}
+  m_Layer: 7
   m_Name: ball_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2813,6 +2829,20 @@ CapsuleCollider:
   m_Height: 0.45
   m_Direction: 0
   m_Center: {x: 0.07, y: 0.05, z: 0}
+--- !u!114 &8900317388441447150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5895195317045262638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94bcc663f53ffde4984f4112d27ab978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponModelInstantiationSlot
+  weaponSlot: 0
+  currentWeaponModel: {fileID: 0}
 --- !u!1 &5974951059589969253
 GameObject:
   m_ObjectHideFlags: 0
@@ -3211,7 +3241,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2584145825172641486}
   - component: {fileID: 8445266797618027341}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: calf_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}

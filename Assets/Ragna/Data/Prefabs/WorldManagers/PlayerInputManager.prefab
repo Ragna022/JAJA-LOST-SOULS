@@ -44,4 +44,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 846508c22d4bb404ba548ef8ddb64edb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  useMobileInput: 1
+  mobileCameraTouch: {fileID: 0}
   movementInput: {x: 0, y: 0}
+  horizontalInput: 0
+  verticalInput: 0
+  moveAmount: 0
+  cameraInput: {x: 0, y: 0}
+  cameraHorizontalInput: 0
+  cameraVerticalInput: 0
+  lockOn_Input: 0
+  lockOn_Left_Input: 0
+  lockOn_Right_Input: 0
+  dodgeInput: 0
+  sprintInput: 0
+  jumpInput: 0
+  RB_Input: 0
+  RT_Input: 0
+  Hold_RT_Input: 0
+  debugMobileMovement: {x: 0, y: 0}
+  debugMobileCamera: {x: 0, y: 0}

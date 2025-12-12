@@ -44,5 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e3dc93968079444af0a2f0ef8208ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  unarmedWeapon: {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   weapons:
+  - {fileID: 11400000, guid: 8a10f6dd7ff43824bb36143d00a995f1, type: 2}
   - {fileID: 11400000, guid: 915c51803af4ae041ae164262d848be9, type: 2}
+  - {fileID: 11400000, guid: 1a4c4a92796a62e45830e89ff52d0960, type: 2}

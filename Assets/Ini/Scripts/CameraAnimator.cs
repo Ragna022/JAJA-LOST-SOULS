@@ -29,9 +29,9 @@ public class CameraAnimator : MonoBehaviour
         if (inSelectionView) return;
         inSelectionView = true;
         
-        mainCam.transform.DOMove(viewB.position, cameraMoveDuration).SetEase(cameraEase);
-        mainCam.transform.DORotateQuaternion(viewB.rotation, cameraMoveDuration).SetEase(cameraEase);
-        camSwayScript.enabled = false; Debug.Log("Entering Character Selection View...");
+        //mainCam.transform.DOMove(viewB.position, cameraMoveDuration).SetEase(cameraEase);
+        //mainCam.transform.DORotateQuaternion(viewB.rotation, cameraMoveDuration).SetEase(cameraEase);
+        //camSwayScript.enabled = false; Debug.Log("Entering Character Selection View...");
     }
 
     public void ReturnToMainView()

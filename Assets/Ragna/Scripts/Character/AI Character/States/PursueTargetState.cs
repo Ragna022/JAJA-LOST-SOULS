@@ -14,17 +14,22 @@ public class PursueTargetState : AIState
 
         if (!aiCharacter.navMeshAgent.enabled)
             aiCharacter.navMeshAgent.enabled = true;
-//
-        /*if (aiCharacter.aiCharacterCombatManager.viewableAngle < aiCharacter.aiCharacterCombatManager.minimumFOV
-            || aiCharacter.aiCharacterCombatManager.viewableAngle > aiCharacter.aiCharacterCombatManager.maximumFOV)
-            aiCharacter.aiCharacterCombatManager.PivotTowardsTarget(aiCharacter);*/
+
+        // FIX: Ensure stopping distance is reset for chasing
+        // If it was set to 0.2 in combat, we set it back to ~2.0 here so it stops naturally near the player
+        if (aiCharacter.navMeshAgent.stoppingDistance < 2.0f) 
+        {
+            aiCharacter.navMeshAgent.stoppingDistance = 2.0f; 
+        }
 
         aiCharacter.aiCharacterLocomotionManager.RotateTowardsAgent(aiCharacter);
 
-        if(aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.combatStance.maximumEngagementDistance)
-            return SwitchState(aiCharacter, aiCharacter.combatStance);//
+        // Switch to Combat Stance if close enough
+        if (aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.combatStance.maximumEngagementDistance)
+            return SwitchState(aiCharacter, aiCharacter.combatStance);
 
-        if(aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.navMeshAgent.stoppingDistance)
+        // Also switch if we physically reached the NavMesh stopping distance
+        if (aiCharacter.aiCharacterCombatManager.distanceFromTarget <= aiCharacter.navMeshAgent.stoppingDistance)
             return SwitchState(aiCharacter, aiCharacter.combatStance);
 
         NavMeshPath path = new NavMeshPath();
