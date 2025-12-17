@@ -362,7 +362,7 @@ public class LobbyManager : NetworkBehaviour
         PublicPersistentLobbyData = persistentLobbyData;
         HideLobbyUIClientRpc();
         NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
-        NetworkManager.Singleton.SceneManager.LoadScene("World_01", LoadSceneMode.Single);
+        NetworkManager.Singleton.SceneManager.LoadScene("World", LoadSceneMode.Single);
     }
 
     [ClientRpc]
@@ -383,7 +383,7 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"🎯 Scene '{sceneName}' loaded - Clients: {clientsCompleted.Count}, TimedOut: {clientsTimedOut.Count}");
 
-        if (sceneName == "World_01" && LoadingScreenManager.Instance != null)
+        if (sceneName == "World" && LoadingScreenManager.Instance != null)
         {
             LoadingScreenManager.Instance.Complete();
         }

@@ -10,6 +10,7 @@ TagManager:
   - Player2
   - Look
   - SpawnPoint
+  - AI_Spawn
   layers:
   - Default
   - TransparentFX
