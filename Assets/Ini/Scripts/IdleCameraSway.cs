@@ -19,14 +19,12 @@ public class IdleCameraSway : MonoBehaviour
 
     private bool isSwaying = true;
 
-    private Transform cam;
+    public Transform cam;
     private Vector3 startPos;
     private Quaternion startRot;
 
     void Start()
     {
-        cam = Camera.main.transform;
-
         // Optional: start camera at viewA
         if (viewA != null)
         {

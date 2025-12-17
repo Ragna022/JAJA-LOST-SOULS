@@ -20,20 +20,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider progressBar;
     [SerializeField] private TextMeshProUGUI progressText;
 
-    [Header("Audio Sources")]
-    [SerializeField] private AudioSource musicAS;
-    [SerializeField] private AudioSource sfxAS;
-    [SerializeField] private AudioClip buttonClick;
-
     public GameObject[] playerImageBg;
-
-    private CameraAnimator camAnim;
+    public CameraAnimator camAnim;
 
     public TextMeshProUGUI readyText;
     public CharacterSelector charView;
-
-    [Header("Audio Settings")]
-    [SerializeField] private Slider musicSlider, sfxSlider;
 
     private bool isMenu;
 
@@ -48,22 +39,6 @@ public class UIManager : MonoBehaviour
         }
 
         StartCoroutine(CloseSplashThenLoadMain());
-
-        // Load saved prefs (defaults if not set)
-        float savedMusicVol = PlayerPrefs.GetFloat("MusicVol", 0.75f);
-        float savedSFXVol = PlayerPrefs.GetFloat("SFXVol", 0.75f);
-
-        // Apply to sliders
-        musicSlider.value = savedMusicVol;
-        sfxSlider.value = savedSFXVol;
-
-        // Hook listeners
-        musicSlider.onValueChanged.AddListener(SetMusicVolume);
-        sfxSlider.onValueChanged.AddListener(SetSFXVolume);
-
-        // Apply saved settings immediately
-        SetMusicVolume(savedMusicVol);
-        SetSFXVolume(savedSFXVol);
     }
 
     private IEnumerator CloseSplashThenLoadMain()
@@ -82,12 +57,14 @@ public class UIManager : MonoBehaviour
         isMenu = true;
             SetCanvasGroupInActive(menuUICG);
                 ShowSettingsUI();
+                    SoundManager.Instance.PlayClickSound();
     }
     
     public void BackToMenuUI()
     {
         StartCoroutine(ShowLoadingUI(menuUICG));
         SetCanvasGroupInActive(charSelectionUICG);
+        SoundManager.Instance.PlayClickSound();
     }
     
     public IEnumerator ShowLoadingUI(CanvasGroup targetUI)
@@ -142,6 +119,7 @@ public class UIManager : MonoBehaviour
     public void StartGame()
     {       
         StartCoroutine(startGame());
+        SoundManager.Instance.PlayClickSound();
     }
 
     private IEnumerator startGame()
@@ -156,6 +134,7 @@ public class UIManager : MonoBehaviour
 
     public void CloseCharacterSelectionUI()
     {
+                SoundManager.Instance.PlayClickSound();
             SetCanvasGroupInActive(charSelectionUICG);
         SetCanvasGroupActive(menuUICG);
     }
@@ -163,6 +142,7 @@ public class UIManager : MonoBehaviour
     public void loadGameSelectionUI()
     {
         StartCoroutine(loadOutToGameMode());
+        SoundManager.Instance.PlayClickSound();
 
         // TODO: Ragna the selected character will be registered in this method
     }
@@ -177,6 +157,7 @@ public class UIManager : MonoBehaviour
     public void GameModeToMenu()
     {
         StartCoroutine(returnToGameMode());
+        SoundManager.Instance.PlayClickSound();
     }
 
     public IEnumerator returnToGameMode()
@@ -189,6 +170,7 @@ public class UIManager : MonoBehaviour
     public void GameModeToHosting()
     {
         StartCoroutine(OpenHosting());
+        SoundManager.Instance.PlayClickSound();
     }
 
     public IEnumerator OpenHosting()
@@ -201,6 +183,7 @@ public class UIManager : MonoBehaviour
     public void HostingToGameMode()
     {
         StartCoroutine(OpenGameMode());
+        SoundManager.Instance.PlayClickSound();
     }
 
     public IEnumerator OpenGameMode()
@@ -213,23 +196,27 @@ public class UIManager : MonoBehaviour
     public void FadeInGameIDInputField()
     {
         SetCanvasGroupActive(gameIDUI);
+        SoundManager.Instance.PlayClickSound();
     }
 
     public void FadeOutGameIDInputField()
     {
         SetCanvasGroupInActive(gameIDUI);
+        SoundManager.Instance.PlayClickSound();
     }
 
     public void FadeInLobby()
     {
         SetCanvasGroupActive(lobbyUI);
         SetCanvasGroupInActive(hostingUI);
+        SoundManager.Instance.PlayClickSound();
     }
 
     public void FadeOutLobby()
     {
         SetCanvasGroupActive(hostingUI);
         SetCanvasGroupInActive(lobbyUI);
+        SoundManager.Instance.PlayClickSound();
     }
 
     public void PlayerReady()
@@ -269,6 +256,7 @@ public class UIManager : MonoBehaviour
         }
 
         StartCoroutine(undoSettings());
+        SoundManager.Instance.PlayClickSound();
     }
     #endregion
 
@@ -289,36 +277,16 @@ public class UIManager : MonoBehaviour
         tUI.interactable = false;
         tUI.blocksRaycasts = false;
     }
-
-    #region AUDIO
-    public void SetMusicVolume(float value)
+    public void Quit()
     {
-        if (musicAS != null)
-            musicAS.volume = Mathf.Clamp01(value);
-
-        PlayerPrefs.SetFloat("MusicVol", value);
+        Application.Quit() ;
+        SoundManager.Instance.PlayClickSound();
     }
-
-    public void SetSFXVolume(float value)
-    {
-        if (sfxAS != null)
-            sfxAS.volume = Mathf.Clamp01(value);
-
-        PlayerPrefs.SetFloat("SFXVol", value);
-    }
-
-    public void PlayClickSound()
-    {
-        if (sfxAS != null && buttonClick != null)
-            sfxAS.PlayOneShot(buttonClick, sfxAS.volume);
-    }
-    #endregion
-
-    public void Quit() => Application.Quit();  // Quit application ASAP ASAP
 
     public void LoadGame()
     {
         Debug.Log("Load Game!");
+        SoundManager.Instance.PlayClickSound();
         // This will load the gameScene using scene manager
     }
 }
