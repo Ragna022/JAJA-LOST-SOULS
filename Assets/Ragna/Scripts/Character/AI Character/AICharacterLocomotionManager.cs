@@ -80,6 +80,14 @@ public class AICharacterLocomotionManager : CharacterLocomotionManager
 
     private void HandleAIMovement()
     {
+        // STOP SCRIPT MOVEMENT IF PERFORMING ACTION (Attack)
+        // This prevents "sliding" while the root motion animation plays
+        if (character.isPerformingAction)
+        {
+            character.characterAnimatorManager.UpdateAnimatorMovementParameters(0, 0, false);
+            return;
+        }
+
         NavMeshAgent agent = aiCharacter.navMeshAgent;
 
         // Check if agent has reached destination
@@ -88,6 +96,7 @@ public class AICharacterLocomotionManager : CharacterLocomotionManager
 
         // Get desired velocity from NavMeshAgent
         Vector3 desiredVelocity = agent.desiredVelocity;
+        desiredVelocity.y = 0; // Prevent Floating: Ignore vertical velocity from NavMesh
         
         // If at destination, force stop
         if (hasReachedDestination)
@@ -98,6 +107,7 @@ public class AICharacterLocomotionManager : CharacterLocomotionManager
         // Check if agent wants to move
         if (desiredVelocity.magnitude > 0.1f && !hasReachedDestination)
         {
+            Debug.Log($"[AI DEBUG] Moving! DesiredVelocity: {desiredVelocity}, Magnitude: {desiredVelocity.magnitude}");
             // Smoothly transition velocity for natural movement
             lastAgentVelocity = Vector3.Lerp(lastAgentVelocity, desiredVelocity, Time.deltaTime * 10f);
             
@@ -175,6 +185,7 @@ public class AICharacterLocomotionManager : CharacterLocomotionManager
         float moveAmount = Mathf.Clamp01(speed / movementSpeed);
 
         // Update animator with smooth values
+        Debug.Log($"[AI DEBUG] Animator Update: Strafe={strafe}, Forward={forward}, Speed={speed}, MoveAmount={moveAmount}");
         character.characterAnimatorManager.UpdateAnimatorMovementParameters(
             strafe * moveAmount,
             forward * moveAmount,

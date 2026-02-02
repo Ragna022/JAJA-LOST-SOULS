@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "JaJa.sln"
+    "dotnet.defaultSolution": "JaJa.sln",
+    "dotrush.roslyn.projectOrSolutionFiles": []
 }

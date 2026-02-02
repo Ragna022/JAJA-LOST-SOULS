@@ -11,7 +11,7 @@ public class AICharacterAnimatorManager : CharacterAnimatorManager
         aiCharacter = GetComponent<AICharacterManager>();
     }
 
-    private void OnAimatorMove()
+    /*private void OnAnimatorMove()
     {
         // HOST
         if (aiCharacter.IsOwner)
@@ -39,5 +39,5 @@ public class AICharacterAnimatorManager : CharacterAnimatorManager
                 aiCharacter.characterNetworkManager.networkPositionSmoothTime);
             aiCharacter.transform.rotation *= aiCharacter.animator.deltaRotation;
         }
-    }
+    }*/
 }
