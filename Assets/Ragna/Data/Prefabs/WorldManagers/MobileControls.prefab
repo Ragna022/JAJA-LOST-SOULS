@@ -711,7 +711,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34d5ea7ceeb6b1e4ba7653ba5ade3a25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraSensitivity: 0.3
+  cameraSensitivity: 0.06
   invertY: 0
   ignoreUITouches: 1
   deadZone: 10
@@ -1408,9 +1408,9 @@ RectTransform:
   - {fileID: 2428893567302275319}
   m_Father: {fileID: 4601817802281226231}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1059, y: -145.4524}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 288.1504, y: 88.8708}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &384502630187517687
@@ -1495,10 +1495,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
+      - m_Target: {fileID: 2938056388299676268}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -1555,7 +1555,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4631201669236531932
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1889,9 +1889,9 @@ RectTransform:
   - {fileID: 8968494033694412404}
   m_Father: {fileID: 4601817802281226231}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1059, y: -361.26196}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 288.1472, y: 88.8708}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2010128989593044112
@@ -2623,9 +2623,9 @@ RectTransform:
   - {fileID: 1102345007336331369}
   m_Father: {fileID: 4601817802281226231}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1059, y: -253.35718}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 288.1472, y: 88.8708}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4163584144831755526

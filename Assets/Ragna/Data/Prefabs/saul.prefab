@@ -843,9 +843,9 @@ MonoBehaviour:
   sprintingSpeed: 5
   rotationSpeed: 15
   sprintingStaminaCost: 2
-  jumpStaminaCost: 25
-  jumpHeight: 4
-  jumpForwardSpeed: 5
+  jumpStaminaCost: 2
+  jumpHeight: 0.085
+  jumpForwardSpeed: 1
   freeFallSpeed: 2
   dodgeStaminaCost: 25
 --- !u!114 &4689598195364650488

@@ -519,7 +519,7 @@ public class LobbyManager : NetworkBehaviour
             Destroy(TitleScreenManager.Instance.gameObject);
         }
         PublicPersistentLobbyData = null;
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("Live UI_");
     }
 
     public override void OnNetworkDespawn()

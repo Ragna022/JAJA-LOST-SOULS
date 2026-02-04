@@ -189,86 +189,63 @@ public class CharacterNetworkManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // Track ALIVE status by OwnerClientId for PLAYERS
-        Dictionary<ulong, bool> ownerAliveStatus = new Dictionary<ulong, bool>();
-        Dictionary<ulong, CharacterManager> ownerToCharacter = new Dictionary<ulong, CharacterManager>();
-        
-        int totalAICharacters = 0;
+        List<CharacterManager> alivePlayers = new List<CharacterManager>();
         int aliveAICharacters = 0;
-        
+
+        Debug.Log("--- VICTORY CHECK START ---");
+
         foreach (var spawnedObj in NetworkManager.Singleton.SpawnManager.SpawnedObjects.Values)
         {
+            if (spawnedObj == null || spawnedObj.gameObject == null) continue;
+
             CharacterManager charManager = spawnedObj.GetComponent<CharacterManager>();
             if (charManager == null) continue;
 
-            PlayerManager playerManager = charManager as PlayerManager;
-            AICharacterManager aiManager = charManager as AICharacterManager;
-            
-            if (playerManager != null)
+            // CHECK PLAYERS
+            if (charManager is PlayerManager)
             {
-                ulong ownerClientId = spawnedObj.OwnerClientId;
-                bool isAlive = !charManager.characterNetworkManager.isDead.Value;
-                
-                if (!ownerAliveStatus.ContainsKey(ownerClientId))
+                if (!charManager.characterNetworkManager.isDead.Value)
                 {
-                    ownerAliveStatus[ownerClientId] = isAlive;
-                    ownerToCharacter[ownerClientId] = charManager;
+                    alivePlayers.Add(charManager);
+                    // LOG THE NAME SO WE KNOW WHO THIS IS
+                    Debug.Log($"✅ Found ALIVE Player: {charManager.gameObject.name} (NetID: {charManager.NetworkObjectId})");
                 }
                 else
                 {
-                    if (!isAlive) ownerAliveStatus[ownerClientId] = false;
-                    
-                    if (isAlive && !ownerAliveStatus[ownerClientId])
-                    {
-                        ownerToCharacter[ownerClientId] = charManager;
-                        ownerAliveStatus[ownerClientId] = true;
-                    }
+                    Debug.Log($"💀 Found DEAD Player: {charManager.gameObject.name}");
                 }
             }
-            else if (aiManager != null)
+            // CHECK AI
+            else if (charManager is AICharacterManager)
             {
-                totalAICharacters++;
-                if (!charManager.characterNetworkManager.isDead.Value) aliveAICharacters++;
-            }
-        }
-
-        List<ulong> alivePlayerOwners = new List<ulong>();
-        foreach (var kvp in ownerAliveStatus)
-        {
-            if (kvp.Value) alivePlayerOwners.Add(kvp.Key);
-        }
-
-        int totalPlayerOwners = ownerAliveStatus.Count;
-        bool victoryMet = false;
-
-        // PvE Victory: All AI dead, at least one player alive
-        if (totalAICharacters > 0)
-        {
-            if (aliveAICharacters == 0 && alivePlayerOwners.Count > 0)
-            {
-                victoryMet = true;
-            }
-        }
-        // PvP Victory: Last Man Standing
-        else 
-        {
-            if (totalPlayerOwners > 1 && alivePlayerOwners.Count == 1)
-            {
-                victoryMet = true;
-            }
-        }
-
-        if (victoryMet)
-        {
-            foreach (ulong winnerOwnerId in alivePlayerOwners)
-            {
-                if(ownerToCharacter.ContainsKey(winnerOwnerId))
+                if (!charManager.characterNetworkManager.isDead.Value)
                 {
-                    CharacterManager winner = ownerToCharacter[winnerOwnerId];
-                    winner.characterNetworkManager.hasWon.Value = true;
+                    aliveAICharacters++;
                 }
             }
         }
+
+        Debug.Log($"[Summary] AI Left: {aliveAICharacters} | Players Left: {alivePlayers.Count}");
+
+        if (aliveAICharacters > 0) 
+        {
+            Debug.Log("❌ Victory Failed: AI still alive.");
+            return; 
+        }
+
+        if (alivePlayers.Count == 1)
+        {
+            CharacterManager winner = alivePlayers[0];
+            Debug.Log($"👑 VICTORY TRIGGERED! Winner: {winner.name}");
+            winner.characterNetworkManager.hasWon.Value = true;
+        }
+        else
+        {
+            // THIS WILL SHOW IN YOUR LOGS
+            Debug.Log($"❌ Victory Failed: Player count is {alivePlayers.Count}. It must be EXACTLY 1.");
+        }
+        
+        Debug.Log("--- VICTORY CHECK END ---");
     }
 
     private void PlayDeathAnimation()
